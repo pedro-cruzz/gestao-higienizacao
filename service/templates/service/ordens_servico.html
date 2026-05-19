@@ -1,10 +1,15 @@
 {% extends "service/base.html" %}
 
+<<<<<<< HEAD
 {% block title %}Ordens de Servico | HigiFlow{% endblock %}
+=======
+{% block title %}Ordens de Serviço | HigiFlow{% endblock %}
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 
 {% block content %}
     <section class="page-heading service-orders-heading">
         <div>
+<<<<<<< HEAD
             <h1>Ordens de Servico</h1>
             <p>Agende, acompanhe e conclua os servicos aprovados.</p>
         </div>
@@ -60,12 +65,34 @@
                             data-status="{{ card.status_key }}"
                             data-update-url="{% url 'atualizar_status_os' card.obj.pk %}"
                         >
+=======
+            <h1>Ordens de Serviço</h1>
+            <p>Acompanhe o status dos serviços em andamento</p>
+        </div>
+    </section>
+
+    <section class="service-orders-board" aria-label="Ordens de serviço por status">
+        {% for coluna in colunas_ordens %}
+            <article class="service-orders-column" aria-label="{{ coluna.title }}">
+                <header class="service-orders-column-header">
+                    <h2>{{ coluna.title }}</h2>
+                    <span>{{ coluna.cards|length }}</span>
+                </header>
+
+                <div class="service-orders-list">
+                    {% for card in coluna.cards %}
+                        <article class="service-order-card service-order-card-{{ card.status_key }}">
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
                             <div class="service-order-card-top">
                                 <span class="service-order-number">
                                     <i class="bi bi-grip-vertical"></i>
                                     {{ card.numero }}
                                 </span>
+<<<<<<< HEAD
                                 <span class="service-order-status service-order-status-{{ card.status_key }}" data-kanban-status-label>
+=======
+                                <span class="service-order-status service-order-status-{{ card.status_key }}">
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
                                     {{ card.status_label }}
                                 </span>
                             </div>
@@ -86,16 +113,29 @@
 
                             <footer class="service-order-card-footer">
                                 <strong>{{ card.valor }}</strong>
+<<<<<<< HEAD
                                 <a href="{% url 'os_detalhe' card.obj.pk %}">Ver detalhes</a>
                             </footer>
                         </article>
                     {% empty %}
                         <div class="service-orders-empty" data-kanban-empty>Sem ordens nesta etapa.</div>
+=======
+                                {% if card.obj %}
+                                    <a href="{% url 'orcamento_detalhe' card.obj.pk %}">Ver detalhes</a>
+                                {% else %}
+                                    <a href="{% url 'orcamentos' %}">Ver detalhes</a>
+                                {% endif %}
+                            </footer>
+                        </article>
+                    {% empty %}
+                        <div class="service-orders-empty">Sem ordens nesta etapa.</div>
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
                     {% endfor %}
                 </div>
             </article>
         {% endfor %}
     </section>
+<<<<<<< HEAD
 
     <section class="orcamentos-panel" aria-label="Lista de ordens de servico">
         <div class="leads-toolbar">
@@ -381,4 +421,6 @@
             refreshCounts();
         })();
     </script>
+=======
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 {% endblock %}

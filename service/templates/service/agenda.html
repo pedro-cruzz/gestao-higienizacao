@@ -6,6 +6,7 @@
     <section class="page-heading agenda-heading">
         <div>
             <h1>Agenda</h1>
+<<<<<<< HEAD
             <p>{{ total_mes }} servico(s) programado(s) neste mes.</p>
         </div>
 
@@ -229,4 +230,64 @@
             });
         })();
     </script>
+=======
+            <p>Gerencie os agendamentos de todas as equipes</p>
+        </div>
+
+        <div class="agenda-week-controls" aria-label="Navegação da semana">
+            <button type="button" class="agenda-nav-button" aria-label="Semana anterior">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="agenda-period">
+                <i class="bi bi-calendar3"></i>
+                <span>{{ periodo_agenda }}</span>
+            </div>
+            <button type="button" class="agenda-nav-button" aria-label="Próxima semana">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+
+    <section class="agenda-calendar-card" aria-label="Agenda semanal">
+        <div class="agenda-legend">
+            {% for equipe in equipes %}
+                <span>
+                    <i class="agenda-team-dot agenda-team-{{ equipe.key }}"></i>
+                    {{ equipe.nome }}
+                </span>
+            {% endfor %}
+        </div>
+
+        <div class="agenda-scroll">
+            <div class="agenda-grid" role="table" aria-label="Agendamentos da semana">
+                <div class="agenda-row agenda-days-row" role="row">
+                    <div class="agenda-corner-cell" role="columnheader"></div>
+                    {% for dia in dias %}
+                        <div class="agenda-day-cell" role="columnheader">
+                            <strong>{{ dia.nome }}</strong>
+                            <span>{{ dia.numero }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {% for linha in linhas_agenda %}
+                    <div class="agenda-row agenda-time-row" role="row">
+                        <div class="agenda-time-cell" role="rowheader">{{ linha.horario }}</div>
+                        {% for celula in linha.celulas %}
+                            <div class="agenda-slot-cell" role="cell">
+                                {% for evento in celula.eventos %}
+                                    <article class="agenda-event agenda-team-{{ evento.equipe }}{% if evento.tamanho %} agenda-event-{{ evento.tamanho }}{% endif %}">
+                                        <strong>{{ evento.cliente }}</strong>
+                                        <span>{{ evento.servico }}</span>
+                                        <small>{{ evento.endereco }}</small>
+                                    </article>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 {% endblock %}

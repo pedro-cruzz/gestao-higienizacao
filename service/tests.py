@@ -71,6 +71,7 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "100%")
 
     def test_agenda_retorna_ok(self):
+<<<<<<< HEAD
         OrdemServico.objects.create(
             titulo="Servico agenda teste",
             data_agendada=timezone.localdate(),
@@ -87,6 +88,14 @@ class ServiceViewsTests(TestCase):
         self.assertNotContains(response, "agenda-calendar-card")
         self.assertContains(response, "Servico agenda teste")
         self.assertContains(response, "Administrador / dono")
+=======
+        response = self.client.get(reverse("agenda"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "agenda-calendar-card")
+        self.assertContains(response, "Gerencie os agendamentos de todas as equipes")
+        self.assertContains(response, "Pedro Lima")
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 
     def test_cria_lead(self):
         response = self.client.post(
@@ -250,6 +259,7 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "120.00")
 
     def test_lista_ordens_servico_retorna_ok(self):
+<<<<<<< HEAD
         OrdemServico.objects.create(
             titulo="OS Cliente Ordem",
             data_agendada=timezone.localdate(),
@@ -257,11 +267,21 @@ class ServiceViewsTests(TestCase):
             administrador_executa=True,
             valor=120.0,
         )
+=======
+        orcamento = Orcamento.objects.create(
+            name="Cliente Ordem",
+            email="ordem@teste.com",
+            quantidade=1,
+            valor=120.0,
+        )
+        orcamento.itens.set([self.item_a])
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 
         response = self.client.get(reverse("ordens_servico"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "service-orders-board")
+<<<<<<< HEAD
         self.assertContains(response, "OS Cliente Ordem")
         self.assertContains(response, "R$ 120,00")
 
@@ -287,6 +307,10 @@ class ServiceViewsTests(TestCase):
 
         ordem.refresh_from_db()
         self.assertEqual(ordem.status, OrdemServico.Status.EM_ANDAMENTO)
+=======
+        self.assertContains(response, "Cliente Ordem")
+        self.assertContains(response, "R$ 120")
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 
     def test_deleta_cliente_sem_apagar_orcamento(self):
         cliente = Cliente.objects.create(

@@ -1322,12 +1322,15 @@ body.higiflow-app {
     border-radius: 10px;
     padding: 16px;
     background: rgba(236, 236, 240, 0.3);
+<<<<<<< HEAD
     transition: background-color 160ms ease, box-shadow 160ms ease;
 }
 
 .service-orders-column.is-drag-over {
     background: #eff6ff;
     box-shadow: inset 0 0 0 2px rgba(38, 100, 235, 0.22);
+=======
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 }
 
 .service-orders-column-header {
@@ -1376,6 +1379,7 @@ body.higiflow-app {
     padding: 16px 16px 0 20px;
     background: #fff;
     box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.1);
+<<<<<<< HEAD
     cursor: grab;
     transition: opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
@@ -1392,6 +1396,8 @@ body.higiflow-app {
 .service-order-card.is-saving {
     pointer-events: none;
     opacity: 0.72;
+=======
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 }
 
 .service-order-card-agendada,
@@ -1399,6 +1405,7 @@ body.higiflow-app {
     border-left-color: #8ec5ff;
 }
 
+<<<<<<< HEAD
 .service-order-card-execucao,
 .service-order-card-em_andamento {
     border-left-color: #dab2ff;
@@ -1408,6 +1415,12 @@ body.higiflow-app {
     border-left-color: #ffb4ab;
 }
 
+=======
+.service-order-card-execucao {
+    border-left-color: #dab2ff;
+}
+
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 .service-order-card-top,
 .service-order-card-footer {
     display: flex;
@@ -1452,17 +1465,24 @@ body.higiflow-app {
     color: var(--hf-blue);
 }
 
+<<<<<<< HEAD
 .service-order-status-execucao,
 .service-order-status-em_andamento {
+=======
+.service-order-status-execucao {
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
     background: #f3e8ff;
     color: #8200db;
 }
 
+<<<<<<< HEAD
 .service-order-status-cancelada {
     background: #fff1f2;
     color: #b42318;
 }
 
+=======
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 .service-order-card-body {
     display: flex;
     flex-direction: column;
@@ -2037,6 +2057,7 @@ body.service-map-open {
     align-items: center;
 }
 
+<<<<<<< HEAD
 .agenda-section-header {
     display: flex;
     align-items: center;
@@ -2060,6 +2081,8 @@ body.service-map-open {
     line-height: 20px;
 }
 
+=======
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 .agenda-week-controls {
     display: flex;
     align-items: center;
@@ -2095,7 +2118,10 @@ body.service-map-open {
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
+<<<<<<< HEAD
     text-decoration: none;
+=======
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
     white-space: nowrap;
 }
 
@@ -2104,6 +2130,7 @@ body.service-map-open {
     font-size: 18px;
 }
 
+<<<<<<< HEAD
 .agenda-month-card,
 .agenda-week-section {
     width: 100%;
@@ -2246,6 +2273,34 @@ body.service-map-open {
 .agenda-month-event:hover,
 .agenda-item:hover {
     filter: brightness(0.98);
+=======
+.agenda-calendar-card {
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--hf-border);
+    border-radius: 14px;
+    background: #fff;
+}
+
+.agenda-legend {
+    min-height: 53px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--hf-border);
+    padding: 16px;
+}
+
+.agenda-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--hf-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    white-space: nowrap;
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 }
 
 .agenda-team-dot {
@@ -2255,6 +2310,125 @@ body.service-map-open {
     border-radius: 999px;
 }
 
+<<<<<<< HEAD
+=======
+.agenda-scroll {
+    overflow-x: auto;
+}
+
+.agenda-grid {
+    min-width: 980px;
+}
+
+.agenda-row {
+    display: grid;
+    grid-template-columns: 94px repeat(7, minmax(116px, 1fr));
+}
+
+.agenda-days-row {
+    min-height: 54px;
+    border-bottom: 1px solid var(--hf-border);
+}
+
+.agenda-corner-cell,
+.agenda-day-cell,
+.agenda-time-cell,
+.agenda-slot-cell {
+    border-left: 1px solid var(--hf-border);
+}
+
+.agenda-corner-cell,
+.agenda-time-cell {
+    border-left: 0;
+    background: rgba(236, 236, 240, 0.3);
+}
+
+.agenda-day-cell {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 2px;
+    padding: 10px 8px;
+    color: var(--hf-text);
+    text-align: center;
+}
+
+.agenda-day-cell strong {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+}
+
+.agenda-day-cell span {
+    color: var(--hf-muted);
+    font-size: 11px;
+    line-height: 14px;
+}
+
+.agenda-time-row {
+    min-height: 92px;
+    border-bottom: 1px solid var(--hf-border);
+}
+
+.agenda-time-cell {
+    padding: 12px 16px 12px 12px;
+    color: var(--hf-muted);
+    font-size: 14px;
+    line-height: 20px;
+    text-align: right;
+}
+
+.agenda-slot-cell {
+    min-width: 0;
+    min-height: 92px;
+    padding: 8px;
+}
+
+.agenda-event {
+    min-height: 78px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    overflow: hidden;
+    border-left: 4px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    padding: 8px;
+    color: #fff;
+}
+
+.agenda-event-grande {
+    min-height: 180px;
+}
+
+.agenda-event strong,
+.agenda-event span,
+.agenda-event small {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.agenda-event strong {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+}
+
+.agenda-event span {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+}
+
+.agenda-event small {
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 14px;
+}
+
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 .agenda-team-a {
     background: #2b7fff;
 }
@@ -2267,6 +2441,7 @@ body.service-map-open {
     background: #00c950;
 }
 
+<<<<<<< HEAD
 .agenda-item {
     width: 100%;
     text-align: left;
@@ -2337,6 +2512,8 @@ body.service-map-open {
     overflow-wrap: anywhere;
 }
 
+=======
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 .hero-card,
 .content-card,
 .section-card,
@@ -2396,9 +2573,14 @@ body.service-map-open {
         justify-content: flex-start;
     }
 
+<<<<<<< HEAD
     .agenda-month-day {
         min-height: 116px;
         padding: 8px;
+=======
+    .agenda-row {
+        grid-template-columns: 86px repeat(7, minmax(112px, 1fr));
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
     }
 }
 
@@ -2446,6 +2628,7 @@ body.service-map-open {
         justify-content: space-between;
     }
 
+<<<<<<< HEAD
     .agenda-section-header {
         align-items: stretch;
         flex-direction: column;
@@ -2476,6 +2659,8 @@ body.service-map-open {
         justify-content: flex-start;
     }
 
+=======
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
     .agenda-period {
         flex: 1;
         justify-content: center;
@@ -2528,6 +2713,7 @@ body.service-map-open {
         min-height: auto;
     }
 
+<<<<<<< HEAD
     .os-table,
     .os-table thead,
     .os-table tbody,
@@ -2591,6 +2777,8 @@ body.service-map-open {
         justify-content: flex-start;
     }
 
+=======
+>>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
     .catalog-form {
         grid-template-columns: 1fr;
     }
