@@ -1025,6 +1025,82 @@ body.higiflow-app {
     table-layout: fixed;
 }
 
+.os-table {
+    width: 100%;
+    min-width: 1040px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.os-table th:nth-child(1),
+.os-table td:nth-child(1) {
+    width: 280px;
+}
+
+.os-table th:nth-child(2),
+.os-table td:nth-child(2) {
+    width: 170px;
+}
+
+.os-table th:nth-child(3),
+.os-table td:nth-child(3) {
+    width: 170px;
+}
+
+.os-table th:nth-child(4),
+.os-table td:nth-child(4) {
+    width: 170px;
+}
+
+.os-table th:nth-child(5),
+.os-table td:nth-child(5) {
+    width: 140px;
+}
+
+.os-table th:nth-child(6),
+.os-table td:nth-child(6) {
+    width: 120px;
+}
+
+.os-table th:nth-child(7),
+.os-table td:nth-child(7) {
+    width: 110px;
+}
+
+.os-table thead tr {
+    height: 45px;
+    border-bottom: 1px solid var(--hf-border);
+    background: rgba(236, 236, 240, 0.3);
+}
+
+.os-table tbody tr {
+    min-height: 72px;
+    border-bottom: 1px solid var(--hf-border);
+}
+
+.os-table tbody tr:last-child {
+    border-bottom: 0;
+}
+
+.os-table th,
+.os-table td {
+    padding: 16px 24px;
+    color: var(--hf-muted);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.os-table th {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.os-table td {
+    font-size: 15px;
+    line-height: 22px;
+}
+
 .orcamentos-table th:nth-child(1),
 .orcamentos-table td:nth-child(1) {
     width: 100px;
@@ -1332,6 +1408,126 @@ body.higiflow-app {
     border-color: rgba(180, 35, 24, 0.22);
 }
 
+.agenda-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.agenda-day {
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--hf-border);
+    border-radius: 14px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.agenda-day.is-today {
+    border-color: rgba(38, 100, 235, 0.45);
+    box-shadow: 0 12px 28px rgba(38, 100, 235, 0.08);
+}
+
+.agenda-day header {
+    display: grid;
+    gap: 3px;
+    padding: 14px;
+    border-bottom: 1px solid var(--hf-border);
+    background: rgba(236, 236, 240, 0.3);
+}
+
+.agenda-day header span {
+    color: var(--hf-muted);
+    font-size: 13px;
+    line-height: 18px;
+    text-transform: uppercase;
+}
+
+.agenda-day header strong {
+    color: var(--hf-text);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 24px;
+}
+
+.agenda-day-list {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 12px;
+}
+
+.agenda-item {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid var(--hf-border);
+    border-radius: 10px;
+    color: var(--hf-text);
+    background: #fff;
+    text-decoration: none;
+}
+
+.agenda-item:hover {
+    color: var(--hf-text);
+    border-color: rgba(38, 100, 235, 0.35);
+    background: #eff6ff;
+}
+
+.agenda-time {
+    color: var(--hf-blue);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
+}
+
+.agenda-item strong {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    overflow-wrap: anywhere;
+}
+
+.agenda-item small,
+.agenda-empty {
+    color: var(--hf-muted);
+    font-size: 13px;
+    line-height: 18px;
+}
+
+.agenda-empty {
+    min-height: 72px;
+    display: grid;
+    place-items: center;
+    border: 1px dashed var(--hf-border);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.agenda-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.os-check-field {
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+}
+
+.os-check-field label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.os-check-field .form-check-input {
+    margin: 0;
+}
+
 .hf-pdf-modal-content {
     border: 1px solid var(--hf-border);
     border-radius: 14px;
@@ -1607,6 +1803,10 @@ body.service-map-open {
         grid-template-columns: 1fr;
     }
 
+    .agenda-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .catalog-toolbar {
         align-items: stretch;
         flex-direction: column;
@@ -1704,6 +1904,19 @@ body.service-map-open {
     }
 
     .service-map-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .agenda-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .agenda-day {
+        min-height: 260px;
+    }
+
+    .agenda-actions {
         align-items: stretch;
         flex-direction: column;
     }

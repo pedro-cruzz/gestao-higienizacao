@@ -1,0 +1,131 @@
+{% extends "service/base.html" %}
+
+{% block title %}Ordens de Servico | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>Ordens de Servico</h1>
+            <p>Agende, acompanhe e conclua os servicos aprovados.</p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{% url 'agenda' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-calendar3"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="{% url 'nova_os' %}" class="hf-btn hf-btn-primary">
+                <i class="bi bi-plus-lg"></i>
+                <span>Nova OS</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="orcamento-summary-grid" aria-label="Resumo das ordens de servico">
+        <article class="orcamento-summary-card">
+            <span>Total</span>
+            <strong>{{ total_ordens }}</strong>
+        </article>
+        <article class="orcamento-summary-card">
+            <span>Agendadas</span>
+            <strong class="summary-blue">{{ total_agendadas }}</strong>
+        </article>
+        <article class="orcamento-summary-card">
+            <span>Em andamento</span>
+            <strong class="summary-neutral">{{ total_em_andamento }}</strong>
+        </article>
+        <article class="orcamento-summary-card">
+            <span>Concluidas</span>
+            <strong class="summary-blue">{{ total_concluidas }}</strong>
+        </article>
+        <article class="orcamento-summary-card">
+            <span>Canceladas</span>
+            <strong class="summary-red">{{ total_canceladas }}</strong>
+        </article>
+    </section>
+
+    <section class="orcamentos-panel" aria-label="Lista de ordens de servico">
+        <div class="leads-toolbar">
+            <form method="get" class="leads-search orcamentos-search">
+                <i class="bi bi-search"></i>
+                <input
+                    type="search"
+                    name="q"
+                    value="{{ busca }}"
+                    placeholder="Buscar por cliente, tecnico ou endereco..."
+                    aria-label="Buscar OS"
+                >
+            </form>
+            <a href="{% url 'tecnicos' %}" class="filter-button text-decoration-none">
+                <i class="bi bi-person-gear"></i>
+                <span>Equipe tecnica</span>
+            </a>
+        </div>
+
+        <div class="leads-table-wrap">
+            <table class="os-table">
+                <thead>
+                    <tr>
+                        <th>OS</th>
+                        <th>Cliente</th>
+                        <th>Agenda</th>
+                        <th>Responsavel</th>
+                        <th>Status</th>
+                        <th>Valor</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ordem in ordens %}
+                        <tr>
+                            <td>
+                                <div class="quote-client">
+                                    <strong>#{{ ordem.pk }} - {{ ordem.titulo }}</strong>
+                                    <span>{{ ordem.endereco|default:"Sem endereco" }}</span>
+                                </div>
+                            </td>
+                            <td>{{ ordem.cliente.name|default:ordem.orcamento.name|default:"-" }}</td>
+                            <td>
+                                <span class="quote-date">
+                                    <i class="bi bi-calendar3"></i>
+                                    {{ ordem.data_agendada|date:"d/m/Y" }} {{ ordem.hora_inicio|time:"H:i" }}
+                                </span>
+                            </td>
+                            <td>{{ ordem.responsavel_nome }}</td>
+                            <td>
+                                <span class="status-pill {{ ordem.status_css }}">{{ ordem.get_status_display }}</span>
+                            </td>
+                            <td class="quote-value">
+                                <strong>R$ {{ ordem.valor|floatformat:2 }}</strong>
+                            </td>
+                            <td>
+                                <div class="quote-actions">
+                                    <a href="{% url 'os_detalhe' ordem.pk %}" class="quote-icon-button" aria-label="Abrir OS #{{ ordem.pk }}">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'editar_os' ordem.pk %}" class="quote-icon-button" aria-label="Editar OS #{{ ordem.pk }}">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7">
+                                <div class="table-empty">
+                                    Nenhuma OS encontrada.
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="orcamentos-pagination">
+            <p>Mostrando {{ total_filtrado }} de {{ total_ordens }} OS</p>
+            <div>
+                <a href="{% url 'nova_os' %}" class="pagination-button text-decoration-none">Criar OS</a>
+            </div>
+        </footer>
+    </section>
+{% endblock %}

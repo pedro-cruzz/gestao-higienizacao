@@ -1,6 +1,7 @@
 from django import forms
+from django.db.models import Q
 
-from service.models import CategoriaCatalogo, Cliente, Orcamento, Service_catalog
+from service.models import CategoriaCatalogo, Cliente, Orcamento, OrdemServico, Service_catalog, Tecnico
 
 
 class CategoriaCatalogoForm(forms.ModelForm):
@@ -389,6 +390,190 @@ class ClienteVinculoOrcamentoForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["cliente"].queryset = Cliente.objects.order_by("name", "email")
         self.fields["cliente"].widget.attrs["class"] = "form-select"
+
+
+class TecnicoForm(forms.ModelForm):
+    class Meta:
+        model = Tecnico
+        fields = ["name", "email", "telefone", "especialidade", "ativo", "observacoes"]
+        labels = {
+            "name": "Nome da equipe ou tecnico",
+            "email": "Email",
+            "telefone": "Telefone",
+            "especialidade": "Especialidade",
+            "ativo": "Ativo",
+            "observacoes": "Observacoes",
+        }
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Ex.: Equipe A"}),
+            "email": forms.EmailInput(attrs={"placeholder": "equipe@empresa.com"}),
+            "telefone": forms.TextInput(attrs={"placeholder": "(11) 99999-9999"}),
+            "especialidade": forms.TextInput(attrs={"placeholder": "Ex.: Sofas, tapetes, colchao"}),
+            "observacoes": forms.Textarea(attrs={"rows": 4, "placeholder": "Disponibilidade, area de atendimento ou detalhes internos."}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            field.required = name == "name"
+            field.widget.attrs["class"] = "form-check-input" if name == "ativo" else "form-control"
+
+
+class OrdemServicoForm(forms.ModelForm):
+    class Meta:
+        model = OrdemServico
+        fields = [
+            "orcamento",
+            "cliente",
+            "titulo",
+            "descricao",
+            "endereco",
+            "data_agendada",
+            "hora_inicio",
+            "hora_fim",
+            "tecnico",
+            "administrador_executa",
+            "status",
+            "valor",
+            "instrucoes",
+            "checklist",
+        ]
+        labels = {
+            "orcamento": "Orcamento de origem",
+            "cliente": "Cliente",
+            "titulo": "Titulo da OS",
+            "descricao": "Servico a realizar",
+            "endereco": "Endereco do servico",
+            "data_agendada": "Data agendada",
+            "hora_inicio": "Hora inicial",
+            "hora_fim": "Hora final prevista",
+            "tecnico": "Equipe tecnica",
+            "administrador_executa": "Administrador/dono executa o servico",
+            "status": "Status",
+            "valor": "Valor",
+            "instrucoes": "Instrucoes internas",
+            "checklist": "Checklist do servico",
+        }
+        widgets = {
+            "orcamento": forms.Select(),
+            "cliente": forms.Select(),
+            "titulo": forms.TextInput(attrs={"placeholder": "Ex.: Higienizacao sofa - Cliente Maria"}),
+            "descricao": forms.Textarea(attrs={"rows": 4, "placeholder": "Detalhes do servico, itens, produtos e cuidados."}),
+            "endereco": forms.TextInput(attrs={"placeholder": "Endereco completo do atendimento"}),
+            "data_agendada": forms.DateInput(attrs={"type": "date"}),
+            "hora_inicio": forms.TimeInput(attrs={"type": "time"}),
+            "hora_fim": forms.TimeInput(attrs={"type": "time"}),
+            "tecnico": forms.Select(),
+            "administrador_executa": forms.CheckboxInput(),
+            "status": forms.Select(),
+            "valor": forms.NumberInput(attrs={"step": "0.01", "placeholder": "0.00"}),
+            "instrucoes": forms.Textarea(attrs={"rows": 3, "placeholder": "Orientacoes para quem vai executar."}),
+            "checklist": forms.Textarea(attrs={"rows": 4, "placeholder": "Ex.: Fotografar antes/depois; aspirar; extrair; finalizar."}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get("instance")
+        if args and args[0] is not None:
+            args = (self._data_com_orcamento(args[0]), *args[1:])
+        elif kwargs.get("data") is not None:
+            kwargs["data"] = self._data_com_orcamento(kwargs["data"])
+
+        super().__init__(*args, **kwargs)
+
+        orcamentos = Orcamento.objects.filter(aprovado=True).filter(Q(ordem_servico__isnull=True))
+        if instance and instance.orcamento_id:
+            orcamentos = Orcamento.objects.filter(Q(pk=instance.orcamento_id) | Q(aprovado=True, ordem_servico__isnull=True))
+        self.fields["orcamento"].queryset = orcamentos.order_by("-created_at", "-id")
+        self.fields["orcamento"].label_from_instance = self._orcamento_label
+        self.fields["orcamento"].required = False
+        self.fields["cliente"].queryset = Cliente.objects.order_by("name", "email")
+        self.fields["cliente"].required = False
+        self.fields["tecnico"].queryset = Tecnico.objects.filter(ativo=True).order_by("name")
+        self.fields["tecnico"].required = False
+        self.fields["descricao"].required = False
+        self.fields["endereco"].required = False
+        self.fields["hora_fim"].required = False
+        self.fields["instrucoes"].required = False
+        self.fields["checklist"].required = False
+
+        for name, field in self.fields.items():
+            if name == "administrador_executa":
+                field.widget.attrs["class"] = "form-check-input"
+            elif isinstance(field.widget, forms.Select):
+                field.widget.attrs["class"] = "form-select"
+            else:
+                field.widget.attrs["class"] = "form-control"
+
+    @staticmethod
+    def _orcamento_label(orcamento: Orcamento) -> str:
+        return f"#{orcamento.pk} - {orcamento.name} | R$ {orcamento.valor:.2f}"
+
+    @staticmethod
+    def _data_com_orcamento(data):
+        mutable_data = data.copy()
+        orcamento_id = mutable_data.get("orcamento")
+        if not orcamento_id:
+            return mutable_data
+
+        orcamento = Orcamento.objects.filter(pk=orcamento_id).first()
+        if not orcamento:
+            return mutable_data
+
+        if not mutable_data.get("cliente") and orcamento.cliente_id:
+            mutable_data["cliente"] = str(orcamento.cliente_id)
+        if not mutable_data.get("titulo"):
+            mutable_data["titulo"] = f"Servico para {orcamento.name}"
+        if not mutable_data.get("descricao"):
+            itens = ", ".join(item.name for item in orcamento.itens.all())
+            mutable_data["descricao"] = itens or orcamento.descricao or ""
+        if not mutable_data.get("endereco"):
+            mutable_data["endereco"] = orcamento.endereco or ""
+        if not mutable_data.get("valor"):
+            mutable_data["valor"] = str(orcamento.valor or 0)
+        return mutable_data
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get("tecnico") and not cleaned_data.get("administrador_executa"):
+            self.add_error(
+                "administrador_executa",
+                "Selecione uma equipe tecnica ou marque que o administrador/dono executa o servico.",
+            )
+
+        hora_inicio = cleaned_data.get("hora_inicio")
+        hora_fim = cleaned_data.get("hora_fim")
+        if hora_inicio and hora_fim and hora_fim <= hora_inicio:
+            self.add_error("hora_fim", "A hora final deve ser posterior a hora inicial.")
+        return cleaned_data
+
+
+class OrdemServicoConclusaoForm(forms.ModelForm):
+    class Meta:
+        model = OrdemServico
+        fields = ["status", "observacoes_execucao", "checklist"]
+        labels = {
+            "status": "Status final",
+            "observacoes_execucao": "Observacoes da execucao",
+            "checklist": "Checklist executado",
+        }
+        widgets = {
+            "status": forms.Select(),
+            "observacoes_execucao": forms.Textarea(attrs={"rows": 4, "placeholder": "Relate o que foi feito, intercorrencias e orientacoes ao cliente."}),
+            "checklist": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["status"].choices = [
+            (OrdemServico.Status.CONCLUIDA, "Concluida"),
+            (OrdemServico.Status.EM_ANDAMENTO, "Em andamento"),
+            (OrdemServico.Status.CANCELADA, "Cancelada"),
+        ]
+        self.fields["status"].widget.attrs["class"] = "form-select"
+        self.fields["observacoes_execucao"].required = False
+        self.fields["checklist"].required = False
+        self.fields["observacoes_execucao"].widget.attrs["class"] = "form-control"
+        self.fields["checklist"].widget.attrs["class"] = "form-control"
 
 
 def montar_endereco_limpo(cleaned_data: dict) -> str:

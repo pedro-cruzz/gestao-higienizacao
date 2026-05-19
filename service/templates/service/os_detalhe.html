@@ -1,0 +1,167 @@
+{% extends "service/base.html" %}
+
+{% block title %}OS #{{ ordem.pk }} | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>OS #{{ ordem.pk }}</h1>
+            <p>{{ ordem.titulo }}</p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{% url 'ordens_servico' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-arrow-left"></i>
+                <span>OS</span>
+            </a>
+            <a href="{% url 'agenda' %}?data={{ ordem.data_agendada|date:'Y-m-d' }}" class="hf-btn hf-btn-light">
+                <i class="bi bi-calendar3"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="{% url 'editar_os' ordem.pk %}" class="hf-btn hf-btn-primary">
+                <i class="bi bi-pencil-square"></i>
+                <span>Editar</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="metric-grid orcamento-metrics" aria-label="Resumo da OS">
+        <article class="metric-card">
+            <div>
+                <p>Status</p>
+                <strong>{{ ordem.get_status_display }}</strong>
+                <span><i class="bi bi-clipboard-check"></i>Ordem de servico</span>
+            </div>
+            <span class="metric-icon"><i class="bi bi-list-check"></i></span>
+        </article>
+        <article class="metric-card">
+            <div>
+                <p>Agenda</p>
+                <strong>{{ ordem.data_agendada|date:"d/m/Y" }}</strong>
+                <span><i class="bi bi-clock"></i>{{ ordem.hora_inicio|time:"H:i" }}{% if ordem.hora_fim %} - {{ ordem.hora_fim|time:"H:i" }}{% endif %}</span>
+            </div>
+            <span class="metric-icon"><i class="bi bi-calendar3"></i></span>
+        </article>
+        <article class="metric-card">
+            <div>
+                <p>Responsavel</p>
+                <strong>{{ ordem.responsavel_nome }}</strong>
+                <span><i class="bi bi-person-gear"></i>Execucao</span>
+            </div>
+            <span class="metric-icon"><i class="bi bi-person-check"></i></span>
+        </article>
+        <article class="metric-card">
+            <div>
+                <p>Valor</p>
+                <strong>R$ {{ ordem.valor|floatformat:2 }}</strong>
+                <span><i class="bi bi-wallet2"></i>Servico</span>
+            </div>
+            <span class="metric-icon"><i class="bi bi-currency-dollar"></i></span>
+        </article>
+    </section>
+
+    <section class="orcamento-detail-grid">
+        <div class="orcamento-main-stack">
+            <article class="dashboard-card orcamento-panel">
+                <header>
+                    <h2>Execucao</h2>
+                    <span class="status-pill {{ status_class }}">{{ ordem.get_status_display }}</span>
+                </header>
+                <div class="orcamento-detail-list">
+                    <div>
+                        <span>Servico</span>
+                        <strong>{{ ordem.descricao|default:"Sem descricao" }}</strong>
+                    </div>
+                    <div>
+                        <span>Endereco</span>
+                        <strong>{{ ordem.endereco|default:"Sem endereco" }}</strong>
+                    </div>
+                    <div>
+                        <span>Instrucoes</span>
+                        <strong>{{ ordem.instrucoes|default:"Sem instrucoes internas" }}</strong>
+                    </div>
+                    <div>
+                        <span>Checklist</span>
+                        <strong>{{ ordem.checklist|default:"Sem checklist" }}</strong>
+                    </div>
+                    {% if ordem.observacoes_execucao %}
+                        <div>
+                            <span>Observacoes da execucao</span>
+                            <strong>{{ ordem.observacoes_execucao }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+
+            <article class="dashboard-card orcamento-panel">
+                <header>
+                    <h2>Concluir ou atualizar</h2>
+                    <span class="status-pill status-gray">Admin</span>
+                </header>
+                <form method="post" action="{% url 'concluir_os' ordem.pk %}" class="catalog-form">
+                    {% csrf_token %}
+                    <div class="form-field span-2">
+                        <label for="{{ conclusao_form.status.id_for_label }}">{{ conclusao_form.status.label }}</label>
+                        {{ conclusao_form.status }}
+                        {{ conclusao_form.status.errors }}
+                    </div>
+                    <div class="form-field span-2">
+                        <label for="{{ conclusao_form.checklist.id_for_label }}">{{ conclusao_form.checklist.label }}</label>
+                        {{ conclusao_form.checklist }}
+                        {{ conclusao_form.checklist.errors }}
+                    </div>
+                    <div class="form-field span-2">
+                        <label for="{{ conclusao_form.observacoes_execucao.id_for_label }}">{{ conclusao_form.observacoes_execucao.label }}</label>
+                        {{ conclusao_form.observacoes_execucao }}
+                        {{ conclusao_form.observacoes_execucao.errors }}
+                    </div>
+                    <div class="form-actions span-2">
+                        <button type="submit" class="hf-btn hf-btn-primary">
+                            <i class="bi bi-check2-circle"></i>
+                            <span>Salvar execucao</span>
+                        </button>
+                    </div>
+                </form>
+            </article>
+        </div>
+
+        <aside class="orcamento-side-stack">
+            <article class="dashboard-card orcamento-panel">
+                <header>
+                    <h2>Cliente</h2>
+                    <i class="bi bi-person metric-icon"></i>
+                </header>
+                <div class="orcamento-detail-list">
+                    <div>
+                        <span>Nome</span>
+                        <strong>{{ ordem.cliente.name|default:ordem.orcamento.name|default:"Sem cliente" }}</strong>
+                    </div>
+                    <div>
+                        <span>Contato</span>
+                        <strong>{{ ordem.cliente.telefone|default:ordem.cliente.email|default:ordem.orcamento.telefone|default:ordem.orcamento.email|default:"-" }}</strong>
+                    </div>
+                </div>
+            </article>
+
+            <article class="dashboard-card orcamento-panel">
+                <header>
+                    <h2>Origem</h2>
+                    <span class="status-pill status-soft-blue">Comercial</span>
+                </header>
+                {% if ordem.orcamento %}
+                    <div class="orcamento-linked-client">
+                        <strong>Orcamento #{{ ordem.orcamento.pk }}</strong>
+                        <span>{{ ordem.orcamento.name }} - R$ {{ ordem.orcamento.valor|floatformat:2 }}</span>
+                    </div>
+                    <div class="orcamento-action-list mt-3">
+                        <a class="hf-btn hf-btn-light" href="{% url 'orcamento_detalhe' ordem.orcamento.pk %}">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <span>Abrir orcamento</span>
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="empty-dashboard-state orcamento-compact-empty">OS criada manualmente.</div>
+                {% endif %}
+            </article>
+        </aside>
+    </section>
+{% endblock %}

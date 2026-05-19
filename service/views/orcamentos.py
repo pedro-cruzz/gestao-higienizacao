@@ -341,6 +341,7 @@ def detalhe_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         "orcamento": orcamento,
         "itens": orcamento.itens.all(),
         "mapa": _links_mapa_orcamento(orcamento),
+        "ordem_servico": getattr(orcamento, "ordem_servico", None),
         "vinculo_form": ClienteVinculoOrcamentoForm(
             initial={"cliente": orcamento.cliente_id} if orcamento.cliente_id else None
         ),

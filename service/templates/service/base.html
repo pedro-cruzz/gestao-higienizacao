@@ -19,7 +19,7 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     >
     {% block extra_head %}{% endblock %}
-    <link rel="stylesheet" href="{% static 'service/css/dashboard.css' %}?v=20260506-orcamentos-1">
+    <link rel="stylesheet" href="{% static 'service/css/dashboard.css' %}?v=20260507-os-agenda-1">
 </head>
 <body class="higiflow-app">
     <div class="hf-shell">
@@ -42,11 +42,11 @@
                     <i class="bi bi-file-earmark-text"></i>
                     <span>Orçamentos</span>
                 </a>
-                <a href="{% url 'catalogo' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'catalogo' or request.resolver_match.url_name == 'novo_produto' %} active{% endif %}">
+                <a href="{% url 'ordens_servico' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'ordens_servico' or request.resolver_match.url_name == 'nova_os' or request.resolver_match.url_name == 'os_detalhe' or request.resolver_match.url_name == 'editar_os' %} active{% endif %}">
                     <i class="bi bi-clipboard-check"></i>
                     <span>Ordens de Serviço</span>
                 </a>
-                <a href="{% url 'catalogo' %}" class="hf-nav-link">
+                <a href="{% url 'agenda' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'agenda' %} active{% endif %}">
                     <i class="bi bi-calendar3"></i>
                     <span>Agenda</span>
                 </a>
@@ -54,9 +54,9 @@
                     <i class="bi bi-person-circle"></i>
                     <span>Clientes</span>
                 </a>
-                <a href="{% url 'catalogo' %}" class="hf-nav-link">
+                <a href="{% url 'tecnicos' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'tecnicos' or request.resolver_match.url_name == 'novo_tecnico' or request.resolver_match.url_name == 'editar_tecnico' %} active{% endif %}">
                     <i class="bi bi-gear"></i>
-                    <span>Configurações</span>
+                    <span>Equipe</span>
                 </a>
             </nav>
         </aside>

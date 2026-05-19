@@ -1,0 +1,61 @@
+{% extends "service/base.html" %}
+
+{% block title %}Agenda | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>Agenda</h1>
+            <p>{{ total_semana }} servico(s) programado(s) nesta semana.</p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{% url 'agenda' %}?data={{ semana_anterior }}" class="hf-btn hf-btn-light">
+                <i class="bi bi-chevron-left"></i>
+                <span>Semana anterior</span>
+            </a>
+            <a href="{% url 'agenda' %}?data={{ hoje }}" class="hf-btn hf-btn-light">
+                <i class="bi bi-calendar-day"></i>
+                <span>Hoje</span>
+            </a>
+            <a href="{% url 'agenda' %}?data={{ proxima_semana }}" class="hf-btn hf-btn-primary">
+                <span>Proxima semana</span>
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+    </section>
+
+    <section class="agenda-grid" aria-label="Agenda semanal">
+        {% for dia in dias %}
+            <article class="agenda-day{% if dia.is_today %} is-today{% endif %}">
+                <header>
+                    <span>{{ dia.data|date:"D" }}</span>
+                    <strong>{{ dia.data|date:"d/m" }}</strong>
+                </header>
+
+                <div class="agenda-day-list">
+                    {% for ordem in dia.ordens %}
+                        <a href="{% url 'os_detalhe' ordem.pk %}" class="agenda-item">
+                            <span class="agenda-time">{{ ordem.hora_inicio|time:"H:i" }}</span>
+                            <strong>{{ ordem.titulo }}</strong>
+                            <small>{{ ordem.responsavel_nome }}</small>
+                            <span class="status-pill {{ ordem.status_css }}">{{ ordem.get_status_display }}</span>
+                        </a>
+                    {% empty %}
+                        <div class="agenda-empty">Sem servicos</div>
+                    {% endfor %}
+                </div>
+            </article>
+        {% endfor %}
+    </section>
+
+    <section class="agenda-actions">
+        <a href="{% url 'nova_os' %}" class="hf-btn hf-btn-primary">
+            <i class="bi bi-plus-lg"></i>
+            <span>Agendar OS</span>
+        </a>
+        <a href="{% url 'ordens_servico' %}" class="hf-btn hf-btn-light">
+            <i class="bi bi-list-check"></i>
+            <span>Ver OS</span>
+        </a>
+    </section>
+{% endblock %}

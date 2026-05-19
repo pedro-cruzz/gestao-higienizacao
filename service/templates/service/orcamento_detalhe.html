@@ -238,6 +238,16 @@
                                 <span>Concluir</span>
                             </button>
                         </form>
+                    {% elif ordem_servico %}
+                        <a class="hf-btn hf-btn-primary" href="{% url 'os_detalhe' ordem_servico.pk %}">
+                            <i class="bi bi-clipboard-check"></i>
+                            <span>Abrir OS #{{ ordem_servico.pk }}</span>
+                        </a>
+                    {% else %}
+                        <a class="hf-btn hf-btn-primary" href="{% url 'nova_os' %}?orcamento={{ orcamento.pk }}">
+                            <i class="bi bi-calendar-plus"></i>
+                            <span>Criar OS e agendar</span>
+                        </a>
                     {% endif %}
                     {% if not orcamento.cliente %}
                         <form

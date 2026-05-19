@@ -3,8 +3,9 @@ from unittest.mock import patch
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
-from service.models import CategoriaCatalogo, Cliente, Orcamento, Service_catalog
+from service.models import CategoriaCatalogo, Cliente, Orcamento, OrdemServico, Service_catalog, Tecnico
 from service.services.nominatim import LocalizacaoMapa, NominatimService
 from service.services.viacep import EnderecoViaCep
 
@@ -714,3 +715,118 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(response["Content-Type"], "application/pdf")
         self.assertTrue(response.content.startswith(b"%PDF"))
         self.assertGreater(len(response.content), 3000)
+
+    def test_cria_tecnico(self):
+        response = self.client.post(
+            reverse("novo_tecnico"),
+            {
+                "name": "Equipe A",
+                "email": "equipe@teste.com",
+                "telefone": "11912345678",
+                "especialidade": "Sofas e tapetes",
+                "ativo": "on",
+                "observacoes": "Atende zona sul.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        tecnico = Tecnico.objects.get(name="Equipe A")
+        self.assertTrue(tecnico.ativo)
+        self.assertEqual(tecnico.especialidade, "Sofas e tapetes")
+
+    def test_cria_os_a_partir_de_orcamento_com_tecnico(self):
+        cliente = Cliente.objects.create(name="Cliente OS", email="os@teste.com")
+        tecnico = Tecnico.objects.create(name="Equipe OS", ativo=True)
+        orcamento = Orcamento.objects.create(
+            name="Cliente OS",
+            email="os@teste.com",
+            endereco="Rua OS, 10",
+            quantidade=1,
+            valor=120.0,
+            aprovado=True,
+            cliente=cliente,
+        )
+        orcamento.itens.set([self.item_a])
+
+        response = self.client.post(
+            reverse("nova_os"),
+            {
+                "orcamento": orcamento.pk,
+                "cliente": cliente.pk,
+                "data_agendada": timezone.localdate().isoformat(),
+                "hora_inicio": "09:00",
+                "hora_fim": "11:00",
+                "tecnico": tecnico.pk,
+                "status": OrdemServico.Status.AGENDADA,
+                "instrucoes": "Levar extratora.",
+                "checklist": "Fotos antes e depois.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        ordem = OrdemServico.objects.get(orcamento=orcamento)
+        self.assertEqual(ordem.cliente, cliente)
+        self.assertEqual(ordem.tecnico, tecnico)
+        self.assertEqual(ordem.titulo, "Servico para Cliente OS")
+        self.assertEqual(ordem.valor, 120.0)
+        self.assertEqual(ordem.endereco, "Rua OS, 10")
+
+    def test_cria_os_executada_pelo_administrador_sem_tecnico(self):
+        response = self.client.post(
+            reverse("nova_os"),
+            {
+                "titulo": "Servico feito pelo dono",
+                "descricao": "Atendimento manual.",
+                "endereco": "Rua Admin, 20",
+                "data_agendada": timezone.localdate().isoformat(),
+                "hora_inicio": "14:00",
+                "administrador_executa": "on",
+                "status": OrdemServico.Status.AGENDADA,
+                "valor": "90.00",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        ordem = OrdemServico.objects.get(titulo="Servico feito pelo dono")
+        self.assertTrue(ordem.administrador_executa)
+        self.assertIsNone(ordem.tecnico)
+        self.assertEqual(ordem.responsavel_nome, "Administrador / dono")
+
+    def test_agenda_exibe_os_da_semana(self):
+        ordem = OrdemServico.objects.create(
+            titulo="OS na agenda",
+            data_agendada=timezone.localdate(),
+            hora_inicio="08:30",
+            administrador_executa=True,
+            valor=150.0,
+        )
+
+        response = self.client.get(reverse("agenda"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "OS na agenda")
+        self.assertContains(response, ordem.get_status_display())
+
+    def test_conclui_os_pelo_administrador(self):
+        ordem = OrdemServico.objects.create(
+            titulo="OS para concluir",
+            data_agendada=timezone.localdate(),
+            hora_inicio="10:00",
+            administrador_executa=True,
+            valor=150.0,
+        )
+
+        response = self.client.post(
+            reverse("concluir_os", args=[ordem.pk]),
+            {
+                "status": OrdemServico.Status.CONCLUIDA,
+                "checklist": "Servico executado.",
+                "observacoes_execucao": "Cliente aprovou o resultado.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        ordem.refresh_from_db()
+        self.assertEqual(ordem.status, OrdemServico.Status.CONCLUIDA)
+        self.assertIsNotNone(ordem.data_conclusao)
+        self.assertEqual(ordem.observacoes_execucao, "Cliente aprovou o resultado.")

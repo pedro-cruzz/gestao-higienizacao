@@ -19,6 +19,8 @@ Projeto inicial em Django para gerenciamento de:
 - criacao de orcamentos com selecao de itens do catalogo
 - aprovacao de orcamento com criacao automatica de cliente
 - listagem de clientes
+- cadastro de equipe tecnica
+- ordens de servico com agenda, responsavel e conclusao
 - painel web com navbar e sidebar
 
 ## Modelos Principais
@@ -68,13 +70,44 @@ Campos principais:
 - `telefone`
 - `endereco`
 
+### `Tecnico`
+
+Representa uma equipe ou tecnico que pode receber ordens de servico.
+
+Campos principais:
+
+- `name`
+- `email`
+- `telefone`
+- `especialidade`
+- `ativo`
+
+### `OrdemServico`
+
+Representa um servico agendado a partir de um orcamento aprovado ou criado manualmente.
+
+Campos principais:
+
+- `orcamento`
+- `cliente`
+- `tecnico`
+- `administrador_executa`
+- `titulo`
+- `data_agendada`
+- `hora_inicio`
+- `status`
+- `checklist`
+- `observacoes_execucao`
+
 ## Fluxo Principal
 
 1. Cadastrar produtos no catalogo
 2. Criar um orcamento selecionando itens do catalogo
 3. Aprovar o orcamento
 4. Criar automaticamente o cliente com base nos dados do orcamento
-5. Consultar os clientes cadastrados na tela de clientes
+5. Criar e agendar a ordem de servico
+6. Atribuir uma equipe tecnica ou marcar execucao pelo administrador/dono
+7. Concluir a OS com checklist e observacoes da execucao
 
 ## Rotas Principais
 
@@ -83,6 +116,10 @@ Campos principais:
 - `/orcamentos/novo/` - criacao de orcamento
 - `/orcamentos/<id>/` - detalhe do orcamento
 - `/orcamentos/<id>/aprovar/` - aprovacao do orcamento
+- `/ordens-servico/` - listagem de ordens de servico
+- `/ordens-servico/nova/` - criacao e agendamento de OS
+- `/agenda/` - agenda semanal das OS
+- `/tecnicos/` - cadastro de equipes tecnicas
 - `/clientes/` - listagem de clientes
 
 ## Como Rodar Localmente

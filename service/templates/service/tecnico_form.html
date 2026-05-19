@@ -1,0 +1,71 @@
+{% extends "service/base.html" %}
+
+{% block title %}{% if is_edit %}Editar Equipe{% else %}Nova Equipe{% endif %} | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>{% if is_edit %}Editar equipe{% else %}Nova equipe tecnica{% endif %}</h1>
+            <p>Use este cadastro para distribuir servicos na agenda e nas OS.</p>
+        </div>
+        <a href="{% url 'tecnicos' %}" class="hf-btn hf-btn-light">
+            <i class="bi bi-arrow-left"></i>
+            <span>Equipe</span>
+        </a>
+    </section>
+
+    <section class="catalog-form-layout">
+        <article class="catalog-form-panel">
+            <header>
+                <span class="status-pill status-soft-blue">Usuario operacional</span>
+                <h2>Dados da equipe</h2>
+            </header>
+
+            <form method="post" class="catalog-form">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <div class="form-field span-2">
+                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                    {{ form.name }}
+                    {{ form.name.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {{ form.email.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.telefone.id_for_label }}">{{ form.telefone.label }}</label>
+                    {{ form.telefone }}
+                    {{ form.telefone.errors }}
+                </div>
+                <div class="form-field span-2">
+                    <label for="{{ form.especialidade.id_for_label }}">{{ form.especialidade.label }}</label>
+                    {{ form.especialidade }}
+                    {{ form.especialidade.errors }}
+                </div>
+                <div class="form-field os-check-field span-2">
+                    <label for="{{ form.ativo.id_for_label }}">
+                        {{ form.ativo }}
+                        <span>{{ form.ativo.label }}</span>
+                    </label>
+                    {{ form.ativo.errors }}
+                </div>
+                <div class="form-field span-2">
+                    <label for="{{ form.observacoes.id_for_label }}">{{ form.observacoes.label }}</label>
+                    {{ form.observacoes }}
+                    {{ form.observacoes.errors }}
+                </div>
+
+                <div class="form-actions span-2">
+                    <button type="submit" class="hf-btn hf-btn-primary">
+                        <i class="bi bi-check-lg"></i>
+                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar equipe{% endif %}</span>
+                    </button>
+                    <a href="{% url 'tecnicos' %}" class="hf-btn hf-btn-light">Cancelar</a>
+                </div>
+            </form>
+        </article>
+    </section>
+{% endblock %}
