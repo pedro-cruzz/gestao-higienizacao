@@ -3,7 +3,7 @@
 {% block title %}Ordens de Servico | HigiFlow{% endblock %}
 
 {% block content %}
-    <section class="page-heading">
+    <section class="page-heading service-orders-heading">
         <div>
             <h1>Ordens de Servico</h1>
             <p>Agende, acompanhe e conclua os servicos aprovados.</p>
@@ -27,20 +27,74 @@
         </article>
         <article class="orcamento-summary-card">
             <span>Agendadas</span>
-            <strong class="summary-blue">{{ total_agendadas }}</strong>
+            <strong class="summary-blue" data-kanban-summary="agendada">{{ total_agendadas }}</strong>
         </article>
         <article class="orcamento-summary-card">
             <span>Em andamento</span>
-            <strong class="summary-neutral">{{ total_em_andamento }}</strong>
+            <strong class="summary-neutral" data-kanban-summary="em_andamento">{{ total_em_andamento }}</strong>
         </article>
         <article class="orcamento-summary-card">
             <span>Concluidas</span>
-            <strong class="summary-blue">{{ total_concluidas }}</strong>
+            <strong class="summary-blue" data-kanban-summary="concluida">{{ total_concluidas }}</strong>
         </article>
         <article class="orcamento-summary-card">
             <span>Canceladas</span>
-            <strong class="summary-red">{{ total_canceladas }}</strong>
+            <strong class="summary-red" data-kanban-summary="cancelada">{{ total_canceladas }}</strong>
         </article>
+    </section>
+
+    <section class="service-orders-board" aria-label="Ordens de servico por status" data-kanban-board data-csrf-token="{{ csrf_token }}">
+        {% for coluna in colunas_ordens %}
+            <article class="service-orders-column" aria-label="{{ coluna.title }}" data-kanban-column data-status="{{ coluna.key }}">
+                <header class="service-orders-column-header">
+                    <h2>{{ coluna.title }}</h2>
+                    <span data-kanban-count>{{ coluna.cards|length }}</span>
+                </header>
+
+                <div class="service-orders-list" data-kanban-list>
+                    {% for card in coluna.cards %}
+                        <article
+                            class="service-order-card service-order-card-{{ card.status_key }}"
+                            draggable="true"
+                            data-kanban-card
+                            data-status="{{ card.status_key }}"
+                            data-update-url="{% url 'atualizar_status_os' card.obj.pk %}"
+                        >
+                            <div class="service-order-card-top">
+                                <span class="service-order-number">
+                                    <i class="bi bi-grip-vertical"></i>
+                                    {{ card.numero }}
+                                </span>
+                                <span class="service-order-status service-order-status-{{ card.status_key }}" data-kanban-status-label>
+                                    {{ card.status_label }}
+                                </span>
+                            </div>
+
+                            <div class="service-order-card-body">
+                                <p class="service-order-client">
+                                    <i class="bi bi-person"></i>
+                                    <strong>{{ card.cliente }}</strong>
+                                </p>
+                                <p class="service-order-service">{{ card.servico }}</p>
+                                {% if card.agenda %}
+                                    <p class="service-order-date">
+                                        <i class="bi bi-calendar3"></i>
+                                        <span>{{ card.agenda }}</span>
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <footer class="service-order-card-footer">
+                                <strong>{{ card.valor }}</strong>
+                                <a href="{% url 'os_detalhe' card.obj.pk %}">Ver detalhes</a>
+                            </footer>
+                        </article>
+                    {% empty %}
+                        <div class="service-orders-empty" data-kanban-empty>Sem ordens nesta etapa.</div>
+                    {% endfor %}
+                </div>
+            </article>
+        {% endfor %}
     </section>
 
     <section class="orcamentos-panel" aria-label="Lista de ordens de servico">
@@ -61,7 +115,7 @@
             </a>
         </div>
 
-        <div class="leads-table-wrap">
+        <div class="leads-table-wrap os-table-wrap">
             <table class="os-table">
                 <thead>
                     <tr>
@@ -77,27 +131,27 @@
                 <tbody>
                     {% for ordem in ordens %}
                         <tr>
-                            <td>
+                            <td data-label="OS">
                                 <div class="quote-client">
                                     <strong>#{{ ordem.pk }} - {{ ordem.titulo }}</strong>
                                     <span>{{ ordem.endereco|default:"Sem endereco" }}</span>
                                 </div>
                             </td>
-                            <td>{{ ordem.cliente.name|default:ordem.orcamento.name|default:"-" }}</td>
-                            <td>
+                            <td data-label="Cliente">{{ ordem.cliente_nome }}</td>
+                            <td data-label="Agenda">
                                 <span class="quote-date">
                                     <i class="bi bi-calendar3"></i>
                                     {{ ordem.data_agendada|date:"d/m/Y" }} {{ ordem.hora_inicio|time:"H:i" }}
                                 </span>
                             </td>
-                            <td>{{ ordem.responsavel_nome }}</td>
-                            <td>
+                            <td data-label="Responsavel">{{ ordem.responsavel_nome }}</td>
+                            <td data-label="Status">
                                 <span class="status-pill {{ ordem.status_css }}">{{ ordem.get_status_display }}</span>
                             </td>
-                            <td class="quote-value">
+                            <td class="quote-value" data-label="Valor">
                                 <strong>R$ {{ ordem.valor|floatformat:2 }}</strong>
                             </td>
-                            <td>
+                            <td data-label="Acoes">
                                 <div class="quote-actions">
                                     <a href="{% url 'os_detalhe' ordem.pk %}" class="quote-icon-button" aria-label="Abrir OS #{{ ordem.pk }}">
                                         <i class="bi bi-eye"></i>
@@ -128,4 +182,203 @@
             </div>
         </footer>
     </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        (() => {
+            const board = document.querySelector("[data-kanban-board]");
+            if (!board) {
+                return;
+            }
+
+            const emptyText = "Sem ordens nesta etapa.";
+            let draggedCard = null;
+            let originList = null;
+            let originNext = null;
+            let originStatus = null;
+
+            function getCookie(name) {
+                return document.cookie
+                    .split(";")
+                    .map((cookie) => cookie.trim())
+                    .find((cookie) => cookie.startsWith(`${name}=`))
+                    ?.slice(name.length + 1) || "";
+            }
+
+            function cardsIn(list) {
+                return Array.from(list.querySelectorAll("[data-kanban-card]"));
+            }
+
+            function ensureEmptyState(list) {
+                const empty = list.querySelector("[data-kanban-empty]");
+                if (cardsIn(list).length === 0) {
+                    if (!empty) {
+                        const element = document.createElement("div");
+                        element.className = "service-orders-empty";
+                        element.dataset.kanbanEmpty = "";
+                        element.textContent = emptyText;
+                        list.appendChild(element);
+                    }
+                    return;
+                }
+
+                empty?.remove();
+            }
+
+            function refreshColumnCount(column) {
+                const count = column.querySelector("[data-kanban-count]");
+                if (count) {
+                    count.textContent = cardsIn(column).length;
+                }
+            }
+
+            function refreshCounts() {
+                board.querySelectorAll("[data-kanban-column]").forEach((column) => {
+                    refreshColumnCount(column);
+                    ensureEmptyState(column.querySelector("[data-kanban-list]"));
+                });
+            }
+
+            function updateSummaries(totals) {
+                if (!totals) {
+                    return;
+                }
+
+                Object.entries(totals).forEach(([status, total]) => {
+                    const summary = document.querySelector(`[data-kanban-summary="${status}"]`);
+                    if (summary) {
+                        summary.textContent = total;
+                    }
+                });
+            }
+
+            function updateCardStatus(card, status, label) {
+                const previous = card.dataset.status;
+                card.dataset.status = status;
+                card.classList.remove(`service-order-card-${previous}`);
+                card.classList.add(`service-order-card-${status}`);
+
+                const badge = card.querySelector("[data-kanban-status-label]");
+                if (badge) {
+                    badge.textContent = label;
+                    badge.classList.remove(`service-order-status-${previous}`);
+                    badge.classList.add(`service-order-status-${status}`);
+                }
+            }
+
+            function rollbackCard(card, previousList, previousNext, previousStatus) {
+                if (!card || !previousList) {
+                    return;
+                }
+
+                if (previousNext && previousNext.parentElement === previousList) {
+                    previousList.insertBefore(card, previousNext);
+                } else {
+                    previousList.appendChild(card);
+                }
+
+                card.dataset.status = previousStatus;
+                refreshCounts();
+            }
+
+            async function persistStatus(card, column, previousList, previousNext, previousStatus) {
+                const status = column.dataset.status;
+                const currentStatus = card.dataset.status;
+                if (status === currentStatus) {
+                    refreshCounts();
+                    return;
+                }
+
+                card.classList.add("is-saving");
+                try {
+                    const response = await fetch(card.dataset.updateUrl, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": board.dataset.csrfToken || getCookie("csrftoken"),
+                            "X-Requested-With": "XMLHttpRequest",
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        body: new URLSearchParams({status}),
+                    });
+                    const payload = await response.json();
+                    if (!response.ok || !payload.ok) {
+                        throw new Error(payload.error || "Nao foi possivel atualizar a OS.");
+                    }
+
+                    updateCardStatus(card, payload.status, payload.status_label);
+                    updateSummaries(payload.totais);
+                } catch (error) {
+                    rollbackCard(card, previousList, previousNext, previousStatus);
+                    window.hfAlert?.({
+                        icon: "error",
+                        title: "Status nao atualizado",
+                        text: error.message,
+                    });
+                } finally {
+                    card.classList.remove("is-saving");
+                    refreshCounts();
+                }
+            }
+
+            board.addEventListener("dragstart", (event) => {
+                const card = event.target.closest("[data-kanban-card]");
+                if (!card) {
+                    return;
+                }
+
+                draggedCard = card;
+                originList = card.parentElement;
+                originNext = card.nextElementSibling;
+                originStatus = card.dataset.status;
+                card.classList.add("is-dragging");
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", card.dataset.updateUrl);
+            });
+
+            board.addEventListener("dragend", () => {
+                draggedCard?.classList.remove("is-dragging");
+                board.querySelectorAll(".is-drag-over").forEach((column) => {
+                    column.classList.remove("is-drag-over");
+                });
+                draggedCard = null;
+                originList = null;
+                originNext = null;
+                originStatus = null;
+            });
+
+            board.querySelectorAll("[data-kanban-column]").forEach((column) => {
+                column.addEventListener("dragover", (event) => {
+                    if (!draggedCard) {
+                        return;
+                    }
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                    column.classList.add("is-drag-over");
+                });
+
+                column.addEventListener("dragleave", (event) => {
+                    if (!column.contains(event.relatedTarget)) {
+                        column.classList.remove("is-drag-over");
+                    }
+                });
+
+                column.addEventListener("drop", (event) => {
+                    event.preventDefault();
+                    column.classList.remove("is-drag-over");
+                    if (!draggedCard) {
+                        return;
+                    }
+
+                    const list = column.querySelector("[data-kanban-list]");
+                    list.querySelector("[data-kanban-empty]")?.remove();
+                    list.appendChild(draggedCard);
+                    refreshCounts();
+                    persistStatus(draggedCard, column, originList, originNext, originStatus);
+                });
+            });
+
+            refreshCounts();
+        })();
+    </script>
 {% endblock %}

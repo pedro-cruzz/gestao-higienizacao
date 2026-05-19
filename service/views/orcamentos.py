@@ -147,6 +147,135 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
     return render(request, "service/orcamentos.html", context)
 
 
+def _nome_servico_ordem(orcamento: Orcamento) -> str:
+    itens = list(orcamento.itens.all())
+    if itens:
+        return " + ".join(item.name for item in itens[:2])
+    return orcamento.descricao or "Servico cadastrado"
+
+
+def _dinheiro_ordem(valor: float) -> str:
+    valor_formatado = f"{valor:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"R$ {valor_formatado}"
+
+
+def _status_ordem(orcamento: Orcamento) -> str:
+    if not orcamento.aprovado:
+        return "agendada" if orcamento.cliente_id or orcamento.email else "aguardando"
+
+    data_atualizacao = timezone.localtime(orcamento.updated_at).date()
+    if data_atualizacao >= timezone.localdate():
+        return "execucao"
+    return "concluida"
+
+
+def _agenda_ordem(orcamento: Orcamento, status: str) -> str:
+    if status == "aguardando":
+        return ""
+
+    data_atualizacao = timezone.localtime(orcamento.updated_at)
+    if status == "execucao" and data_atualizacao.date() == timezone.localdate():
+        return f"Hoje {data_atualizacao:%H:%M}"
+    if status == "concluida":
+        return data_atualizacao.strftime("%d/%m/%Y")
+    return data_atualizacao.strftime("%d/%m/%Y %H:%M")
+
+
+def _colunas_ordens_base() -> list[dict]:
+    return [
+        {
+            "key": "aguardando",
+            "title": "Aguardando Agendamento",
+            "cards": [],
+        },
+        {
+            "key": "agendada",
+            "title": "Agendada",
+            "cards": [],
+        },
+        {
+            "key": "execucao",
+            "title": "Em Execução",
+            "cards": [],
+        },
+        {
+            "key": "concluida",
+            "title": "Concluída",
+            "cards": [],
+        },
+    ]
+
+
+def _colunas_ordens_exemplo() -> list[dict]:
+    colunas = _colunas_ordens_base()
+    exemplos = {
+        "aguardando": [
+            ("#1250", "Aguardando", "Roberta Silva", "Limpeza de Sofá", "", "R$ 520"),
+            ("#1248", "Aguardando", "Eduardo Costa", "Higienização de Tapete", "", "R$ 380"),
+        ],
+        "agendada": [
+            ("#1247", "Agendada", "Mariana Alves", "Limpeza de Colchão", "30/04/2026 14:00", "R$ 290"),
+            ("#1244", "Agendada", "Júlia Ferreira", "Higienização de Tapete", "01/05/2026 10:00", "R$ 320"),
+        ],
+        "execucao": [
+            ("#1245", "Em", "Pedro Lima", "Limpeza de Sofá", "Hoje 09:00", "R$ 450"),
+        ],
+        "concluida": [
+            ("#1243", "Concluída", "Roberto Alves", "Limpeza de Estofados", "28/04/2026", "R$ 680"),
+            ("#1242", "Concluída", "Camila Santos", "Impermeabilização", "27/04/2026", "R$ 520"),
+        ],
+    }
+
+    for coluna in colunas:
+        coluna["cards"] = [
+            {
+                "numero": numero,
+                "status_label": status_label,
+                "cliente": cliente,
+                "servico": servico,
+                "agenda": agenda,
+                "valor": valor,
+                "status_key": coluna["key"],
+                "obj": None,
+            }
+            for numero, status_label, cliente, servico, agenda, valor in exemplos[coluna["key"]]
+        ]
+    return colunas
+
+
+def listar_ordens_servico(request: HttpRequest) -> HttpResponse:
+    orcamentos = list(Orcamento.objects.prefetch_related("itens", "cliente").order_by("-updated_at", "-id")[:12])
+
+    if not orcamentos:
+        colunas = _colunas_ordens_exemplo()
+    else:
+        colunas = _colunas_ordens_base()
+        colunas_por_status = {coluna["key"]: coluna for coluna in colunas}
+        status_labels = {
+            "aguardando": "Aguardando",
+            "agendada": "Agendada",
+            "execucao": "Em",
+            "concluida": "Concluída",
+        }
+
+        for orcamento in orcamentos:
+            status_key = _status_ordem(orcamento)
+            colunas_por_status[status_key]["cards"].append(
+                {
+                    "numero": f"#{orcamento.pk}",
+                    "status_label": status_labels[status_key],
+                    "cliente": orcamento.name,
+                    "servico": _nome_servico_ordem(orcamento),
+                    "agenda": _agenda_ordem(orcamento, status_key),
+                    "valor": _dinheiro_ordem(orcamento.valor),
+                    "status_key": status_key,
+                    "obj": orcamento,
+                }
+            )
+
+    return render(request, "service/ordens_servico.html", {"colunas_ordens": colunas})
+
+
 def novo_orcamento(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = OrcamentoForm(request.POST)

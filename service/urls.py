@@ -3,6 +3,7 @@ from django.urls import path
 from service.views import (
     agenda,
     aprovar_orcamento,
+    atualizar_status_ordem_servico,
     buscar_endereco_cep,
     buscar_mapa_orcamento,
     cadastrar_cliente_orcamento,
@@ -46,6 +47,7 @@ urlpatterns = [
     path("agenda/", agenda, name="agenda"),
     path("ordens-servico/", listar_ordens_servico, name="ordens_servico"),
     path("ordens-servico/nova/", nova_ordem_servico, name="nova_os"),
+    path("ordens-servico/<int:pk>/status/", atualizar_status_ordem_servico, name="atualizar_status_os"),
     path("ordens-servico/<int:pk>/", detalhe_ordem_servico, name="os_detalhe"),
     path("ordens-servico/<int:pk>/editar/", editar_ordem_servico, name="editar_os"),
     path("ordens-servico/<int:pk>/concluir/", concluir_ordem_servico, name="concluir_os"),

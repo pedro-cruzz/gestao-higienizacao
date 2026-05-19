@@ -166,5 +166,82 @@ def inicio(request: HttpRequest) -> HttpResponse:
     return render(request, "service/inicio.html", context)
 
 
+def agenda(request: HttpRequest) -> HttpResponse:
+    equipes = [
+        {"key": "a", "nome": "Equipe A"},
+        {"key": "b", "nome": "Equipe B"},
+        {"key": "c", "nome": "Equipe C"},
+    ]
+    dias = [
+        {"key": "segunda", "nome": "Segunda", "numero": "28"},
+        {"key": "terca", "nome": "Terça", "numero": "29"},
+        {"key": "quarta", "nome": "Quarta", "numero": "30"},
+        {"key": "quinta", "nome": "Quinta", "numero": "01"},
+        {"key": "sexta", "nome": "Sexta", "numero": "02"},
+        {"key": "sabado", "nome": "Sábado", "numero": "03"},
+        {"key": "domingo", "nome": "Domingo", "numero": "04"},
+    ]
+    horarios = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"]
+    eventos = [
+        {
+            "dia": "quinta",
+            "horario": "08:00",
+            "equipe": "c",
+            "cliente": "Ana Costa",
+            "servico": "Impermeabilização",
+            "endereco": "Av. D, 321",
+        },
+        {
+            "dia": "terca",
+            "horario": "09:00",
+            "equipe": "a",
+            "cliente": "Pedro Lima",
+            "servico": "Limpeza de Sofá",
+            "endereco": "Rua A, 123",
+        },
+        {
+            "dia": "quarta",
+            "horario": "10:00",
+            "equipe": "b",
+            "cliente": "João Santos",
+            "servico": "Limpeza Colchão",
+            "endereco": "Rua C, 789",
+        },
+        {
+            "dia": "terca",
+            "horario": "14:00",
+            "equipe": "a",
+            "cliente": "Maria Silva",
+            "servico": "Higienização Tapete",
+            "endereco": "Av. B, 456",
+            "tamanho": "grande",
+        },
+    ]
+
+    linhas = []
+    for horario in horarios:
+        celulas = []
+        for dia in dias:
+            celulas.append(
+                {
+                    "dia": dia["key"],
+                    "eventos": [
+                        evento
+                        for evento in eventos
+                        if evento["dia"] == dia["key"] and evento["horario"] == horario
+                    ],
+                }
+            )
+        linhas.append({"horario": horario, "celulas": celulas})
+
+    context = {
+        "equipes": equipes,
+        "dias": dias,
+        "linhas_agenda": linhas,
+        "periodo_agenda": "28 Abr - 04 Mai, 2026",
+    }
+    return render(request, "service/agenda.html", context)
+
+
 def teste(request: HttpRequest) -> HttpResponse:
     return render(request, "teste.html")

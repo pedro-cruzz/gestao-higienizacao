@@ -70,6 +70,24 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "Cliente Dashboard")
         self.assertContains(response, "100%")
 
+    def test_agenda_retorna_ok(self):
+        OrdemServico.objects.create(
+            titulo="Servico agenda teste",
+            data_agendada=timezone.localdate(),
+            hora_inicio="09:00",
+            administrador_executa=True,
+            valor=120.0,
+        )
+
+        response = self.client.get(reverse("agenda"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "agenda-month-card")
+        self.assertContains(response, "agenda-week-cards")
+        self.assertNotContains(response, "agenda-calendar-card")
+        self.assertContains(response, "Servico agenda teste")
+        self.assertContains(response, "Administrador / dono")
+
     def test_cria_lead(self):
         response = self.client.post(
             reverse("novo_lead"),
@@ -230,6 +248,45 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Cliente Lista")
         self.assertContains(response, "120.00")
+
+    def test_lista_ordens_servico_retorna_ok(self):
+        OrdemServico.objects.create(
+            titulo="OS Cliente Ordem",
+            data_agendada=timezone.localdate(),
+            hora_inicio="09:00",
+            administrador_executa=True,
+            valor=120.0,
+        )
+
+        response = self.client.get(reverse("ordens_servico"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "service-orders-board")
+        self.assertContains(response, "OS Cliente Ordem")
+        self.assertContains(response, "R$ 120,00")
+
+    def test_atualiza_status_os_pelo_kanban(self):
+        ordem = OrdemServico.objects.create(
+            titulo="OS Kanban",
+            data_agendada=timezone.localdate(),
+            hora_inicio="09:00",
+            administrador_executa=True,
+            valor=120.0,
+        )
+
+        response = self.client.post(
+            reverse("atualizar_status_os", args=[ordem.pk]),
+            {"status": OrdemServico.Status.EM_ANDAMENTO},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["status"], OrdemServico.Status.EM_ANDAMENTO)
+        self.assertEqual(payload["totais"][OrdemServico.Status.EM_ANDAMENTO], 1)
+
+        ordem.refresh_from_db()
+        self.assertEqual(ordem.status, OrdemServico.Status.EM_ANDAMENTO)
 
     def test_deleta_cliente_sem_apagar_orcamento(self):
         cliente = Cliente.objects.create(

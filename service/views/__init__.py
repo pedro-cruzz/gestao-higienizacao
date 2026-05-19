@@ -26,6 +26,7 @@ from service.views.orcamentos import (
 )
 from service.views.ordens import (
     agenda,
+    atualizar_status_ordem_servico,
     concluir_ordem_servico,
     detalhe_ordem_servico,
     editar_ordem_servico,
@@ -40,6 +41,7 @@ from service.views.produtos import deletar_produto, editar_produto, novo_produto
 __all__ = [
     "agenda",
     "aprovar_orcamento",
+    "atualizar_status_ordem_servico",
     "buscar_cliente_dados",
     "buscar_endereco_cep",
     "buscar_mapa_orcamento",
@@ -61,8 +63,8 @@ __all__ = [
     "inicio",
     "listar_clientes",
     "listar_leads",
-    "listar_orcamentos",
     "listar_ordens_servico",
+    "listar_orcamentos",
     "listar_tecnicos",
     "nova_categoria",
     "novo_cliente",
