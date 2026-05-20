@@ -3260,3 +3260,232 @@ body.service-map-open {
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 600px) {
+    body.higiflow-app {
+        font-size: 14px;
+    }
+
+    .hf-shell {
+        display: block;
+        min-height: 100vh;
+    }
+
+    .hf-sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+
+    .hf-brand {
+        height: auto;
+        padding: 16px;
+    }
+
+    .hf-brand-mark,
+    .hf-brand-logo {
+        width: 52px;
+        height: 52px;
+    }
+
+    .hf-nav {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 12px;
+    }
+
+    .hf-nav-link {
+        min-width: max-content;
+        height: 40px;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .hf-main {
+        width: 100%;
+    }
+
+    .hf-topbar {
+        height: auto;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 14px 16px;
+    }
+
+    .hf-search {
+        width: 100%;
+    }
+
+    .hf-userbar {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .hf-user {
+        min-width: 0;
+        padding-left: 12px;
+    }
+
+    .hf-user div {
+        max-width: 130px;
+    }
+
+    .hf-user strong,
+    .hf-user span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .hf-content {
+        padding: 20px 16px;
+    }
+
+    .page-heading,
+    .dashboard-heading,
+    .agenda-section-header,
+    .lead-form-card-head,
+    .lead-section-title-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .page-heading h1,
+    .dashboard-heading h1 {
+        font-size: 22px;
+        line-height: 30px;
+    }
+
+    .dashboard-actions,
+    .agenda-actions,
+    .form-actions,
+    .lead-form-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .hf-btn,
+    .dashboard-actions .hf-btn,
+    .form-actions .hf-btn,
+    .lead-form-actions .btn,
+    .lead-form-actions a {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .metric-grid,
+    .recent-grid,
+    .catalog-grid,
+    .catalog-form-layout,
+    .catalog-form,
+    .orcamento-detail-grid,
+    .orcamento-summary-grid,
+    .service-orders-board,
+    .agenda-week-cards,
+    .approval-options-grid,
+    .pdf-customization-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .metric-card,
+    .dashboard-card,
+    .catalog-card,
+    .catalog-form-panel {
+        padding: 18px;
+    }
+
+    .catalog-toolbar,
+    .leads-toolbar,
+    .leads-filter-form,
+    .lead-filter-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .catalog-search,
+    .leads-search,
+    .orcamentos-search,
+    .lead-filter-field,
+    .filter-button,
+    .filter-clear-button {
+        width: 100%;
+        flex: auto;
+    }
+
+    .catalog-specs {
+        grid-template-columns: 1fr;
+    }
+
+    .catalog-image-upload {
+        grid-template-columns: 1fr;
+    }
+
+    .catalog-image-preview,
+    .catalog-image-placeholder {
+        width: 100%;
+    }
+
+    .leads-table-wrap,
+    .orcamentos-panel {
+        overflow-x: auto;
+    }
+
+    .leads-table,
+    .orcamentos-table {
+        min-width: 760px;
+    }
+
+    .orcamentos-pagination {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .orcamentos-pagination div {
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .service-orders-column {
+        min-height: auto;
+    }
+
+    .agenda-month-weekdays {
+        display: none;
+    }
+
+    .agenda-month-grid {
+        grid-template-columns: 1fr;
+        border-radius: 14px;
+    }
+
+    .agenda-month-day {
+        min-height: auto;
+        border-left: 0;
+    }
+
+    .agenda-period {
+        width: 100%;
+        justify-content: center;
+        font-size: 14px;
+    }
+
+    .service-map-canvas {
+        min-height: 280px;
+    }
+
+    .service-map-card.is-fullscreen {
+        inset: 0;
+        border-radius: 0;
+    }
+
+    .hf-pdf-modal .modal-body,
+    .hf-pdf-modal .modal-header,
+    .hf-pdf-modal .modal-footer {
+        padding: 16px;
+    }
+}
