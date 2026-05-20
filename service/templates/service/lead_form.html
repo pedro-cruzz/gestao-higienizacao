@@ -3,105 +3,163 @@
 {% block title %}Novo Lead | HigiFlow{% endblock %}
 
 {% block content %}
-    <section class="hero-card card border-0 p-4 p-lg-5 mb-4">
-        <span class="badge rounded-pill px-3 py-2 mb-3">Leads</span>
-        <h1 class="display-6 fw-semibold">Cadastre um novo contato para acompanhar no painel.</h1>
-        <p class="mb-0 text-white-50">
-            O lead entra na lista recente da tela inicial e pode virar cliente quando um orcamento for aprovado.
-        </p>
+    <section class="page-heading lead-form-heading">
+        <div>
+            <span class="status-pill status-soft-blue">Leads</span>
+            <h1>Novo lead</h1>
+            <p>Contato comercial para orcamento ou conversao direta em cliente</p>
+        </div>
+        <a href="{% url 'leads' %}" class="hf-btn hf-btn-light">
+            <i class="bi bi-arrow-left"></i>
+            <span>Voltar</span>
+        </a>
     </section>
 
     <section class="row g-4">
         <article class="col-12 col-xl-8">
-            <div class="content-card p-4">
-                <h2 class="h4 mb-4">Novo lead</h2>
-                <form method="post" class="row g-3" data-cep-url-template="{% url 'buscar_endereco_cep' '00000000' %}">
+            <div class="content-card lead-form-card p-4">
+                <div class="lead-form-card-head">
+                    <div>
+                        <h2>Dados do lead</h2>
+                        <p>Campos essenciais para contato e qualificacao inicial.</p>
+                    </div>
+                    <span class="status-pill status-blue">Cadastro</span>
+                </div>
+
+                <form method="post" class="lead-form" data-cep-url-template="{% url 'buscar_endereco_cep' '00000000' %}">
                     {% csrf_token %}
+                    {{ form.non_field_errors }}
 
-                    <div class="col-12 col-md-6">
-                        <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">{{ form.name.label }}</label>
-                        {{ form.name }}
-                        {{ form.name.errors }}
+                    <div class="lead-form-section">
+                        <div class="lead-section-title">
+                            <i class="bi bi-person-lines-fill"></i>
+                            <div>
+                                <h3>Contato</h3>
+                                <p>Identificacao e canal principal.</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">{{ form.name.label }}</label>
+                                {{ form.name }}
+                                {{ form.name.errors }}
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.telefone.id_for_label }}" class="form-label fw-semibold">{{ form.telefone.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-whatsapp"></i></span>
+                                    {{ form.telefone }}
+                                </div>
+                                {{ form.telefone.errors }}
+                            </div>
+
+                            <div class="col-12">
+                                <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">{{ form.email.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    {{ form.email }}
+                                </div>
+                                {{ form.email.errors }}
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="col-12 col-md-6">
-                        <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">{{ form.email.label }}</label>
-                        {{ form.email }}
-                        {{ form.email.errors }}
-                    </div>
+                    <div class="lead-form-section">
+                        <div class="lead-section-title">
+                            <i class="bi bi-funnel"></i>
+                            <div>
+                                <h3>Qualificacao</h3>
+                                <p>Status atual e origem do contato.</p>
+                            </div>
+                        </div>
 
-                    <div class="col-12 col-md-6">
-                        <label for="{{ form.telefone.id_for_label }}" class="form-label fw-semibold">{{ form.telefone.label }}</label>
-                        {{ form.telefone }}
-                        {{ form.telefone.errors }}
-                    </div>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.status.id_for_label }}" class="form-label fw-semibold">{{ form.status.label }}</label>
+                                {{ form.status }}
+                                {{ form.status.errors }}
+                            </div>
 
-                    <div class="col-12 col-md-6">
-                        <label for="{{ form.status.id_for_label }}" class="form-label fw-semibold">{{ form.status.label }}</label>
-                        {{ form.status }}
-                        {{ form.status.errors }}
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.origem.id_for_label }}" class="form-label fw-semibold">{{ form.origem.label }}</label>
+                                {{ form.origem }}
+                                {{ form.origem.errors }}
+                            </div>
+                        </div>
                     </div>
 
                     {{ form.endereco }}
 
-                    <div class="col-12">
-                        <div class="d-flex align-items-center justify-content-between gap-3 mb-1">
-                            <h3 class="h5 mb-0">Endereco</h3>
+                    <div class="lead-form-section">
+                        <div class="lead-section-title lead-section-title-row">
+                            <div class="lead-section-title-main">
+                                <i class="bi bi-geo-alt"></i>
+                                <div>
+                                    <h3>Endereco</h3>
+                                    <p>Local de atendimento ou referencia do contato.</p>
+                                </div>
+                            </div>
                             <span class="status-pill status-soft-blue">ViaCEP</span>
                         </div>
-                        <p class="muted-copy small mb-0">Digite o CEP para preencher rua, bairro, cidade e UF automaticamente.</p>
-                    </div>
 
-                    <div class="col-12 col-md-4">
-                        <label for="{{ form.cep.id_for_label }}" class="form-label fw-semibold">{{ form.cep.label }}</label>
-                        <div class="input-group">
-                            {{ form.cep }}
-                            <button type="button" class="btn btn-outline-secondary" data-cep-search>
-                                <i class="bi bi-search"></i>
-                            </button>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-4">
+                                <label for="{{ form.cep.id_for_label }}" class="form-label fw-semibold">{{ form.cep.label }}</label>
+                                <div class="input-group">
+                                    {{ form.cep }}
+                                    <button type="button" class="btn btn-outline-secondary" data-cep-search title="Buscar CEP" aria-label="Buscar CEP">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                                {{ form.cep.errors }}
+                            </div>
+
+                            <div class="col-12 col-md-8">
+                                <label for="{{ form.logradouro.id_for_label }}" class="form-label fw-semibold">{{ form.logradouro.label }}</label>
+                                {{ form.logradouro }}
+                                {{ form.logradouro.errors }}
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <label for="{{ form.numero.id_for_label }}" class="form-label fw-semibold">{{ form.numero.label }}</label>
+                                {{ form.numero }}
+                                {{ form.numero.errors }}
+                            </div>
+
+                            <div class="col-12 col-md-5">
+                                <label for="{{ form.complemento.id_for_label }}" class="form-label fw-semibold">{{ form.complemento.label }}</label>
+                                {{ form.complemento }}
+                                {{ form.complemento.errors }}
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label for="{{ form.bairro.id_for_label }}" class="form-label fw-semibold">{{ form.bairro.label }}</label>
+                                {{ form.bairro }}
+                                {{ form.bairro.errors }}
+                            </div>
+
+                            <div class="col-12 col-md-8">
+                                <label for="{{ form.cidade.id_for_label }}" class="form-label fw-semibold">{{ form.cidade.label }}</label>
+                                {{ form.cidade }}
+                                {{ form.cidade.errors }}
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label for="{{ form.uf.id_for_label }}" class="form-label fw-semibold">{{ form.uf.label }}</label>
+                                {{ form.uf }}
+                                {{ form.uf.errors }}
+                            </div>
                         </div>
-                        {{ form.cep.errors }}
                     </div>
 
-                    <div class="col-12 col-md-8">
-                        <label for="{{ form.logradouro.id_for_label }}" class="form-label fw-semibold">{{ form.logradouro.label }}</label>
-                        {{ form.logradouro }}
-                        {{ form.logradouro.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-3">
-                        <label for="{{ form.numero.id_for_label }}" class="form-label fw-semibold">{{ form.numero.label }}</label>
-                        {{ form.numero }}
-                        {{ form.numero.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-5">
-                        <label for="{{ form.complemento.id_for_label }}" class="form-label fw-semibold">{{ form.complemento.label }}</label>
-                        {{ form.complemento }}
-                        {{ form.complemento.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-4">
-                        <label for="{{ form.bairro.id_for_label }}" class="form-label fw-semibold">{{ form.bairro.label }}</label>
-                        {{ form.bairro }}
-                        {{ form.bairro.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-8">
-                        <label for="{{ form.cidade.id_for_label }}" class="form-label fw-semibold">{{ form.cidade.label }}</label>
-                        {{ form.cidade }}
-                        {{ form.cidade.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-4">
-                        <label for="{{ form.uf.id_for_label }}" class="form-label fw-semibold">{{ form.uf.label }}</label>
-                        {{ form.uf }}
-                        {{ form.uf.errors }}
-                    </div>
-
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-success">Salvar lead</button>
-                        <a href="{% url 'inicio' %}" class="btn btn-outline-secondary ms-2">Voltar</a>
+                    <div class="lead-form-actions">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check2-circle"></i>
+                            Salvar lead
+                        </button>
+                        <a href="{% url 'leads' %}" class="btn btn-outline-secondary">Cancelar</a>
                     </div>
                 </form>
             </div>
@@ -120,6 +178,10 @@
                                         <div class="small muted-copy">{{ lead.telefone|default:lead.email }}</div>
                                     </div>
                                     <span class="badge text-bg-light border text-dark rounded-pill align-self-start">{{ lead.get_status_display }}</span>
+                                </div>
+                                <div class="lead-recent-actions">
+                                    <a href="{% url 'novo_orcamento' %}?lead={{ lead.pk }}">Orcamento</a>
+                                    <a href="{% url 'novo_cliente' %}?lead={{ lead.pk }}">Cliente</a>
                                 </div>
                             </div>
                         {% endfor %}

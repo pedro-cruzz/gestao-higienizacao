@@ -8,7 +8,7 @@ from service.models import CategoriaCatalogo, Service_catalog
 
 def novo_produto(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
-        form = ProdutoCatalogoForm(request.POST)
+        form = ProdutoCatalogoForm(request.POST, request.FILES)
         if form.is_valid():
             produto = form.save()
             messages.success(request, f"Item '{produto.name}' cadastrado no catalogo com sucesso.")
@@ -32,7 +32,7 @@ def editar_produto(request: HttpRequest, pk: int) -> HttpResponse:
     produto = get_object_or_404(Service_catalog, pk=pk)
 
     if request.method == "POST":
-        form = ProdutoCatalogoForm(request.POST, instance=produto)
+        form = ProdutoCatalogoForm(request.POST, request.FILES, instance=produto)
         if form.is_valid():
             produto = form.save()
             messages.success(request, f"Item '{produto.name}' atualizado com sucesso.")

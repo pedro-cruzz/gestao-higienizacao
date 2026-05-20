@@ -1,7 +1,28 @@
 from django import forms
 from django.db.models import Q
 
-from service.models import CategoriaCatalogo, Cliente, Orcamento, OrdemServico, Service_catalog, Tecnico
+from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
+
+
+def normalizar_email(value: str | None) -> str:
+    return (value or "").strip().lower()
+
+
+def normalizar_telefone(value: str | None) -> str:
+    raw_value = (value or "").strip()
+    if not raw_value:
+        return ""
+
+    digits = "".join(char for char in raw_value if char.isdigit())
+    if digits.startswith("55") and len(digits) in [12, 13]:
+        digits = digits[2:]
+
+    if len(digits) == 11:
+        return f"({digits[:2]}) {digits[2:7]}-{digits[7:]}"
+    if len(digits) == 10:
+        return f"({digits[:2]}) {digits[2:6]}-{digits[6:]}"
+
+    raise forms.ValidationError("Informe um telefone com DDD no formato (11) 99999-9999.")
 
 
 class CategoriaCatalogoForm(forms.ModelForm):
@@ -33,6 +54,7 @@ class ProdutoCatalogoForm(forms.ModelForm):
             "name",
             "categoria",
             "valor",
+            "imagem",
             "descricao",
             "tempo",
             "formato",
@@ -45,6 +67,7 @@ class ProdutoCatalogoForm(forms.ModelForm):
             "name": "Nome do servico ou item",
             "categoria": "Categoria",
             "valor": "Valor base",
+            "imagem": "Imagem do item",
             "descricao": "Descricao",
             "tempo": "Tempo medio",
             "formato": "Formato",
@@ -57,6 +80,7 @@ class ProdutoCatalogoForm(forms.ModelForm):
             "name": forms.TextInput(attrs={"placeholder": "Ex.: Sofa retratil 3 lugares"}),
             "categoria": forms.Select(),
             "valor": forms.NumberInput(attrs={"step": "0.01", "placeholder": "0.00"}),
+            "imagem": forms.ClearableFileInput(attrs={"accept": "image/*"}),
             "descricao": forms.Textarea(
                 attrs={"rows": 4, "placeholder": "Ex.: Higienizacao profunda com extratora e acabamento antiodor."}
             ),
@@ -72,6 +96,7 @@ class ProdutoCatalogoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name in [
             "categoria",
+            "imagem",
             "descricao",
             "tempo",
             "formato",
@@ -222,13 +247,101 @@ class ClienteForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        cleaned_data["email"] = normalizar_email(cleaned_data.get("email"))
+        cleaned_data["telefone"] = normalizar_telefone(cleaned_data.get("telefone"))
         endereco = montar_endereco_limpo(cleaned_data)
         cleaned_data["uf"] = (cleaned_data.get("uf") or "").strip().upper()
         cleaned_data["endereco"] = endereco or (cleaned_data.get("endereco") or "").strip()
         return cleaned_data
 
 
+class LeadForm(forms.ModelForm):
+    class Meta:
+        model = Lead
+        fields = [
+            "name",
+            "email",
+            "telefone",
+            "status",
+            "origem",
+            "cep",
+            "logradouro",
+            "numero",
+            "complemento",
+            "bairro",
+            "cidade",
+            "uf",
+            "endereco",
+        ]
+        labels = {
+            "name": "Nome do lead",
+            "email": "Email",
+            "telefone": "Telefone",
+            "status": "Status",
+            "origem": "Origem",
+            "cep": "CEP",
+            "logradouro": "Logradouro",
+            "numero": "Numero",
+            "complemento": "Complemento",
+            "bairro": "Bairro",
+            "cidade": "Cidade",
+            "uf": "UF",
+        }
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Ex.: Maria Souza"}),
+            "email": forms.EmailInput(attrs={"placeholder": "lead@empresa.com"}),
+            "telefone": forms.TextInput(attrs={"placeholder": "(11) 99999-9999"}),
+            "status": forms.Select(),
+            "origem": forms.Select(),
+            "cep": forms.TextInput(attrs={"placeholder": "00000-000", "autocomplete": "postal-code"}),
+            "logradouro": forms.TextInput(attrs={"placeholder": "Rua, avenida ou travessa"}),
+            "numero": forms.TextInput(attrs={"placeholder": "Numero"}),
+            "complemento": forms.TextInput(attrs={"placeholder": "Apartamento, bloco, referencia"}),
+            "bairro": forms.TextInput(attrs={"placeholder": "Bairro"}),
+            "cidade": forms.TextInput(attrs={"placeholder": "Cidade"}),
+            "uf": forms.TextInput(attrs={"placeholder": "SP"}),
+            "endereco": forms.HiddenInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in [
+            "email",
+            "telefone",
+            "cep",
+            "logradouro",
+            "numero",
+            "complemento",
+            "bairro",
+            "cidade",
+            "uf",
+            "endereco",
+        ]:
+            self.fields[field_name].required = False
+
+        for name, field in self.fields.items():
+            if name in ["status", "origem"]:
+                field.widget.attrs["class"] = "form-select"
+            elif name != "endereco":
+                field.widget.attrs["class"] = "form-control text-uppercase" if name == "uf" else "form-control"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data["email"] = normalizar_email(cleaned_data.get("email"))
+        cleaned_data["telefone"] = normalizar_telefone(cleaned_data.get("telefone"))
+        cleaned_data["uf"] = (cleaned_data.get("uf") or "").strip().upper()
+        cleaned_data["endereco"] = montar_endereco_limpo(cleaned_data) or (cleaned_data.get("endereco") or "").strip()
+        return cleaned_data
+
+
 class OrcamentoForm(forms.Form):
+    lead = forms.ModelChoiceField(
+        label="Lead de origem",
+        queryset=Lead.objects.none(),
+        required=False,
+        empty_label="Preencher manualmente ou selecionar lead",
+        widget=forms.Select(),
+    )
     cliente = forms.ModelChoiceField(
         label="Cliente ja cadastrado",
         queryset=Cliente.objects.none(),
@@ -322,10 +435,20 @@ class OrcamentoForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        if args and args[0] is not None:
+            args = (self._data_com_origem(args[0]), *args[1:])
+        elif kwargs.get("data") is not None:
+            kwargs["data"] = self._data_com_origem(kwargs["data"])
+
         super().__init__(*args, **kwargs)
+        self.fields["lead"].queryset = Lead.objects.filter(cliente__isnull=True).exclude(
+            status=Lead.Status.CONVERTIDO
+        ).order_by("-created_at", "-id")
+        self.fields["lead"].label_from_instance = self._lead_label
         self.fields["cliente"].queryset = Cliente.objects.order_by("name", "email")
         self.fields["itens"].queryset = Service_catalog.objects.select_related("categoria").order_by("categoria__name", "tipo", "name")
         self.fields["itens"].label_from_instance = self._catalogo_item_label
+        self.fields["lead"].widget.attrs["class"] = "form-select"
         self.fields["cliente"].widget.attrs["class"] = "form-select"
         self.fields["criar_cliente_automatico"].widget.attrs["class"] = "form-check-input"
         self.fields["name"].widget.attrs["class"] = "form-control"
@@ -348,8 +471,44 @@ class OrcamentoForm(forms.Form):
         categoria = f"{categoria_nome} - " if categoria_nome else ""
         return f"{categoria}{item.name} | R$ {item.valor:.2f}"
 
+    @staticmethod
+    def _lead_label(lead: Lead) -> str:
+        contato = lead.telefone or lead.email or "sem contato"
+        return f"#{lead.pk} - {lead.name} ({contato})"
+
+    @staticmethod
+    def _data_com_origem(data):
+        mutable_data = data.copy()
+        lead_id = mutable_data.get("lead")
+        cliente_id = mutable_data.get("cliente")
+
+        if cliente_id:
+            return mutable_data
+
+        if lead_id:
+            lead = Lead.objects.filter(pk=lead_id).first()
+            if lead:
+                for field_name in [
+                    "name",
+                    "email",
+                    "telefone",
+                    "cep",
+                    "logradouro",
+                    "numero",
+                    "complemento",
+                    "bairro",
+                    "cidade",
+                    "uf",
+                    "endereco",
+                ]:
+                    if not mutable_data.get(field_name):
+                        mutable_data[field_name] = getattr(lead, field_name, None) or ""
+
+        return mutable_data
+
     def clean(self):
         cleaned_data = super().clean()
+        lead = cleaned_data.get("lead")
         cliente = cleaned_data.get("cliente")
         if cliente:
             for field_name in [
@@ -367,8 +526,27 @@ class OrcamentoForm(forms.Form):
             ]:
                 if not cleaned_data.get(field_name):
                     cleaned_data[field_name] = getattr(cliente, field_name, None) or ""
+            cleaned_data["lead"] = None
             cleaned_data["criar_cliente_automatico"] = False
+        elif lead:
+            for field_name in [
+                "name",
+                "email",
+                "telefone",
+                "cep",
+                "logradouro",
+                "numero",
+                "complemento",
+                "bairro",
+                "cidade",
+                "uf",
+                "endereco",
+            ]:
+                if not cleaned_data.get(field_name):
+                    cleaned_data[field_name] = getattr(lead, field_name, None) or ""
 
+        cleaned_data["email"] = normalizar_email(cleaned_data.get("email"))
+        cleaned_data["telefone"] = normalizar_telefone(cleaned_data.get("telefone"))
         cleaned_data["uf"] = (cleaned_data.get("uf") or "").strip().upper()
         cleaned_data["endereco"] = montar_endereco_limpo(cleaned_data) or (cleaned_data.get("endereco") or "").strip()
         if not cleaned_data.get("cliente") and not cleaned_data.get("name"):
@@ -417,6 +595,12 @@ class TecnicoForm(forms.ModelForm):
         for name, field in self.fields.items():
             field.required = name == "name"
             field.widget.attrs["class"] = "form-check-input" if name == "ativo" else "form-control"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data["email"] = normalizar_email(cleaned_data.get("email"))
+        cleaned_data["telefone"] = normalizar_telefone(cleaned_data.get("telefone"))
+        return cleaned_data
 
 
 class OrdemServicoForm(forms.ModelForm):

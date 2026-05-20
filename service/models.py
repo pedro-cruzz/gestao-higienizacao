@@ -27,6 +27,7 @@ class Service_catalog(models.Model):
     )
     id = models.AutoField(primary_key=True)
     valor = models.FloatField(null=False)
+    imagem = models.ImageField(upload_to="catalogo/", null=True, blank=True)
     descricao = models.TextField(null=True)
     formato = models.CharField(max_length=100, null=True)
     tamanho = models.CharField(max_length=100, null=True)
@@ -42,6 +43,60 @@ class Service_catalog(models.Model):
     @property
     def categoria_nome(self):
         return self.categoria.name if self.categoria else self.tipo
+
+
+class Lead(models.Model):
+    class Status(models.TextChoices):
+        NOVO = "novo", "Novo"
+        CONTATADO = "contatado", "Contatado"
+        AGUARDANDO = "aguardando", "Aguardando"
+        CONVERTIDO = "convertido", "Convertido"
+
+    class Origem(models.TextChoices):
+        MANUAL = "manual", "Manual"
+        WHATSAPP = "whatsapp", "WhatsApp"
+        INSTAGRAM = "instagram", "Instagram"
+        INDICACAO = "indicacao", "Indicacao"
+        SITE = "site", "Site"
+        OUTRO = "outro", "Outro"
+
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100, null=False)
+    email = models.EmailField(null=True, blank=True)
+    telefone = models.CharField(max_length=20, null=True, blank=True)
+    endereco = models.CharField(max_length=255, null=True, blank=True)
+    cep = models.CharField(max_length=9, null=True, blank=True)
+    logradouro = models.CharField(max_length=120, null=True, blank=True)
+    numero = models.CharField(max_length=20, null=True, blank=True)
+    complemento = models.CharField(max_length=120, null=True, blank=True)
+    bairro = models.CharField(max_length=120, null=True, blank=True)
+    cidade = models.CharField(max_length=120, null=True, blank=True)
+    uf = models.CharField(max_length=2, null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.NOVO,
+    )
+    origem = models.CharField(
+        max_length=20,
+        choices=Origem.choices,
+        default=Origem.MANUAL,
+    )
+    cliente = models.OneToOneField(
+        "Cliente",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="lead_origem",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return self.name
 
 
 class Orcamento(models.Model):
@@ -64,6 +119,13 @@ class Orcamento(models.Model):
     aprovado = models.BooleanField(default=False)
     cliente = models.ForeignKey(
         "Cliente",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orcamentos",
+    )
+    lead = models.ForeignKey(
+        Lead,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

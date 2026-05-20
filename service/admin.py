@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from service.models import CategoriaCatalogo, Cliente, Orcamento, OrdemServico, Service_catalog, Tecnico
+from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
 
 
 @admin.register(CategoriaCatalogo)
@@ -11,7 +11,7 @@ class CategoriaCatalogoAdmin(admin.ModelAdmin):
 
 @admin.register(Service_catalog)
 class ServiceCatalogAdmin(admin.ModelAdmin):
-    list_display = ("name", "categoria", "tipo", "valor")
+    list_display = ("name", "categoria", "tipo", "valor", "imagem")
     list_filter = ("categoria",)
     search_fields = ("name", "tipo", "categoria__name")
 
@@ -27,6 +27,13 @@ class OrcamentoAdmin(admin.ModelAdmin):
 class ClienteAdmin(admin.ModelAdmin):
     list_display = ("name", "email", "telefone")
     search_fields = ("name", "email")
+
+
+@admin.register(Lead)
+class LeadAdmin(admin.ModelAdmin):
+    list_display = ("name", "email", "telefone", "status", "origem", "cliente")
+    list_filter = ("status", "origem")
+    search_fields = ("name", "email", "telefone")
 
 
 @admin.register(Tecnico)

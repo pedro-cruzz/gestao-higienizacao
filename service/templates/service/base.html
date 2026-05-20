@@ -19,7 +19,7 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     >
     {% block extra_head %}{% endblock %}
-    <link rel="stylesheet" href="{% static 'service/css/dashboard.css' %}?v=20260517-sidebar-catalogo-2">
+    <link rel="stylesheet" href="{% static 'service/css/dashboard.css' %}?v=20260520-orcamento-form-refresh">
 </head>
 <body class="higiflow-app">
     <div class="hf-shell">
@@ -31,12 +31,8 @@
 
             <nav class="hf-nav" aria-label="Menu principal">
                 <a href="{% url 'inicio' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'inicio' %} active{% endif %}">
-                    <i class="bi bi-house-door"></i>
-<<<<<<< HEAD
+                    <i class="bi bi-columns-gap"></i>
                     <span>Inicio</span>
-=======
-                    <span>Início</span>
->>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
                 </a>
                 <a href="{% url 'leads' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'leads' or request.resolver_match.url_name == 'novo_lead' %} active{% endif %}">
                     <i class="bi bi-people"></i>
@@ -44,21 +40,13 @@
                 </a>
                 <a href="{% url 'catalogo' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'catalogo' or request.resolver_match.url_name == 'novo_produto' or request.resolver_match.url_name == 'editar_produto' or request.resolver_match.url_name == 'nova_categoria' %} active{% endif %}">
                     <i class="bi bi-grid"></i>
-<<<<<<< HEAD
                     <span>Catalogo</span>
-=======
-                    <span>Catálogo</span>
->>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
                 </a>
                 <a href="{% url 'orcamentos' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'orcamentos' or request.resolver_match.url_name == 'novo_orcamento' or request.resolver_match.url_name == 'orcamento_detalhe' %} active{% endif %}">
                     <i class="bi bi-file-earmark-text"></i>
                     <span>Orcamentos</span>
                 </a>
-<<<<<<< HEAD
                 <a href="{% url 'ordens_servico' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'ordens_servico' or request.resolver_match.url_name == 'nova_os' or request.resolver_match.url_name == 'os_detalhe' or request.resolver_match.url_name == 'editar_os' %} active{% endif %}">
-=======
-                <a href="{% url 'ordens_servico' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'ordens_servico' %} active{% endif %}">
->>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
                     <i class="bi bi-clipboard-check"></i>
                     <span>Ordens de Servico</span>
                 </a>

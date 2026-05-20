@@ -27,7 +27,7 @@
                 <h2>{% if is_edit %}Atualizar detalhes{% else %}Detalhes do item{% endif %}</h2>
             </header>
 
-            <form method="post" class="catalog-form">
+            <form method="post" class="catalog-form" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 <div class="form-field span-2">
@@ -46,6 +46,24 @@
                     <label for="{{ form.valor.id_for_label }}">{{ form.valor.label }}</label>
                     {{ form.valor }}
                     {{ form.valor.errors }}
+                </div>
+
+                <div class="form-field span-2">
+                    <label for="{{ form.imagem.id_for_label }}">{{ form.imagem.label }}</label>
+                    <div class="catalog-image-upload">
+                        {% if produto.imagem %}
+                            <img src="{{ produto.imagem.url }}" alt="{{ produto.name }}" class="catalog-image-preview">
+                        {% else %}
+                            <div class="catalog-image-placeholder">
+                                <i class="bi bi-image"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            {{ form.imagem }}
+                            <p class="field-helper">Use uma foto do item, tecido ou servico. Formatos comuns como JPG, PNG e WebP.</p>
+                            {{ form.imagem.errors }}
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-field span-2">

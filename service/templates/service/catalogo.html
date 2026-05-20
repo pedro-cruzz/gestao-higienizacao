@@ -83,6 +83,16 @@
         <section class="catalog-grid" aria-label="Itens do catalogo">
             {% for item in itens %}
                 <article class="catalog-card">
+                    <div class="catalog-card-media">
+                        {% if item.imagem %}
+                            <img src="{{ item.imagem.url }}" alt="{{ item.name }}">
+                        {% else %}
+                            <div class="catalog-card-media-empty">
+                                <i class="bi bi-image"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
                     <header>
                         <span class="status-pill status-soft-blue">{{ item.categoria_nome|default:"Servico" }}</span>
                         <strong>R$ {{ item.valor|floatformat:2 }}</strong>

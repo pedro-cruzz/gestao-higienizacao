@@ -5,7 +5,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from service.models import Cliente, Orcamento, OrdemServico, Service_catalog
+from service.models import Cliente, Lead, Orcamento, OrdemServico, Service_catalog
 
 
 def _month_boundaries() -> tuple[datetime, datetime]:
@@ -58,15 +58,15 @@ def _signed_count(current: int, previous: int) -> str:
 
 def _lead_status_class(status: str) -> str:
     return {
-        Cliente.Status.NOVO: "status-blue",
-        Cliente.Status.CONTATADO: "status-yellow",
-        Cliente.Status.AGUARDANDO: "status-gray",
-        Cliente.Status.CONVERTIDO: "status-soft-blue",
+        Lead.Status.NOVO: "status-blue",
+        Lead.Status.CONTATADO: "status-yellow",
+        Lead.Status.AGUARDANDO: "status-gray",
+        Lead.Status.CONVERTIDO: "status-soft-blue",
     }.get(status, "status-gray")
 
 
 def _dashboard_leads():
-    leads = Cliente.objects.order_by("-created_at", "-id")[:3]
+    leads = Lead.objects.order_by("-created_at", "-id")[:3]
     return [
         {
             "name": lead.name,
@@ -119,7 +119,7 @@ def _dashboard_ordens():
 def inicio(request: HttpRequest) -> HttpResponse:
     previous_start, current_start = _month_boundaries()
 
-    leads = Cliente.objects.all()
+    leads = Lead.objects.all()
     orcamentos = Orcamento.objects.all()
     orcamentos_aprovados = orcamentos.filter(aprovado=True)
     servicos_catalogo = Service_catalog.objects.all()

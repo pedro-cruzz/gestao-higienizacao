@@ -1,3 +1,5 @@
+from datetime import datetime, time
+import tempfile
 from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -5,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from service.models import CategoriaCatalogo, Cliente, Orcamento, OrdemServico, Service_catalog, Tecnico
+from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
 from service.services.nominatim import LocalizacaoMapa, NominatimService
 from service.services.viacep import EnderecoViaCep
 
@@ -48,9 +50,14 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "Maria Cliente")
 
     def test_inicio_exibe_metricas_reais(self):
-        lead = Cliente.objects.create(
+        Lead.objects.create(
             name="Lead Dashboard",
             email="lead@teste.com",
+            telefone="11922223333",
+        )
+        cliente = Cliente.objects.create(
+            name="Cliente Dashboard",
+            email="cliente-dashboard@teste.com",
             telefone="11922223333",
         )
         orcamento = Orcamento.objects.create(
@@ -59,7 +66,7 @@ class ServiceViewsTests(TestCase):
             quantidade=1,
             valor=120.0,
             aprovado=True,
-            cliente=lead,
+            cliente=cliente,
         )
         orcamento.itens.set([self.item_a])
 
@@ -71,7 +78,6 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "100%")
 
     def test_agenda_retorna_ok(self):
-<<<<<<< HEAD
         OrdemServico.objects.create(
             titulo="Servico agenda teste",
             data_agendada=timezone.localdate(),
@@ -88,29 +94,100 @@ class ServiceViewsTests(TestCase):
         self.assertNotContains(response, "agenda-calendar-card")
         self.assertContains(response, "Servico agenda teste")
         self.assertContains(response, "Administrador / dono")
-=======
-        response = self.client.get(reverse("agenda"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "agenda-calendar-card")
-        self.assertContains(response, "Gerencie os agendamentos de todas as equipes")
-        self.assertContains(response, "Pedro Lima")
->>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 
     def test_cria_lead(self):
         response = self.client.post(
             reverse("novo_lead"),
             {
                 "name": "Lead Novo",
-                "email": "novo@teste.com",
-                "telefone": "11933334444",
+                "email": " NOVO@TESTE.COM ",
+                "telefone": "+55 (11) 93333-4444",
                 "endereco": "Rua Lead, 10",
-                "status": Cliente.Status.CONTATADO,
+                "status": Lead.Status.CONTATADO,
+                "origem": Lead.Origem.WHATSAPP,
             },
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(Cliente.objects.filter(email="novo@teste.com").exists())
+        lead = Lead.objects.get(email="novo@teste.com")
+        self.assertEqual(lead.telefone, "(11) 93333-4444")
+
+    def test_nao_cria_lead_com_telefone_invalido(self):
+        response = self.client.post(
+            reverse("novo_lead"),
+            {
+                "name": "Lead Telefone Invalido",
+                "email": "telefone-invalido@teste.com",
+                "telefone": "12345",
+                "status": Lead.Status.NOVO,
+                "origem": Lead.Origem.MANUAL,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Informe um telefone com DDD")
+        self.assertFalse(Lead.objects.filter(email="telefone-invalido@teste.com").exists())
+
+    def test_lista_leads_exibe_status_e_origem_visuais(self):
+        Lead.objects.create(
+            name="Lead Visual",
+            email="visual@teste.com",
+            telefone="11933334444",
+            status=Lead.Status.CONTATADO,
+            origem=Lead.Origem.INSTAGRAM,
+        )
+
+        response = self.client.get(reverse("leads"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "lead-status-contacted")
+        self.assertContains(response, "lead-origin-instagram")
+        self.assertContains(response, "bi-instagram")
+
+    def test_filtra_leads_por_status_origem_e_periodo(self):
+        dentro = Lead.objects.create(
+            name="Lead Dentro",
+            email="dentro@teste.com",
+            status=Lead.Status.AGUARDANDO,
+            origem=Lead.Origem.WHATSAPP,
+        )
+        fora_status = Lead.objects.create(
+            name="Lead Fora Status",
+            email="fora-status@teste.com",
+            status=Lead.Status.NOVO,
+            origem=Lead.Origem.WHATSAPP,
+        )
+        fora_data = Lead.objects.create(
+            name="Lead Fora Data",
+            email="fora-data@teste.com",
+            status=Lead.Status.AGUARDANDO,
+            origem=Lead.Origem.WHATSAPP,
+        )
+        tz = timezone.get_current_timezone()
+        Lead.objects.filter(pk=dentro.pk).update(
+            created_at=timezone.make_aware(datetime.combine(datetime(2026, 5, 15).date(), time.min), tz)
+        )
+        Lead.objects.filter(pk=fora_status.pk).update(
+            created_at=timezone.make_aware(datetime.combine(datetime(2026, 5, 15).date(), time.min), tz)
+        )
+        Lead.objects.filter(pk=fora_data.pk).update(
+            created_at=timezone.make_aware(datetime.combine(datetime(2026, 4, 30).date(), time.min), tz)
+        )
+
+        response = self.client.get(
+            reverse("leads"),
+            {
+                "status": Lead.Status.AGUARDANDO,
+                "origem": Lead.Origem.WHATSAPP,
+                "data_inicio": "2026-05-01",
+                "data_fim": "2026-05-31",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Lead Dentro")
+        self.assertNotContains(response, "Lead Fora Status")
+        self.assertNotContains(response, "Lead Fora Data")
 
     def test_cria_lead_com_endereco_via_cep(self):
         response = self.client.post(
@@ -126,19 +203,191 @@ class ServiceViewsTests(TestCase):
                 "bairro": "Se",
                 "cidade": "Sao Paulo",
                 "uf": "sp",
-                "status": Cliente.Status.NOVO,
+                "status": Lead.Status.NOVO,
+                "origem": Lead.Origem.MANUAL,
             },
         )
 
         self.assertEqual(response.status_code, 302)
-        cliente = Cliente.objects.get(email="lead-cep@teste.com")
-        self.assertEqual(cliente.cep, "01001-000")
-        self.assertEqual(cliente.logradouro, "Praca da Se")
-        self.assertEqual(cliente.numero, "200")
-        self.assertEqual(cliente.bairro, "Se")
-        self.assertEqual(cliente.cidade, "Sao Paulo")
-        self.assertEqual(cliente.uf, "SP")
-        self.assertIn("Praca da Se, 200", cliente.endereco)
+        lead = Lead.objects.get(email="lead-cep@teste.com")
+        self.assertEqual(lead.cep, "01001-000")
+        self.assertEqual(lead.logradouro, "Praca da Se")
+        self.assertEqual(lead.numero, "200")
+        self.assertEqual(lead.bairro, "Se")
+        self.assertEqual(lead.cidade, "Sao Paulo")
+        self.assertEqual(lead.uf, "SP")
+        self.assertIn("Praca da Se, 200", lead.endereco)
+
+    def test_lead_vira_cliente(self):
+        lead = Lead.objects.create(
+            name="Lead para Cliente",
+            email="vira-cliente@teste.com",
+            telefone="11933334444",
+            origem=Lead.Origem.INSTAGRAM,
+        )
+
+        response = self.client.post(
+            f"{reverse('novo_cliente')}?lead={lead.pk}",
+            {
+                "name": lead.name,
+                "email": lead.email,
+                "telefone": lead.telefone,
+                "endereco": "Rua Conversao, 10",
+                "status": Cliente.Status.CONVERTIDO,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        lead.refresh_from_db()
+        self.assertEqual(lead.status, Lead.Status.CONVERTIDO)
+        self.assertIsNotNone(lead.cliente)
+        self.assertTrue(Cliente.objects.filter(email="vira-cliente@teste.com").exists())
+
+    def test_lead_convertido_mostra_acao_de_abrir_cliente(self):
+        cliente = Cliente.objects.create(
+            name="Cliente Convertido",
+            email="cliente-convertido@teste.com",
+        )
+        Lead.objects.create(
+            name="Lead Convertido",
+            email="lead-convertido@teste.com",
+            status=Lead.Status.CONVERTIDO,
+            cliente=cliente,
+        )
+
+        response = self.client.get(reverse("leads"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Convertido")
+        self.assertContains(response, "Abrir cliente")
+        self.assertNotContains(response, "Virar cliente")
+
+    def test_lead_vira_orcamento(self):
+        lead = Lead.objects.create(
+            name="Lead para Orcamento",
+            email="vira-orcamento@teste.com",
+            telefone="11955556666",
+            origem=Lead.Origem.WHATSAPP,
+        )
+
+        response = self.client.post(
+            f"{reverse('novo_orcamento')}?lead={lead.pk}",
+            {
+                "name": lead.name,
+                "email": lead.email,
+                "telefone": lead.telefone,
+                "quantidade": 2,
+                "itens": [str(self.item_a.pk)],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        lead.refresh_from_db()
+        orcamento = Orcamento.objects.get(email="vira-orcamento@teste.com")
+        self.assertEqual(orcamento.lead, lead)
+        self.assertEqual(orcamento.valor, self.item_a.valor * 2)
+        self.assertEqual(lead.status, Lead.Status.CONTATADO)
+
+    def test_orcamento_puxa_dados_do_lead_selecionado(self):
+        lead = Lead.objects.create(
+            name="Lead Selecionado",
+            email="LEAD-SELECIONADO@TESTE.COM",
+            telefone="11922223333",
+            cep="01001-000",
+            logradouro="Praca da Se",
+            numero="100",
+            bairro="Se",
+            cidade="Sao Paulo",
+            uf="SP",
+        )
+
+        response = self.client.post(
+            reverse("novo_orcamento"),
+            {
+                "lead": lead.pk,
+                "quantidade": 1,
+                "itens": [str(self.item_a.pk)],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        lead.refresh_from_db()
+        orcamento = Orcamento.objects.get(email="lead-selecionado@teste.com")
+        self.assertEqual(orcamento.lead, lead)
+        self.assertEqual(orcamento.name, "Lead Selecionado")
+        self.assertEqual(orcamento.telefone, "(11) 92222-3333")
+        self.assertEqual(orcamento.logradouro, "Praca da Se")
+        self.assertEqual(lead.status, Lead.Status.CONTATADO)
+
+    def test_busca_dados_do_lead_para_preencher_orcamento(self):
+        lead = Lead.objects.create(
+            name="Lead Ajax",
+            email="ajax@teste.com",
+            telefone="(11) 93333-4444",
+            logradouro="Rua Ajax",
+            numero="10",
+            bairro="Centro",
+            cidade="Sao Paulo",
+            uf="SP",
+        )
+
+        response = self.client.get(reverse("buscar_lead_dados", args=[lead.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["lead"]["name"], "Lead Ajax")
+        self.assertEqual(data["lead"]["telefone"], "(11) 93333-4444")
+        self.assertEqual(data["lead"]["logradouro"], "Rua Ajax")
+
+    def test_form_orcamento_tem_url_para_buscar_lead(self):
+        response = self.client.get(reverse("novo_orcamento"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "data-lead-url-template")
+
+    def test_lead_aguardando_mantem_status_ao_virar_orcamento(self):
+        lead = Lead.objects.create(
+            name="Lead Aguardando Orcamento",
+            email="lead-aguardando@teste.com",
+            status=Lead.Status.AGUARDANDO,
+        )
+
+        response = self.client.post(
+            f"{reverse('novo_orcamento')}?lead={lead.pk}",
+            {
+                "name": lead.name,
+                "email": lead.email,
+                "quantidade": 1,
+                "itens": [str(self.item_a.pk)],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        lead.refresh_from_db()
+        self.assertEqual(lead.status, Lead.Status.AGUARDANDO)
+
+    def test_orcamento_do_lead_ao_virar_cliente_atualiza_lead(self):
+        lead = Lead.objects.create(
+            name="Lead Orcamento Cliente",
+            email="lead-orcamento-cliente@teste.com",
+        )
+        orcamento = Orcamento.objects.create(
+            name=lead.name,
+            email=lead.email,
+            quantidade=1,
+            valor=120.0,
+            lead=lead,
+        )
+        orcamento.itens.set([self.item_a])
+
+        response = self.client.post(reverse("cadastrar_cliente_orcamento", args=[orcamento.pk]))
+
+        self.assertEqual(response.status_code, 302)
+        lead.refresh_from_db()
+        self.assertEqual(lead.status, Lead.Status.CONVERTIDO)
+        self.assertIsNotNone(lead.cliente)
+        self.assertEqual(lead.cliente.email, lead.email)
 
     def test_cria_cliente(self):
         response = self.client.post(
@@ -190,7 +439,7 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(response.status_code, 302)
         cliente = Cliente.objects.get(email="origem@teste.com")
         self.assertEqual(cliente.name, "Cliente do Orcamento")
-        self.assertEqual(cliente.telefone, "11988889999")
+        self.assertEqual(cliente.telefone, "(11) 98888-9999")
         self.assertEqual(cliente.status, Cliente.Status.CONVERTIDO)
         self.assertEqual(cliente.uf, "MG")
 
@@ -259,7 +508,6 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "120.00")
 
     def test_lista_ordens_servico_retorna_ok(self):
-<<<<<<< HEAD
         OrdemServico.objects.create(
             titulo="OS Cliente Ordem",
             data_agendada=timezone.localdate(),
@@ -267,21 +515,11 @@ class ServiceViewsTests(TestCase):
             administrador_executa=True,
             valor=120.0,
         )
-=======
-        orcamento = Orcamento.objects.create(
-            name="Cliente Ordem",
-            email="ordem@teste.com",
-            quantidade=1,
-            valor=120.0,
-        )
-        orcamento.itens.set([self.item_a])
->>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 
         response = self.client.get(reverse("ordens_servico"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "service-orders-board")
-<<<<<<< HEAD
         self.assertContains(response, "OS Cliente Ordem")
         self.assertContains(response, "R$ 120,00")
 
@@ -307,10 +545,6 @@ class ServiceViewsTests(TestCase):
 
         ordem.refresh_from_db()
         self.assertEqual(ordem.status, OrdemServico.Status.EM_ANDAMENTO)
-=======
-        self.assertContains(response, "Cliente Ordem")
-        self.assertContains(response, "R$ 120")
->>>>>>> 35d34db41c3f4e230e73d26ec7f8084c53ffa22f
 
     def test_deleta_cliente_sem_apagar_orcamento(self):
         cliente = Cliente.objects.create(
@@ -369,6 +603,37 @@ class ServiceViewsTests(TestCase):
         produto = Service_catalog.objects.get(name="Sofa retratil 3 lugares")
         self.assertEqual(produto.categoria, categoria)
         self.assertEqual(produto.tipo, "Sofas")
+
+    def test_cria_produto_com_imagem_no_catalogo(self):
+        categoria = CategoriaCatalogo.objects.create(name="Tapetes")
+        image = SimpleUploadedFile(
+            "tapete.gif",
+            b"GIF87a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00\xff\xff\xff,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
+            content_type="image/gif",
+        )
+
+        with tempfile.TemporaryDirectory() as media_root, self.settings(MEDIA_ROOT=media_root):
+            response = self.client.post(
+                reverse("novo_produto"),
+                {
+                    "name": "Tapete com imagem",
+                    "categoria": categoria.pk,
+                    "valor": 90,
+                    "descricao": "Higienizacao de tapete.",
+                    "imagem": image,
+                },
+            )
+
+            self.assertEqual(response.status_code, 302)
+            produto = Service_catalog.objects.get(name="Tapete com imagem")
+            self.assertTrue(produto.imagem.name.startswith("catalogo/"))
+
+    def test_form_produto_tem_upload_de_imagem(self):
+        response = self.client.get(reverse("novo_produto"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'enctype="multipart/form-data"')
+        self.assertContains(response, 'type="file"')
 
     def test_cria_categoria_do_catalogo(self):
         response = self.client.post(
@@ -615,7 +880,57 @@ class ServiceViewsTests(TestCase):
         orcamento.refresh_from_db()
         self.assertEqual(orcamento.cliente, cliente)
 
-    def test_conclui_orcamento_sem_criar_cliente(self):
+    def test_vincula_cliente_existente_e_aprova_orcamento(self):
+        cliente = Cliente.objects.create(
+            name="Cliente Existente",
+            email="existente@teste.com",
+        )
+        orcamento = Orcamento.objects.create(
+            name="Cliente Orcamento",
+            email="orcamento@teste.com",
+            quantidade=1,
+            valor=120.0,
+        )
+        orcamento.itens.set([self.item_a])
+
+        response = self.client.post(
+            reverse("vincular_cliente_orcamento", args=[orcamento.pk]),
+            {"cliente": cliente.pk, "aprovar_orcamento": "1"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        orcamento.refresh_from_db()
+        self.assertTrue(orcamento.aprovado)
+        self.assertEqual(orcamento.cliente, cliente)
+
+    def test_vincula_cliente_existente_e_volta_para_aprovacao(self):
+        cliente = Cliente.objects.create(
+            name="Cliente Existente",
+            email="existente@teste.com",
+        )
+        orcamento = Orcamento.objects.create(
+            name="Cliente Orcamento",
+            email="orcamento@teste.com",
+            quantidade=1,
+            valor=120.0,
+        )
+        orcamento.itens.set([self.item_a])
+
+        response = self.client.post(
+            reverse("vincular_cliente_orcamento", args=[orcamento.pk]),
+            {"cliente": cliente.pk, "voltar_para_aprovacao": "1"},
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('orcamento_detalhe', args=[orcamento.pk])}?aprovar=1",
+            fetch_redirect_response=False,
+        )
+        orcamento.refresh_from_db()
+        self.assertFalse(orcamento.aprovado)
+        self.assertEqual(orcamento.cliente, cliente)
+
+    def test_nao_aprova_orcamento_sem_cliente_vinculado(self):
         orcamento = Orcamento.objects.create(
             name="Cliente Concluir",
             email="concluir@teste.com",
@@ -629,12 +944,54 @@ class ServiceViewsTests(TestCase):
 
         response = self.client.post(reverse("concluir_orcamento", args=[orcamento.pk]))
 
-        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(
+            response,
+            f"{reverse('orcamento_detalhe', args=[orcamento.pk])}?aprovar=1",
+            fetch_redirect_response=False,
+        )
         self.assertEqual(Cliente.objects.count(), 0)
 
         orcamento.refresh_from_db()
-        self.assertTrue(orcamento.aprovado)
+        self.assertFalse(orcamento.aprovado)
         self.assertIsNone(orcamento.cliente)
+
+    def test_detalhe_mostra_cliente_ainda_nao_vinculado(self):
+        orcamento = Orcamento.objects.create(
+            name="Cliente Sem Vinculo",
+            email="sem-vinculo@teste.com",
+            quantidade=1,
+            valor=120.0,
+        )
+        orcamento.itens.set([self.item_a])
+
+        response = self.client.get(reverse("orcamento_detalhe", args=[orcamento.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Ainda nao vinculado")
+
+    def test_aprova_orcamento_com_cliente_vinculado(self):
+        cliente = Cliente.objects.create(
+            name="Cliente Vinculado",
+            email="vinculado@teste.com",
+        )
+        orcamento = Orcamento.objects.create(
+            name="Cliente Concluir",
+            email="concluir@teste.com",
+            telefone="11988887777",
+            endereco="Rua Concluir, 10",
+            quantidade=1,
+            valor=120.0,
+            descricao="Teste de conclusao",
+            cliente=cliente,
+        )
+        orcamento.itens.set([self.item_a])
+
+        response = self.client.post(reverse("concluir_orcamento", args=[orcamento.pk]))
+
+        self.assertEqual(response.status_code, 302)
+        orcamento.refresh_from_db()
+        self.assertTrue(orcamento.aprovado)
+        self.assertEqual(orcamento.cliente, cliente)
 
     def test_cadastra_cliente_do_orcamento_sem_concluir(self):
         orcamento = Orcamento.objects.create(
@@ -658,6 +1015,57 @@ class ServiceViewsTests(TestCase):
         self.assertFalse(orcamento.aprovado)
         self.assertEqual(orcamento.cliente, cliente)
         self.assertEqual(cliente.email, "cadastrado@teste.com")
+
+    def test_cadastra_cliente_do_orcamento_e_volta_para_aprovacao(self):
+        orcamento = Orcamento.objects.create(
+            name="Cliente Pre Aprovacao",
+            email="pre-aprovacao@teste.com",
+            telefone="11988887777",
+            endereco="Rua Pre Aprovacao, 10",
+            quantidade=1,
+            valor=120.0,
+        )
+        orcamento.itens.set([self.item_a])
+
+        response = self.client.post(
+            reverse("cadastrar_cliente_orcamento", args=[orcamento.pk]),
+            {"voltar_para_aprovacao": "1"},
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('orcamento_detalhe', args=[orcamento.pk])}?aprovar=1",
+            fetch_redirect_response=False,
+        )
+        orcamento.refresh_from_db()
+        self.assertFalse(orcamento.aprovado)
+        self.assertIsNotNone(orcamento.cliente)
+
+    def test_cadastra_cliente_do_orcamento_e_aprova(self):
+        orcamento = Orcamento.objects.create(
+            name="Cliente Aprovado Modal",
+            email="modal@teste.com",
+            telefone="11988887777",
+            endereco="Rua Modal, 10",
+            quantidade=1,
+            valor=120.0,
+            descricao="Teste de aprovacao pelo modal",
+        )
+        orcamento.itens.set([self.item_a])
+
+        response = self.client.post(
+            reverse("cadastrar_cliente_orcamento", args=[orcamento.pk]),
+            {"aprovar_orcamento": "1"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Cliente.objects.count(), 1)
+
+        orcamento.refresh_from_db()
+        cliente = Cliente.objects.get()
+        self.assertTrue(orcamento.aprovado)
+        self.assertEqual(orcamento.cliente, cliente)
+        self.assertEqual(cliente.email, "modal@teste.com")
 
     def test_aprova_orcamento_e_cria_cliente_por_rota_legada(self):
         orcamento = Orcamento.objects.create(
@@ -715,7 +1123,7 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Personalizar PDF")
         self.assertContains(response, 'name="pdf_phrase"')
-        self.assertContains(response, 'name="pdf_logo"')
+        self.assertNotContains(response, 'name="pdf_logo"')
 
     def test_gera_pdf_personalizado_com_logo_e_frase(self):
         orcamento = Orcamento.objects.create(

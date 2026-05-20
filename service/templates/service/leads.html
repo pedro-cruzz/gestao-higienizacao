@@ -15,21 +15,59 @@
     </section>
 
     <section class="leads-panel" aria-label="Lista de leads">
-        <div class="leads-toolbar">
-            <form method="get" class="leads-search">
-                <i class="bi bi-search"></i>
-                <input
-                    type="search"
-                    name="q"
-                    value="{{ busca }}"
-                    placeholder="Buscar por nome ou telefone..."
-                    aria-label="Buscar por nome ou telefone"
-                >
+        <div class="leads-toolbar leads-filter-toolbar">
+            <form method="get" class="leads-filter-form">
+                <label class="leads-search leads-filter-search">
+                    <i class="bi bi-search"></i>
+                    <input
+                        type="search"
+                        name="q"
+                        value="{{ busca }}"
+                        placeholder="Buscar por nome ou telefone..."
+                        aria-label="Buscar por nome ou telefone"
+                    >
+                </label>
+
+                <label class="lead-filter-field">
+                    <span>Status</span>
+                    <select name="status" aria-label="Filtrar por status">
+                        <option value="">Todos</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}"{% if status_filtro == value %} selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label class="lead-filter-field">
+                    <span>Origem</span>
+                    <select name="origem" aria-label="Filtrar por origem">
+                        <option value="">Todas</option>
+                        {% for value, label in origem_choices %}
+                            <option value="{{ value }}"{% if origem_filtro == value %} selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label class="lead-filter-field lead-filter-date">
+                    <span>De</span>
+                    <input type="date" name="data_inicio" value="{{ data_inicio }}" aria-label="Data inicial">
+                </label>
+
+                <label class="lead-filter-field lead-filter-date">
+                    <span>Ate</span>
+                    <input type="date" name="data_fim" value="{{ data_fim }}" aria-label="Data final">
+                </label>
+
+                <div class="lead-filter-actions">
+                    <button type="submit" class="filter-button">
+                        <i class="bi bi-funnel"></i>
+                        <span>Filtrar</span>
+                    </button>
+                    <a href="{% url 'leads' %}" class="filter-clear-button" aria-label="Limpar filtros">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
             </form>
-            <button type="button" class="filter-button">
-                <i class="bi bi-funnel"></i>
-                <span>Filtros</span>
-            </button>
         </div>
 
         <div class="leads-table-wrap">
@@ -50,15 +88,48 @@
                             <td class="lead-name">{{ lead.name }}</td>
                             <td>{{ lead.telefone }}</td>
                             <td>
-                                <span class="status-pill {{ lead.status_class }}">{{ lead.status }}</span>
+                                <span class="lead-pill lead-status-pill {{ lead.status_class }}">
+                                    <i class="bi {{ lead.status_icon }}"></i>
+                                    <span>{{ lead.status }}</span>
+                                </span>
                             </td>
-                            <td>{{ lead.origem }}</td>
+                            <td>
+                                <span class="lead-pill lead-origin-pill {{ lead.origem_class }}">
+                                    <i class="bi {{ lead.origem_icon }}"></i>
+                                    <span>{{ lead.origem }}</span>
+                                </span>
+                            </td>
                             <td>{{ lead.data }}</td>
                             <td>
-                                <a href="{% url 'novo_orcamento' %}" class="quote-button">
-                                    <i class="bi bi-file-earmark-text"></i>
-                                    <span>Criar Orçamento</span>
-                                </a>
+                                <div class="quote-actions dropup">
+                                    <button
+                                        type="button"
+                                        class="quote-icon-button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-boundary="viewport"
+                                        aria-expanded="false"
+                                        aria-label="Abrir menu de acoes do lead {{ lead.name }}"
+                                    >
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
+                                        <a href="{% url 'novo_orcamento' %}?lead={{ lead.obj.pk }}" class="dropdown-item hf-actions-menu-item">
+                                            <i class="bi bi-file-earmark-text"></i>
+                                            <span>Criar orcamento</span>
+                                        </a>
+                                        {% if lead.convertido and lead.cliente %}
+                                            <a href="{% url 'editar_cliente' lead.cliente.pk %}" class="dropdown-item hf-actions-menu-item">
+                                                <i class="bi bi-person-check"></i>
+                                                <span>Abrir cliente</span>
+                                            </a>
+                                        {% elif not lead.convertido %}
+                                            <a href="{% url 'novo_cliente' %}?lead={{ lead.obj.pk }}" class="dropdown-item hf-actions-menu-item">
+                                                <i class="bi bi-person-plus"></i>
+                                                <span>Virar cliente</span>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     {% empty %}

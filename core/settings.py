@@ -117,6 +117,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 VIACEP_BASE_URL = "https://viacep.com.br"
 VIACEP_TIMEOUT = 5
 NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org"
