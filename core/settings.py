@@ -25,7 +25,11 @@ SECRET_KEY = 'django-insecure-t@rzwbccnkg4i6#om4t-y(ewq9mvcpeer9+v&v#wg&e3^*#_h+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "cheating-italics-platform.ngrok-free.dev"
+]
 
 
 # Application definition
@@ -116,6 +120,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 VIACEP_BASE_URL = "https://viacep.com.br"
 VIACEP_TIMEOUT = 5

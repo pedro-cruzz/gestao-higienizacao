@@ -6,62 +6,227 @@
     <section class="page-heading agenda-heading">
         <div>
             <h1>Agenda</h1>
-            <p>Gerencie os agendamentos de todas as equipes</p>
+            <p>{{ total_mes }} servico(s) programado(s) neste mes.</p>
         </div>
 
-        <div class="agenda-week-controls" aria-label="Navegação da semana">
-            <button type="button" class="agenda-nav-button" aria-label="Semana anterior">
+        <div class="agenda-week-controls" aria-label="Navegacao do mes">
+            <a href="{% url 'agenda' %}?data={{ mes_anterior }}" class="agenda-nav-button" aria-label="Mes anterior">
                 <i class="bi bi-chevron-left"></i>
-            </button>
-            <div class="agenda-period">
+            </a>
+            <a href="{% url 'agenda' %}?data={{ hoje }}" class="agenda-period">
                 <i class="bi bi-calendar3"></i>
-                <span>{{ periodo_agenda }}</span>
-            </div>
-            <button type="button" class="agenda-nav-button" aria-label="Próxima semana">
+                <span>{{ periodo_mes }}</span>
+            </a>
+            <a href="{% url 'agenda' %}?data={{ proximo_mes }}" class="agenda-nav-button" aria-label="Proximo mes">
                 <i class="bi bi-chevron-right"></i>
-            </button>
+            </a>
         </div>
     </section>
 
-    <section class="agenda-calendar-card" aria-label="Agenda semanal">
-        <div class="agenda-legend">
-            {% for equipe in equipes %}
-                <span>
-                    <i class="agenda-team-dot agenda-team-{{ equipe.key }}"></i>
-                    {{ equipe.nome }}
-                </span>
+    <section class="agenda-month-card" aria-label="Agenda mensal">
+        <header class="agenda-section-header">
+            <div>
+                <h2>Visao mensal</h2>
+                <p>Ordens distribuidas por dia do mes.</p>
+            </div>
+        </header>
+
+        <div class="agenda-month-weekdays" aria-hidden="true">
+            <span>Seg</span>
+            <span>Ter</span>
+            <span>Qua</span>
+            <span>Qui</span>
+            <span>Sex</span>
+            <span>Sab</span>
+            <span>Dom</span>
+        </div>
+
+        <div class="agenda-month-grid">
+            {% for semana in dias_mes %}
+                {% for dia in semana %}
+                    <article class="agenda-month-day{% if not dia.is_current_month %} is-muted{% endif %}{% if dia.is_today %} is-today{% endif %}">
+                        <header>
+                            <span>{{ dia.numero }}</span>
+                        </header>
+                        <div class="agenda-month-events">
+                            {% for evento in dia.eventos %}
+                                <button
+                                    type="button"
+                                    class="agenda-month-event agenda-team-{{ evento.equipe }}"
+                                    data-agenda-os
+                                    data-detail-url="{% url 'os_detalhe' evento.pk %}"
+                                    data-title="{{ evento.servico }}"
+                                    data-client="{{ evento.cliente }}"
+                                    data-schedule="{{ evento.agenda }}"
+                                    data-responsible="{{ evento.responsavel }}"
+                                    data-address="{{ evento.endereco }}"
+                                    data-status="{{ evento.status_label }}"
+                                    data-status-class="{{ evento.status_css }}"
+                                    data-value="{{ evento.valor }}"
+                                >
+                                    <span>{{ evento.horario }}</span>
+                                    <strong>{{ evento.servico }}</strong>
+                                </button>
+                            {% empty %}
+                                <span class="agenda-month-empty"></span>
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% endfor %}
             {% endfor %}
         </div>
+    </section>
 
-        <div class="agenda-scroll">
-            <div class="agenda-grid" role="table" aria-label="Agendamentos da semana">
-                <div class="agenda-row agenda-days-row" role="row">
-                    <div class="agenda-corner-cell" role="columnheader"></div>
-                    {% for dia in dias %}
-                        <div class="agenda-day-cell" role="columnheader">
-                            <strong>{{ dia.nome }}</strong>
-                            <span>{{ dia.numero }}</span>
-                        </div>
-                    {% endfor %}
-                </div>
+    <section class="agenda-week-section" aria-label="Ordens da semana">
+        <header class="agenda-section-header">
+            <div>
+                <h2>Semana selecionada</h2>
+                <p>{{ total_semana }} servico(s) programado(s) nesta semana.</p>
+            </div>
+            <div class="agenda-week-controls" aria-label="Navegacao da semana">
+                <a href="{% url 'agenda' %}?data={{ semana_anterior }}" class="agenda-nav-button" aria-label="Semana anterior">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+                <a href="{% url 'agenda' %}?data={{ hoje }}" class="agenda-period">
+                    <i class="bi bi-calendar3"></i>
+                    <span>{{ periodo_agenda }}</span>
+                </a>
+                <a href="{% url 'agenda' %}?data={{ proxima_semana }}" class="agenda-nav-button" aria-label="Proxima semana">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </header>
 
-                {% for linha in linhas_agenda %}
-                    <div class="agenda-row agenda-time-row" role="row">
-                        <div class="agenda-time-cell" role="rowheader">{{ linha.horario }}</div>
-                        {% for celula in linha.celulas %}
-                            <div class="agenda-slot-cell" role="cell">
-                                {% for evento in celula.eventos %}
-                                    <article class="agenda-event agenda-team-{{ evento.equipe }}{% if evento.tamanho %} agenda-event-{{ evento.tamanho }}{% endif %}">
-                                        <strong>{{ evento.cliente }}</strong>
-                                        <span>{{ evento.servico }}</span>
-                                        <small>{{ evento.endereco }}</small>
-                                    </article>
-                                {% endfor %}
-                            </div>
+        <div class="agenda-week-cards" aria-label="Ordens por dia">
+            {% for dia in dias %}
+                <article class="agenda-day{% if dia.is_today %} is-today{% endif %}">
+                    <header>
+                        <span>{{ dia.data|date:"D" }}</span>
+                        <strong>{{ dia.data|date:"d/m" }}</strong>
+                    </header>
+
+                    <div class="agenda-day-list">
+                        {% for ordem in dia.ordens %}
+                            <button
+                                type="button"
+                                class="agenda-item"
+                                data-agenda-os
+                                data-detail-url="{% url 'os_detalhe' ordem.pk %}"
+                                data-title="{{ ordem.titulo }}"
+                                data-client="{{ ordem.cliente_nome }}"
+                                data-schedule="{{ ordem.data_agendada|date:'d/m/Y' }} {{ ordem.hora_inicio|time:'H:i' }}"
+                                data-responsible="{{ ordem.responsavel_nome }}"
+                                data-address="{{ ordem.endereco|default:'Endereco nao informado' }}"
+                                data-status="{{ ordem.get_status_display }}"
+                                data-status-class="{{ ordem.status_css }}"
+                                data-value="R$ {{ ordem.valor|floatformat:2 }}"
+                            >
+                                <span class="agenda-time">{{ ordem.hora_inicio|time:"H:i" }}</span>
+                                <strong>{{ ordem.titulo }}</strong>
+                                <small>{{ ordem.responsavel_nome }}</small>
+                                <span class="status-pill {{ ordem.status_css }}">{{ ordem.get_status_display }}</span>
+                            </button>
+                        {% empty %}
+                            <div class="agenda-empty">Sem servicos</div>
                         {% endfor %}
                     </div>
-                {% endfor %}
-            </div>
+                </article>
+            {% endfor %}
         </div>
     </section>
+
+    <section class="agenda-actions">
+        <a href="{% url 'nova_os' %}" class="hf-btn hf-btn-primary">
+            <i class="bi bi-plus-lg"></i>
+            <span>Agendar OS</span>
+        </a>
+        <a href="{% url 'ordens_servico' %}" class="hf-btn hf-btn-light">
+            <i class="bi bi-list-check"></i>
+            <span>Ver OS</span>
+        </a>
+    </section>
+
+    <div class="modal fade" id="agendaOsModal" tabindex="-1" aria-labelledby="agendaOsModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content agenda-os-modal">
+                <div class="modal-header">
+                    <div>
+                        <span class="agenda-os-modal-kicker">Ordem de Servico</span>
+                        <h2 class="modal-title" id="agendaOsModalTitle">Detalhes da OS</h2>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="agenda-os-modal-status">
+                        <span class="status-pill" data-os-modal-status></span>
+                        <strong data-os-modal-value></strong>
+                    </div>
+                    <dl class="agenda-os-modal-list">
+                        <div>
+                            <dt>Cliente</dt>
+                            <dd data-os-modal-client></dd>
+                        </div>
+                        <div>
+                            <dt>Agenda</dt>
+                            <dd data-os-modal-schedule></dd>
+                        </div>
+                        <div>
+                            <dt>Responsavel</dt>
+                            <dd data-os-modal-responsible></dd>
+                        </div>
+                        <div>
+                            <dt>Endereco</dt>
+                            <dd data-os-modal-address></dd>
+                        </div>
+                    </dl>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="hf-btn hf-btn-light" data-bs-dismiss="modal">Fechar</button>
+                    <a href="#" class="hf-btn hf-btn-primary" data-os-modal-detail>Ver detalhes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        (() => {
+            const modalElement = document.getElementById("agendaOsModal");
+            if (!modalElement || !window.bootstrap) {
+                return;
+            }
+
+            const modal = new bootstrap.Modal(modalElement);
+            const title = modalElement.querySelector("#agendaOsModalTitle");
+            const status = modalElement.querySelector("[data-os-modal-status]");
+            const detail = modalElement.querySelector("[data-os-modal-detail]");
+            const fields = {
+                client: modalElement.querySelector("[data-os-modal-client]"),
+                schedule: modalElement.querySelector("[data-os-modal-schedule]"),
+                responsible: modalElement.querySelector("[data-os-modal-responsible]"),
+                address: modalElement.querySelector("[data-os-modal-address]"),
+                value: modalElement.querySelector("[data-os-modal-value]"),
+            };
+
+            document.addEventListener("click", (event) => {
+                const trigger = event.target.closest("[data-agenda-os]");
+                if (!trigger) {
+                    return;
+                }
+
+                title.textContent = trigger.dataset.title || "Detalhes da OS";
+                fields.client.textContent = trigger.dataset.client || "-";
+                fields.schedule.textContent = trigger.dataset.schedule || "-";
+                fields.responsible.textContent = trigger.dataset.responsible || "-";
+                fields.address.textContent = trigger.dataset.address || "-";
+                fields.value.textContent = trigger.dataset.value || "";
+                detail.href = trigger.dataset.detailUrl || "#";
+
+                status.className = `status-pill ${trigger.dataset.statusClass || ""}`.trim();
+                status.textContent = trigger.dataset.status || "-";
+                modal.show();
+            });
+        })();
+    </script>
 {% endblock %}

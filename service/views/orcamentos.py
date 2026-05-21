@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -14,7 +15,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 from service.forms import ClienteVinculoOrcamentoForm, OrcamentoForm
-from service.models import Cliente, Orcamento
+from service.models import Cliente, Lead, Orcamento
 from service.services.nominatim import (
     NominatimLookupError,
     NominatimService,
@@ -97,8 +98,7 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
         )
 
     total_orcamentos = todos_orcamentos.count()
-    total_rascunhos = todos_orcamentos.filter(aprovado=False).filter(Q(email__isnull=True) | Q(email="")).count()
-    total_enviados = todos_orcamentos.filter(aprovado=False, email__isnull=False).exclude(email="").count()
+    total_pendentes = todos_orcamentos.filter(aprovado=False).count()
     total_aprovados = todos_orcamentos.filter(aprovado=True).count()
 
     linhas_orcamentos = []
@@ -111,12 +111,9 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
         if orcamento.aprovado:
             status_label = "Aprovado"
             status_class = "status-soft-blue"
-        elif orcamento.email:
-            status_label = "Enviado"
-            status_class = "status-blue"
         else:
-            status_label = "Rascunho"
-            status_class = "status-gray"
+            status_label = "Pendente"
+            status_class = "status-yellow"
 
         linhas_orcamentos.append(
             {
@@ -130,7 +127,7 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
                 "status_class": status_class,
                 "data": orcamento.created_at,
                 "validade": orcamento.created_at + timedelta(days=15),
-                "pode_enviar": not orcamento.aprovado,
+                "pode_aprovar": not orcamento.aprovado,
             }
         )
 
@@ -139,8 +136,7 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
         "orcamentos": linhas_orcamentos,
         "total_orcamentos": total_orcamentos,
         "total_filtrado": len(linhas_orcamentos),
-        "total_rascunhos": total_rascunhos,
-        "total_enviados": total_enviados,
+        "total_pendentes": total_pendentes,
         "total_aprovados": total_aprovados,
         "total_recusados": 0,
     }
@@ -276,7 +272,31 @@ def listar_ordens_servico(request: HttpRequest) -> HttpResponse:
     return render(request, "service/ordens_servico.html", {"colunas_ordens": colunas})
 
 
+def _orcamento_initial_lead(lead: Lead, item_inicial: str | None = None) -> dict:
+    initial = {
+        "lead": lead.pk,
+        "name": lead.name,
+        "email": lead.email,
+        "telefone": lead.telefone,
+        "cep": lead.cep,
+        "logradouro": lead.logradouro,
+        "numero": lead.numero,
+        "complemento": lead.complemento,
+        "bairro": lead.bairro,
+        "cidade": lead.cidade,
+        "uf": lead.uf,
+        "endereco": lead.endereco,
+        "quantidade": 1,
+    }
+    if item_inicial:
+        initial["itens"] = [item_inicial]
+    return initial
+
+
 def novo_orcamento(request: HttpRequest) -> HttpResponse:
+    lead_id = request.GET.get("lead")
+    lead = Lead.objects.filter(pk=lead_id).first() if lead_id else None
+
     if request.method == "POST":
         form = OrcamentoForm(request.POST)
         if form.is_valid():
@@ -285,15 +305,20 @@ def novo_orcamento(request: HttpRequest) -> HttpResponse:
                 email=form.cleaned_data["email"] or None,
                 quantidade=form.cleaned_data["quantidade"],
                 valor=0,
+                lead=lead or form.cleaned_data.get("lead"),
             )
             _salvar_dados_orcamento(orcamento, form)
             _aplicar_fluxo_cliente(orcamento, form)
+            if orcamento.lead_id and orcamento.cliente_id:
+                _marcar_lead_convertido(orcamento, orcamento.cliente)
+            elif orcamento.lead_id:
+                _marcar_lead_contatado_por_orcamento(orcamento)
 
             messages.success(request, "Orcamento criado com sucesso.")
             return redirect("orcamento_detalhe", pk=orcamento.pk)
     else:
         item_inicial = request.GET.get("item")
-        initial = {"itens": [item_inicial]} if item_inicial else None
+        initial = _orcamento_initial_lead(lead, item_inicial) if lead else {"itens": [item_inicial]} if item_inicial else None
         form = OrcamentoForm(initial=initial)
 
     context = {
@@ -329,8 +354,35 @@ def buscar_cliente_dados(request: HttpRequest, pk: int) -> JsonResponse:
     )
 
 
+def buscar_lead_dados(request: HttpRequest, pk: int) -> JsonResponse:
+    if request.method != "GET":
+        return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
+
+    lead = get_object_or_404(Lead, pk=pk)
+    return JsonResponse(
+        {
+            "ok": True,
+            "lead": {
+                "id": lead.pk,
+                "name": lead.name,
+                "email": lead.email or "",
+                "telefone": lead.telefone or "",
+                "endereco": lead.endereco or "",
+                "cep": lead.cep or "",
+                "logradouro": lead.logradouro or "",
+                "numero": lead.numero or "",
+                "complemento": lead.complemento or "",
+                "bairro": lead.bairro or "",
+                "cidade": lead.cidade or "",
+                "uf": lead.uf or "",
+            },
+        }
+    )
+
+
 def _orcamento_initial(orcamento: Orcamento) -> dict:
     return {
+        "lead": orcamento.lead_id,
         "cliente": orcamento.cliente_id,
         "name": orcamento.name,
         "email": orcamento.email,
@@ -369,9 +421,35 @@ def _salvar_dados_orcamento(orcamento: Orcamento, form: OrcamentoForm) -> Orcame
     orcamento.quantidade = quantidade
     orcamento.valor = sum(item.valor for item in itens) * quantidade
     orcamento.cliente = form.cleaned_data.get("cliente") or orcamento.cliente
+    orcamento.lead = form.cleaned_data.get("lead") or orcamento.lead
     orcamento.save()
     orcamento.itens.set(itens)
     return orcamento
+
+
+def _marcar_lead_convertido(orcamento: Orcamento, cliente: Cliente | None = None) -> None:
+    if not orcamento.lead_id:
+        return
+
+    lead = orcamento.lead
+    lead.status = Lead.Status.CONVERTIDO
+    update_fields = ["status", "updated_at"]
+    if cliente and lead.cliente_id != cliente.pk:
+        lead.cliente = cliente
+        update_fields.append("cliente")
+    lead.save(update_fields=update_fields)
+
+
+def _marcar_lead_contatado_por_orcamento(orcamento: Orcamento) -> None:
+    if not orcamento.lead_id or orcamento.cliente_id:
+        return
+
+    lead = orcamento.lead
+    if lead.status != Lead.Status.NOVO:
+        return
+
+    lead.status = Lead.Status.CONTATADO
+    lead.save(update_fields=["status", "updated_at"])
 
 
 def _aplicar_fluxo_cliente(orcamento: Orcamento, form: OrcamentoForm) -> None:
@@ -379,12 +457,14 @@ def _aplicar_fluxo_cliente(orcamento: Orcamento, form: OrcamentoForm) -> None:
     if cliente:
         orcamento.cliente = cliente
         orcamento.save(update_fields=["cliente", "updated_at"])
+        _marcar_lead_convertido(orcamento, cliente)
         return
 
     if form.cleaned_data.get("criar_cliente_automatico"):
         cliente = _criar_ou_atualizar_cliente_do_orcamento(orcamento)
         orcamento.cliente = cliente
         orcamento.save(update_fields=["cliente", "updated_at"])
+        _marcar_lead_convertido(orcamento, cliente)
 
 
 def editar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
@@ -470,6 +550,7 @@ def detalhe_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         "orcamento": orcamento,
         "itens": orcamento.itens.all(),
         "mapa": _links_mapa_orcamento(orcamento),
+        "ordem_servico": getattr(orcamento, "ordem_servico", None),
         "vinculo_form": ClienteVinculoOrcamentoForm(
             initial={"cliente": orcamento.cliente_id} if orcamento.cliente_id else None
         ),
@@ -487,8 +568,18 @@ def vincular_cliente_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     if form.is_valid():
         cliente = form.cleaned_data["cliente"]
         orcamento.cliente = cliente
-        orcamento.save(update_fields=["cliente", "updated_at"])
-        messages.success(request, f"Cliente '{cliente.name}' vinculado ao orcamento.")
+        update_fields = ["cliente", "updated_at"]
+        if request.POST.get("aprovar_orcamento") == "1":
+            orcamento.aprovado = True
+            update_fields.append("aprovado")
+        orcamento.save(update_fields=update_fields)
+        _marcar_lead_convertido(orcamento, cliente)
+        if orcamento.aprovado:
+            messages.success(request, f"Orcamento aprovado e vinculado ao cliente '{cliente.name}'.")
+        else:
+            messages.success(request, f"Cliente '{cliente.name}' vinculado ao orcamento.")
+            if request.POST.get("voltar_para_aprovacao") == "1":
+                return redirect(f"{reverse('orcamento_detalhe', args=[pk])}?aprovar=1")
     else:
         messages.error(request, "Selecione um cliente valido para vincular ao orcamento.")
 
@@ -513,11 +604,18 @@ def concluir_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
 
     orcamento = get_object_or_404(Orcamento, pk=pk)
     if not orcamento.aprovado:
+        if not orcamento.cliente_id:
+            messages.error(
+                request,
+                "Vincule ou crie um cliente antes de aprovar o orcamento.",
+            )
+            return redirect(f"{reverse('orcamento_detalhe', args=[pk])}?aprovar=1")
         orcamento.aprovado = True
         orcamento.save(update_fields=["aprovado", "updated_at"])
-        messages.success(request, "Orcamento concluido com sucesso.")
+        _marcar_lead_convertido(orcamento, orcamento.cliente)
+        messages.success(request, "Orcamento aprovado com sucesso.")
     else:
-        messages.info(request, "Este orcamento ja esta concluido.")
+        messages.info(request, "Este orcamento ja esta aprovado.")
 
     return redirect("orcamento_detalhe", pk=pk)
 
@@ -537,12 +635,22 @@ def cadastrar_cliente_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
 
     cliente = _criar_ou_atualizar_cliente_do_orcamento(orcamento)
     orcamento.cliente = cliente
-    orcamento.save(update_fields=["cliente", "updated_at"])
+    update_fields = ["cliente", "updated_at"]
+    if request.POST.get("aprovar_orcamento") == "1":
+        orcamento.aprovado = True
+        update_fields.append("aprovado")
+    orcamento.save(update_fields=update_fields)
+    _marcar_lead_convertido(orcamento, cliente)
 
-    messages.success(
-        request,
-        "Cliente cadastrado e vinculado ao orcamento com sucesso.",
-    )
+    if orcamento.aprovado:
+        messages.success(request, "Orcamento aprovado e cliente vinculado com sucesso.")
+    else:
+        messages.success(
+            request,
+            "Cliente cadastrado e vinculado ao orcamento com sucesso.",
+        )
+        if request.POST.get("voltar_para_aprovacao") == "1":
+            return redirect(f"{reverse('orcamento_detalhe', args=[pk])}?aprovar=1")
     return redirect("orcamento_detalhe", pk=pk)
 
 
@@ -563,10 +671,11 @@ def aprovar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     orcamento.cliente = cliente
     orcamento.aprovado = True
     orcamento.save(update_fields=["cliente", "aprovado", "updated_at"])
+    _marcar_lead_convertido(orcamento, cliente)
 
     messages.success(
         request,
-        "Orcamento concluido e cliente vinculado com sucesso.",
+        "Orcamento aprovado e cliente vinculado com sucesso.",
     )
     return redirect("orcamento_detalhe", pk=pk)
 

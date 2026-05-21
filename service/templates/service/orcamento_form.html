@@ -1,147 +1,278 @@
 {% extends "service/base.html" %}
 
-{% block title %}{{ form_title|default:"Novo Orcamento" }} | ERP Higienizacao{% endblock %}
+{% block title %}{{ form_title|default:"Novo Orcamento" }} | HigiFlow{% endblock %}
 
 {% block content %}
-    <section class="hero-card card border-0 p-4 p-lg-5 mb-4">
-        <span class="badge rounded-pill px-3 py-2 mb-3">Orcamentos</span>
-        <h1 class="display-6 fw-semibold">{{ form_title|default:"Monte um orcamento inicial com os itens do seu catalogo." }}</h1>
-        <p class="mb-0 text-white-50">
-            {{ form_intro|default:"Esta tela ja salva o cliente, a quantidade, os itens escolhidos e o valor total calculado automaticamente." }}
-        </p>
+    <section class="page-heading">
+        <div>
+            <h1>{{ form_title|default:"Novo orcamento" }}</h1>
+            <p>{{ form_intro|default:"Monte a proposta com cliente, endereco, itens do catalogo e quantidade." }}</p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{% url 'orcamentos' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-arrow-left"></i>
+                <span>Orcamentos</span>
+            </a>
+            <a href="{% url 'catalogo' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-grid"></i>
+                <span>Catalogo</span>
+            </a>
+        </div>
     </section>
 
-    <section class="row g-4">
-        <article class="col-12 col-xl-8">
-            <div class="content-card p-4">
-                <h2 class="h4 mb-4">{{ form_title|default:"Novo orcamento" }}</h2>
-                <form method="post" class="row g-3" data-cep-url-template="{% url 'buscar_endereco_cep' '00000000' %}">
-                {% csrf_token %}
+    <section class="catalog-form-layout orcamento-form-layout">
+        <article class="catalog-form-panel">
+            <header>
+                <span class="status-pill status-soft-blue">Proposta</span>
+                <h2>Dados do orcamento</h2>
+            </header>
 
-                <div class="col-12 col-md-6">
-                    <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">{{ form.name.label }}</label>
+            <form
+                method="post"
+                class="catalog-form orcamento-form"
+                data-cep-url-template="{% url 'buscar_endereco_cep' '00000000' %}"
+                data-lead-url-template="{% url 'buscar_lead_dados' 0 %}"
+            >
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="form-field span-2">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+                {{ form.endereco }}
+
+                <div class="form-field span-2 orcamento-form-section">
+                    <div>
+                        <span class="status-pill status-gray">Cliente</span>
+                        <h3>Identificacao</h3>
+                    </div>
+                </div>
+
+                <div class="form-field span-2">
+                    <label for="{{ form.cliente.id_for_label }}">{{ form.cliente.label }}</label>
+                    {{ form.cliente }}
+                    {{ form.cliente.errors }}
+                    <p class="field-helper">Selecionar cliente tem prioridade sobre o lead.</p>
+                </div>
+
+                <div class="form-field span-2">
+                    <label for="{{ form.lead.id_for_label }}">{{ form.lead.label }}</label>
+                    {{ form.lead }}
+                    {{ form.lead.errors }}
+                    <p class="field-helper">Use um lead para preencher contato e endereco automaticamente.</p>
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
                     {{ form.name }}
                     {{ form.name.errors }}
                 </div>
 
-                <div class="col-12 col-md-6">
-                    <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">{{ form.email.label }}</label>
+                <div class="form-field">
+                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
                     {{ form.email }}
                     {{ form.email.errors }}
                 </div>
 
-                <div class="col-12 col-md-6">
-                    <label for="{{ form.telefone.id_for_label }}" class="form-label fw-semibold">{{ form.telefone.label }}</label>
+                <div class="form-field">
+                    <label for="{{ form.telefone.id_for_label }}">{{ form.telefone.label }}</label>
                     {{ form.telefone }}
                     {{ form.telefone.errors }}
                 </div>
 
-                {{ form.endereco }}
-
-                <div class="col-12">
-                    <div class="d-flex align-items-center justify-content-between gap-3 mb-1">
-                        <h3 class="h5 mb-0">Endereco do servico</h3>
-                        <span class="status-pill status-soft-blue">ViaCEP</span>
-                    </div>
-                    <p class="muted-copy small mb-0">Digite o CEP para preencher rua, bairro, cidade e UF automaticamente.</p>
+                <div class="form-field orcamento-check-field">
+                    <label for="{{ form.criar_cliente_automatico.id_for_label }}">
+                        {{ form.criar_cliente_automatico }}
+                        <span>{{ form.criar_cliente_automatico.label }}</span>
+                    </label>
+                    {{ form.criar_cliente_automatico.errors }}
                 </div>
 
-                <div class="col-12 col-md-4">
-                    <label for="{{ form.cep.id_for_label }}" class="form-label fw-semibold">{{ form.cep.label }}</label>
-                    <div class="input-group">
+                <div class="form-field span-2 orcamento-form-section">
+                    <div>
+                        <span class="status-pill status-soft-blue">ViaCEP</span>
+                        <h3>Endereco do servico</h3>
+                        <p>Digite o CEP para preencher rua, bairro, cidade e UF automaticamente.</p>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.cep.id_for_label }}">{{ form.cep.label }}</label>
+                    <div class="orcamento-cep-row">
                         {{ form.cep }}
-                        <button type="button" class="btn btn-outline-secondary" data-cep-search>
+                        <button type="button" class="quote-icon-button orcamento-cep-button" data-cep-search aria-label="Buscar CEP">
                             <i class="bi bi-search"></i>
                         </button>
                     </div>
                     {{ form.cep.errors }}
                 </div>
 
-                <div class="col-12 col-md-8">
-                    <label for="{{ form.logradouro.id_for_label }}" class="form-label fw-semibold">{{ form.logradouro.label }}</label>
+                <div class="form-field">
+                    <label for="{{ form.logradouro.id_for_label }}">{{ form.logradouro.label }}</label>
                     {{ form.logradouro }}
                     {{ form.logradouro.errors }}
                 </div>
 
-                <div class="col-12 col-md-3">
-                    <label for="{{ form.numero.id_for_label }}" class="form-label fw-semibold">{{ form.numero.label }}</label>
+                <div class="form-field">
+                    <label for="{{ form.numero.id_for_label }}">{{ form.numero.label }}</label>
                     {{ form.numero }}
                     {{ form.numero.errors }}
                 </div>
 
-                <div class="col-12 col-md-5">
-                    <label for="{{ form.complemento.id_for_label }}" class="form-label fw-semibold">{{ form.complemento.label }}</label>
+                <div class="form-field">
+                    <label for="{{ form.complemento.id_for_label }}">{{ form.complemento.label }}</label>
                     {{ form.complemento }}
                     {{ form.complemento.errors }}
                 </div>
 
-                <div class="col-12 col-md-4">
-                    <label for="{{ form.bairro.id_for_label }}" class="form-label fw-semibold">{{ form.bairro.label }}</label>
+                <div class="form-field">
+                    <label for="{{ form.bairro.id_for_label }}">{{ form.bairro.label }}</label>
                     {{ form.bairro }}
                     {{ form.bairro.errors }}
                 </div>
 
-                <div class="col-12 col-md-8">
-                    <label for="{{ form.cidade.id_for_label }}" class="form-label fw-semibold">{{ form.cidade.label }}</label>
+                <div class="form-field">
+                    <label for="{{ form.cidade.id_for_label }}">{{ form.cidade.label }}</label>
                     {{ form.cidade }}
                     {{ form.cidade.errors }}
                 </div>
 
-                <div class="col-12 col-md-4">
-                    <label for="{{ form.uf.id_for_label }}" class="form-label fw-semibold">{{ form.uf.label }}</label>
+                <div class="form-field">
+                    <label for="{{ form.uf.id_for_label }}">{{ form.uf.label }}</label>
                     {{ form.uf }}
                     {{ form.uf.errors }}
                 </div>
 
-                <div class="col-12">
-                    <label for="{{ form.descricao.id_for_label }}" class="form-label fw-semibold">{{ form.descricao.label }}</label>
-                    {{ form.descricao }}
-                    {{ form.descricao.errors }}
+                <div class="form-field span-2 orcamento-form-section">
+                    <div>
+                        <span class="status-pill status-gray">Itens</span>
+                        <h3>Servico e valores</h3>
+                    </div>
                 </div>
 
-                <div class="col-12 col-md-4">
-                    <label for="{{ form.quantidade.id_for_label }}" class="form-label fw-semibold">{{ form.quantidade.label }}</label>
+                <div class="form-field">
+                    <label for="{{ form.quantidade.id_for_label }}">{{ form.quantidade.label }}</label>
                     {{ form.quantidade }}
                     {{ form.quantidade.errors }}
                 </div>
 
-                <div class="col-12">
-                    <label for="{{ form.itens.id_for_label }}" class="form-label fw-semibold">{{ form.itens.label }}</label>
+                <div class="form-field span-2">
+                    <label for="{{ form.itens.id_for_label }}">{{ form.itens.label }}</label>
                     {{ form.itens }}
-                    <div class="form-text">Segure `Ctrl` para selecionar mais de um item.</div>
+                    <p class="field-helper">Segure Ctrl para selecionar mais de um item.</p>
                     {{ form.itens.errors }}
                 </div>
 
-                <div class="col-12">
-                    <button type="submit" class="btn btn-success">{{ form_submit_label|default:"Salvar orcamento" }}</button>
+                <div class="form-field span-2">
+                    <label for="{{ form.descricao.id_for_label }}">{{ form.descricao.label }}</label>
+                    {{ form.descricao }}
+                    {{ form.descricao.errors }}
+                </div>
+
+                <div class="form-actions span-2">
+                    <button type="submit" class="hf-btn hf-btn-primary">
+                        <i class="bi bi-check-lg"></i>
+                        <span>{{ form_submit_label|default:"Salvar orcamento" }}</span>
+                    </button>
+                    <a href="{% url 'orcamentos' %}" class="hf-btn hf-btn-light">Cancelar</a>
                 </div>
             </form>
-                </div>
         </article>
 
-        <aside class="col-12 col-xl-4">
-            <div class="section-card p-4">
-                <h2 class="h4 mb-4">Orcamentos recentes</h2>
+        <aside class="dashboard-card catalog-recent orcamento-recent-card">
+            <header>
+                <h2>Orcamentos recentes</h2>
+                <a href="{% url 'orcamentos' %}">Ver todos <i class="bi bi-chevron-right"></i></a>
+            </header>
+
+            <div class="recent-list">
                 {% if orcamentos_recentes %}
-                    <div class="list-group list-group-flush">
-                        {% for item in orcamentos_recentes %}
-                            <a href="{% url 'orcamento_detalhe' item.pk %}" class="list-group-item list-group-item-action px-0 py-3 bg-transparent border-bottom">
-                                <div class="d-flex justify-content-between gap-3">
-                                    <div>
-                                        <div class="fw-semibold">{{ item.name }}</div>
-                                        <div class="small muted-copy">{{ item.quantidade }} unidade(s)</div>
-                                    </div>
-                                    <div class="price-tag">R$ {{ item.valor|floatformat:2 }}</div>
-                                </div>
-                            </a>
-                        {% endfor %}
-                    </div>
+                    {% for item in orcamentos_recentes %}
+                        <a href="{% url 'orcamento_detalhe' item.pk %}" class="recent-row orcamento-recent-link">
+                            <div>
+                                <strong>{{ item.name }}</strong>
+                                <span>{{ item.quantidade }} unidade(s)</span>
+                            </div>
+                            <div class="recent-meta">
+                                <strong>R$ {{ item.valor|floatformat:2 }}</strong>
+                            </div>
+                        </a>
+                    {% endfor %}
                 {% else %}
-                    <div class="empty-state text-center p-4">
-                        Nenhum orcamento salvo ainda.
-                    </div>
+                    <div class="empty-dashboard-state">Nenhum orcamento salvo ainda.</div>
                 {% endif %}
             </div>
         </aside>
     </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.querySelector("form[data-lead-url-template]");
+            if (!form) {
+                return;
+            }
+
+            const leadSelect = form.querySelector("[name='lead']");
+            const clienteSelect = form.querySelector("[name='cliente']");
+            if (!leadSelect) {
+                return;
+            }
+
+            const fields = {
+                name: form.querySelector("[name='name']"),
+                email: form.querySelector("[name='email']"),
+                telefone: form.querySelector("[name='telefone']"),
+                cep: form.querySelector("[name='cep']"),
+                logradouro: form.querySelector("[name='logradouro']"),
+                numero: form.querySelector("[name='numero']"),
+                complemento: form.querySelector("[name='complemento']"),
+                bairro: form.querySelector("[name='bairro']"),
+                cidade: form.querySelector("[name='cidade']"),
+                uf: form.querySelector("[name='uf']"),
+                endereco: form.querySelector("[name='endereco']"),
+            };
+
+            function setField(name, value) {
+                if (fields[name]) {
+                    fields[name].value = value || "";
+                }
+            }
+
+            async function preencherLead() {
+                const leadId = leadSelect.value;
+                if (!leadId) {
+                    return;
+                }
+
+                if (clienteSelect) {
+                    clienteSelect.value = "";
+                }
+
+                const url = form.dataset.leadUrlTemplate.replace("/0/", `/${leadId}/`);
+                try {
+                    const response = await fetch(url, {headers: {"Accept": "application/json"}});
+                    const data = await response.json();
+                    if (!response.ok || !data.ok) {
+                        throw new Error(data.error || "Nao foi possivel carregar os dados do lead.");
+                    }
+
+                    Object.entries(data.lead).forEach(([fieldName, value]) => {
+                        if (fieldName !== "id") {
+                            setField(fieldName, value);
+                        }
+                    });
+                } catch (error) {
+                    window.hfAlert?.({
+                        icon: "error",
+                        title: "Lead nao encontrado",
+                        text: error.message,
+                    });
+                }
+            }
+
+            leadSelect.addEventListener("change", preencherLead);
+        });
+    </script>
 {% endblock %}

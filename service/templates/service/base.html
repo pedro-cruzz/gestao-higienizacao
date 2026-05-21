@@ -19,20 +19,20 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     >
     {% block extra_head %}{% endblock %}
-    <link rel="stylesheet" href="{% static 'service/css/dashboard.css' %}?v=20260519-clientes-1">
+    <link rel="stylesheet" href="{% static 'service/css/dashboard.css' %}?v=20260520-merge-1">
 </head>
 <body class="higiflow-app">
     <div class="hf-shell">
         <aside class="hf-sidebar">
             <div class="hf-brand">
                 <img class="hf-brand-logo" src="{% static 'service/img/higiflow-logo.png' %}" alt="HigiFlow">
-                <small>HigiFlow - Gestão simplificada</small>
+                <small>HigiFlow - Gestao simplificada</small>
             </div>
 
             <nav class="hf-nav" aria-label="Menu principal">
                 <a href="{% url 'inicio' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'inicio' %} active{% endif %}">
-                    <i class="bi bi-house-door"></i>
-                    <span>Início</span>
+                    <i class="bi bi-columns-gap"></i>
+                    <span>Inicio</span>
                 </a>
                 <a href="{% url 'leads' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'leads' or request.resolver_match.url_name == 'novo_lead' %} active{% endif %}">
                     <i class="bi bi-people"></i>
@@ -40,15 +40,15 @@
                 </a>
                 <a href="{% url 'catalogo' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'catalogo' or request.resolver_match.url_name == 'novo_produto' or request.resolver_match.url_name == 'editar_produto' or request.resolver_match.url_name == 'nova_categoria' %} active{% endif %}">
                     <i class="bi bi-grid"></i>
-                    <span>Catálogo</span>
+                    <span>Catalogo</span>
                 </a>
                 <a href="{% url 'orcamentos' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'orcamentos' or request.resolver_match.url_name == 'novo_orcamento' or request.resolver_match.url_name == 'orcamento_detalhe' %} active{% endif %}">
                     <i class="bi bi-file-earmark-text"></i>
-                    <span>Orçamentos</span>
+                    <span>Orcamentos</span>
                 </a>
-                <a href="{% url 'ordens_servico' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'ordens_servico' %} active{% endif %}">
+                <a href="{% url 'ordens_servico' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'ordens_servico' or request.resolver_match.url_name == 'nova_os' or request.resolver_match.url_name == 'os_detalhe' or request.resolver_match.url_name == 'editar_os' %} active{% endif %}">
                     <i class="bi bi-clipboard-check"></i>
-                    <span>Ordens de Serviço</span>
+                    <span>Ordens de Servico</span>
                 </a>
                 <a href="{% url 'agenda' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'agenda' %} active{% endif %}">
                     <i class="bi bi-calendar3"></i>
@@ -58,9 +58,9 @@
                     <i class="bi bi-person-circle"></i>
                     <span>Clientes</span>
                 </a>
-                <a href="{% url 'catalogo' %}" class="hf-nav-link">
+                <a href="{% url 'tecnicos' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'tecnicos' or request.resolver_match.url_name == 'novo_tecnico' or request.resolver_match.url_name == 'editar_tecnico' %} active{% endif %}">
                     <i class="bi bi-gear"></i>
-                    <span>Configurações</span>
+                    <span>Equipe</span>
                 </a>
             </nav>
         </aside>
@@ -73,13 +73,13 @@
                 </form>
 
                 <div class="hf-userbar">
-                    <button type="button" class="hf-notification" aria-label="Notificações">
+                    <button type="button" class="hf-notification" aria-label="Notificacoes">
                         <i class="bi bi-bell"></i>
                     </button>
                     <div class="hf-user">
                         <span class="hf-avatar">JD</span>
                         <div>
-                            <strong>João Silva</strong>
+                            <strong>Joao Silva</strong>
                             <span>Administrador</span>
                         </div>
                         <i class="bi bi-chevron-down text-secondary"></i>
@@ -136,10 +136,10 @@
 
             const titleByIcon = {
                 success: "Tudo certo",
-                error: "Atenção",
-                warning: "Atenção",
+                error: "Atencao",
+                warning: "Atencao",
                 info: "Aviso",
-                question: "Confirmar ação",
+                question: "Confirmar acao",
             };
 
             function normalizeIcon(tag) {
@@ -179,7 +179,7 @@
                     Swal.fire({
                         ...alertDefaults,
                         icon: form.dataset.hfConfirmIcon || "question",
-                        title: form.dataset.hfConfirmTitle || "Confirmar ação",
+                        title: form.dataset.hfConfirmTitle || "Confirmar acao",
                         text: form.dataset.hfConfirmText || "Deseja continuar?",
                         showCancelButton: true,
                         confirmButtonText: form.dataset.hfConfirmButton || "Confirmar",
@@ -230,8 +230,8 @@
                         if (cep.length !== 8) {
                             window.hfAlert({
                                 icon: "warning",
-                                title: "CEP inválido",
-                                text: "Informe um CEP com 8 dígitos.",
+                                title: "CEP invalido",
+                                text: "Informe um CEP com 8 digitos.",
                             });
                             return;
                         }
@@ -242,7 +242,7 @@
                             const response = await fetch(url, {headers: {"Accept": "application/json"}});
                             const data = await response.json();
                             if (!response.ok || !data.ok) {
-                                throw new Error(data.error || "Não foi possível buscar o CEP.");
+                                throw new Error(data.error || "Nao foi possivel buscar o CEP.");
                             }
 
                             if (fields.logradouro) fields.logradouro.value = data.endereco.logradouro || "";
@@ -255,7 +255,7 @@
                         } catch (error) {
                             window.hfAlert({
                                 icon: "error",
-                                title: "CEP não encontrado",
+                                title: "CEP nao encontrado",
                                 text: error.message,
                             });
                         } finally {

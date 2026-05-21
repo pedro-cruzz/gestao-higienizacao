@@ -5,7 +5,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from service.models import Cliente, Orcamento, Service_catalog
+from service.models import Cliente, Lead, Orcamento, OrdemServico, Service_catalog
 
 
 def _month_boundaries() -> tuple[datetime, datetime]:
@@ -58,15 +58,15 @@ def _signed_count(current: int, previous: int) -> str:
 
 def _lead_status_class(status: str) -> str:
     return {
-        Cliente.Status.NOVO: "status-blue",
-        Cliente.Status.CONTATADO: "status-yellow",
-        Cliente.Status.AGUARDANDO: "status-gray",
-        Cliente.Status.CONVERTIDO: "status-soft-blue",
+        Lead.Status.NOVO: "status-blue",
+        Lead.Status.CONTATADO: "status-yellow",
+        Lead.Status.AGUARDANDO: "status-gray",
+        Lead.Status.CONVERTIDO: "status-soft-blue",
     }.get(status, "status-gray")
 
 
 def _dashboard_leads():
-    leads = Cliente.objects.order_by("-created_at", "-id")[:3]
+    leads = Lead.objects.order_by("-created_at", "-id")[:3]
     return [
         {
             "name": lead.name,
@@ -80,20 +80,38 @@ def _dashboard_leads():
 
 
 def _dashboard_ordens():
-    ordens = Orcamento.objects.prefetch_related("itens").order_by("-created_at", "-id")[:3]
+    ordens = OrdemServico.objects.select_related("tecnico").order_by("-created_at", "-id")[:3]
     dashboard_ordens = []
 
     for ordem in ordens:
-        primeiro_item = next(iter(ordem.itens.all()), None)
         dashboard_ordens.append(
             {
-                "name": ordem.name,
-                "servico": primeiro_item.name if primeiro_item else "Servico cadastrado",
-                "status_label": "Concluida" if ordem.aprovado else "Em execucao",
-                "status_class": "status-soft-blue" if ordem.aprovado else "status-purple",
+                "name": ordem.titulo,
+                "servico": ordem.responsavel_nome,
+                "status_label": ordem.get_status_display(),
+                "status_class": {
+                    OrdemServico.Status.AGENDADA: "status-blue",
+                    OrdemServico.Status.EM_ANDAMENTO: "status-purple",
+                    OrdemServico.Status.CONCLUIDA: "status-soft-blue",
+                    OrdemServico.Status.CANCELADA: "status-red",
+                }.get(ordem.status, "status-gray"),
                 "valor": ordem.valor,
             }
         )
+
+    if not dashboard_ordens:
+        orcamentos = Orcamento.objects.prefetch_related("itens").order_by("-created_at", "-id")[:3]
+        for orcamento in orcamentos:
+            primeiro_item = next(iter(orcamento.itens.all()), None)
+            dashboard_ordens.append(
+                {
+                    "name": orcamento.name,
+                    "servico": primeiro_item.name if primeiro_item else "Servico cadastrado",
+                    "status_label": "Concluida" if orcamento.aprovado else "Em execucao",
+                    "status_class": "status-soft-blue" if orcamento.aprovado else "status-purple",
+                    "valor": orcamento.valor,
+                }
+            )
 
     return dashboard_ordens
 
@@ -101,7 +119,7 @@ def _dashboard_ordens():
 def inicio(request: HttpRequest) -> HttpResponse:
     previous_start, current_start = _month_boundaries()
 
-    leads = Cliente.objects.all()
+    leads = Lead.objects.all()
     orcamentos = Orcamento.objects.all()
     orcamentos_aprovados = orcamentos.filter(aprovado=True)
     servicos_catalogo = Service_catalog.objects.all()

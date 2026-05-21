@@ -20,12 +20,8 @@
             <strong>{{ total_orcamentos }}</strong>
         </article>
         <article class="orcamento-summary-card">
-            <span>Rascunhos</span>
-            <strong class="summary-neutral">{{ total_rascunhos }}</strong>
-        </article>
-        <article class="orcamento-summary-card">
-            <span>Enviados</span>
-            <strong class="summary-blue">{{ total_enviados }}</strong>
+            <span>Pendentes</span>
+            <strong class="summary-blue">{{ total_pendentes }}</strong>
         </article>
         <article class="orcamento-summary-card">
             <span>Aprovados</span>
@@ -95,21 +91,37 @@
                             </td>
                             <td>{{ linha.validade|date:"d/m/Y" }}</td>
                             <td>
-                                <div class="quote-actions">
-                                    <a href="{% url 'orcamento_detalhe' linha.obj.pk %}" class="quote-icon-button" aria-label="Abrir orçamento {{ linha.numero }}">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    {% if linha.pode_enviar %}
-                                        <a href="{% url 'orcamento_detalhe' linha.obj.pk %}" class="quote-icon-button" aria-label="Preparar envio do orçamento {{ linha.numero }}">
-                                            <i class="bi bi-send"></i>
-                                        </a>
-                                    {% endif %}
-                                    <a href="{% url 'gerar_orcamento_pdf' linha.obj.pk %}" class="quote-icon-button" aria-label="Baixar PDF do orçamento {{ linha.numero }}">
-                                        <i class="bi bi-download"></i>
-                                    </a>
-                                    <a href="{% url 'editar_orcamento' linha.obj.pk %}" class="quote-icon-button" aria-label="Editar orçamento {{ linha.numero }}">
+                                <div class="quote-actions dropdown">
+                                    <button
+                                        type="button"
+                                        class="quote-icon-button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-boundary="viewport"
+                                        aria-expanded="false"
+                                        aria-label="Abrir menu de acoes do orcamento {{ linha.numero }}"
+                                    >
                                         <i class="bi bi-three-dots-vertical"></i>
-                                    </a>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
+                                        <a href="{% url 'orcamento_detalhe' linha.obj.pk %}" class="dropdown-item hf-actions-menu-item">
+                                            <i class="bi bi-eye"></i>
+                                            <span>Abrir orcamento</span>
+                                        </a>
+                                        {% if linha.pode_aprovar %}
+                                            <a href="{% url 'orcamento_detalhe' linha.obj.pk %}?aprovar=1" class="dropdown-item hf-actions-menu-item">
+                                                <i class="bi bi-check2-circle"></i>
+                                                <span>Aprovar orcamento</span>
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'gerar_orcamento_pdf' linha.obj.pk %}" class="dropdown-item hf-actions-menu-item">
+                                            <i class="bi bi-download"></i>
+                                            <span>Baixar PDF</span>
+                                        </a>
+                                        <a href="{% url 'editar_orcamento' linha.obj.pk %}" class="dropdown-item hf-actions-menu-item">
+                                            <i class="bi bi-pencil-square"></i>
+                                            <span>Editar orcamento</span>
+                                        </a>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

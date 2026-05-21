@@ -1,0 +1,74 @@
+{% extends "service/base.html" %}
+
+{% block title %}Equipe Tecnica | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>Equipe Tecnica</h1>
+            <p>Cadastre os usuarios operacionais que podem receber ordens de servico.</p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{% url 'ordens_servico' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-list-check"></i>
+                <span>OS</span>
+            </a>
+            <a href="{% url 'novo_tecnico' %}" class="hf-btn hf-btn-primary">
+                <i class="bi bi-person-plus"></i>
+                <span>Nova equipe</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="orcamentos-panel" aria-label="Equipe tecnica">
+        <div class="leads-toolbar">
+            <form method="get" class="leads-search orcamentos-search">
+                <i class="bi bi-search"></i>
+                <input type="search" name="q" value="{{ busca }}" placeholder="Buscar equipe..." aria-label="Buscar equipe">
+            </form>
+            <span class="filter-button">
+                <i class="bi bi-people"></i>
+                <span>{{ total_tecnicos }} cadastro(s)</span>
+            </span>
+        </div>
+
+        <div class="leads-table-wrap">
+            <table class="os-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Contato</th>
+                        <th>Especialidade</th>
+                        <th>Status</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tecnico in tecnicos %}
+                        <tr>
+                            <td class="quote-number">{{ tecnico.name }}</td>
+                            <td>{{ tecnico.telefone|default:tecnico.email|default:"-" }}</td>
+                            <td>{{ tecnico.especialidade|default:"-" }}</td>
+                            <td>
+                                <span class="status-pill {% if tecnico.ativo %}status-soft-blue{% else %}status-gray{% endif %}">
+                                    {% if tecnico.ativo %}Ativo{% else %}Inativo{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'editar_tecnico' tecnico.pk %}" class="quote-icon-button" aria-label="Editar {{ tecnico.name }}">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="table-empty">Nenhuma equipe cadastrada ainda.</div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

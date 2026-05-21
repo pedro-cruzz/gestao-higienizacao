@@ -18,15 +18,27 @@
                 <i class="bi bi-arrow-left"></i>
                 <span>Voltar</span>
             </a>
-            <button
-                type="button"
-                class="hf-btn hf-btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#pdfCustomizationModal"
-            >
-                <i class="bi bi-file-earmark-pdf"></i>
-                <span>Gerar PDF</span>
-            </button>
+            {% if not orcamento.aprovado %}
+                <button
+                    type="button"
+                    class="hf-btn hf-btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#approveBudgetModal"
+                >
+                    <i class="bi bi-check2-circle"></i>
+                    <span>Aprovar</span>
+                </button>
+            {% else %}
+                <button
+                    type="button"
+                    class="hf-btn hf-btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#pdfCustomizationModal"
+                >
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    <span>Gerar PDF</span>
+                </button>
+            {% endif %}
             <a href="{% url 'editar_orcamento' orcamento.pk %}" class="hf-btn hf-btn-light">
                 <i class="bi bi-pencil-square"></i>
                 <span>Editar</span>
@@ -38,10 +50,10 @@
         <article class="metric-card">
             <div>
                 <p>Status</p>
-                <strong>{% if orcamento.aprovado %}Concluido{% else %}Pendente{% endif %}</strong>
+                <strong>{% if orcamento.aprovado %}Aprovado{% else %}Pendente{% endif %}</strong>
                 <span>
                     <i class="bi {% if orcamento.aprovado %}bi-check-circle{% else %}bi-clock{% endif %}"></i>
-                    {% if orcamento.aprovado %}Pronto para agenda{% else %}Aguardando conclusao{% endif %}
+                    {% if orcamento.aprovado %}Pronto para agenda{% else %}Aguardando aprovacao{% endif %}
                 </span>
             </div>
             <span class="metric-icon"><i class="bi bi-clipboard-check"></i></span>
@@ -149,8 +161,10 @@
             <article class="dashboard-card orcamento-panel orcamento-client-card">
                 <header>
                     <h2>Cliente</h2>
-                    {% if orcamento.aprovado %}
-                        <span class="status-pill status-blue">Concluido</span>
+                    {% if not orcamento.cliente %}
+                        <span class="status-pill status-gray">Ainda nao vinculado</span>
+                    {% elif orcamento.aprovado %}
+                        <span class="status-pill status-blue">Aprovado</span>
                     {% else %}
                         <span class="status-pill status-yellow">Pendente</span>
                     {% endif %}
@@ -158,15 +172,15 @@
 
                 <div class="orcamento-detail-list">
                     <div>
-                        <span>Nome</span>
-                        <strong>{{ orcamento.name }}</strong>
+                        <span>Vinculo</span>
+                        <strong>{% if orcamento.cliente %}{{ orcamento.cliente.name }}{% else %}Ainda nao vinculado{% endif %}</strong>
                     </div>
                     <div>
-                        <span>Email</span>
+                        <span>Email do orcamento</span>
                         <strong>{{ orcamento.email|default:"Sem email" }}</strong>
                     </div>
                     <div>
-                        <span>Telefone</span>
+                        <span>Telefone do orcamento</span>
                         <strong>{{ orcamento.telefone|default:"Sem telefone" }}</strong>
                     </div>
                     <div>
@@ -194,7 +208,17 @@
                     <div class="empty-dashboard-state orcamento-compact-empty">Nenhum cliente vinculado.</div>
                 {% endif %}
 
-                {% if total_clientes %}
+                {% if not orcamento.aprovado %}
+                    <button
+                        type="button"
+                        class="hf-btn hf-btn-primary orcamento-link-button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#approveBudgetModal"
+                    >
+                        <i class="bi bi-check2-circle"></i>
+                        <span>Aprovar e vincular</span>
+                    </button>
+                {% elif total_clientes %}
                     <form
                         method="post"
                         action="{% url 'vincular_cliente_orcamento' orcamento.pk %}"
@@ -215,81 +239,201 @@
             </article>
 
             <article class="dashboard-card orcamento-panel">
-                <header>
+                <header class="orcamento-actions-header">
                     <h2>Acoes</h2>
-                    <span class="status-pill status-gray">Operacao</span>
-                </header>
-
-                <div class="orcamento-action-list">
-                    {% if not orcamento.aprovado %}
-                        <form
-                            method="post"
-                            action="{% url 'concluir_orcamento' orcamento.pk %}"
-                            class="m-0"
-                            data-hf-confirm
-                            data-hf-confirm-icon="question"
-                            data-hf-confirm-title="Concluir orçamento?"
-                            data-hf-confirm-text="O orçamento será marcado como concluído sem cadastrar cliente automaticamente."
-                            data-hf-confirm-button="Concluir"
+                    <div class="dropdown">
+                        <button
+                            type="button"
+                            class="quote-icon-button orcamento-menu-toggle"
+                            data-bs-toggle="dropdown"
+                            data-bs-boundary="viewport"
+                            aria-expanded="false"
+                            aria-label="Abrir menu de acoes do orcamento"
                         >
-                            {% csrf_token %}
-                            <button type="submit" class="hf-btn hf-btn-primary">
-                                <i class="bi bi-check2-circle"></i>
-                                <span>Concluir</span>
-                            </button>
-                        </form>
-                    {% endif %}
-                    {% if not orcamento.cliente %}
-                        <form
-                            method="post"
-                            action="{% url 'cadastrar_cliente_orcamento' orcamento.pk %}"
-                            class="m-0"
-                            data-hf-confirm
-                            data-hf-confirm-icon="question"
-                            data-hf-confirm-title="Cadastrar cliente?"
-                            data-hf-confirm-text="Os dados deste orçamento serão usados para criar ou atualizar o cadastro do cliente."
-                            data-hf-confirm-button="Cadastrar"
-                        >
-                            {% csrf_token %}
-                            <button type="submit" class="hf-btn hf-btn-light">
-                                <i class="bi bi-person-plus"></i>
-                                <span>Cadastrar cliente</span>
-                            </button>
-                        </form>
-                    {% endif %}
-                    <a class="hf-btn hf-btn-light" href="{% url 'editar_orcamento' orcamento.pk %}">
-                        <i class="bi bi-pencil-square"></i>
-                        <span>Editar orcamento</span>
-                    </a>
-                    <button
-                        type="button"
-                        class="hf-btn hf-btn-light"
-                        data-bs-toggle="modal"
-                        data-bs-target="#pdfCustomizationModal"
-                    >
-                        <i class="bi bi-file-earmark-pdf"></i>
-                        <span>Gerar PDF</span>
-                    </button>
-                    <form
-                        method="post"
-                        action="{% url 'deletar_orcamento' orcamento.pk %}"
-                        class="m-0"
-                        data-hf-confirm
-                        data-hf-confirm-icon="warning"
-                        data-hf-confirm-title="Excluir orcamento?"
-                        data-hf-confirm-text="Esta acao removera o orcamento permanentemente."
-                        data-hf-confirm-button="Excluir"
-                    >
-                        {% csrf_token %}
-                        <button type="submit" class="hf-btn hf-btn-light orcamento-danger-action">
-                            <i class="bi bi-trash"></i>
-                            <span>Excluir orcamento</span>
+                            <i class="bi bi-three-dots-vertical"></i>
                         </button>
-                    </form>
-                </div>
+                        <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
+                            {% if not orcamento.aprovado %}
+                                <button
+                                    type="button"
+                                    class="dropdown-item hf-actions-menu-item"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#approveBudgetModal"
+                                >
+                                    <i class="bi bi-check2-circle"></i>
+                                    <span>Aprovar orcamento</span>
+                                </button>
+                            {% elif ordem_servico %}
+                                <a class="dropdown-item hf-actions-menu-item" href="{% url 'os_detalhe' ordem_servico.pk %}">
+                                    <i class="bi bi-clipboard-check"></i>
+                                    <span>Abrir OS #{{ ordem_servico.pk }}</span>
+                                </a>
+                            {% else %}
+                                <a class="dropdown-item hf-actions-menu-item" href="{% url 'nova_os' %}?orcamento={{ orcamento.pk }}">
+                                    <i class="bi bi-calendar-plus"></i>
+                                    <span>Criar OS e agendar</span>
+                                </a>
+                            {% endif %}
+                            {% if orcamento.aprovado and not orcamento.cliente %}
+                                <form
+                                    method="post"
+                                    action="{% url 'cadastrar_cliente_orcamento' orcamento.pk %}"
+                                    class="m-0"
+                                    data-hf-confirm
+                                    data-hf-confirm-icon="question"
+                                    data-hf-confirm-title="Cadastrar cliente?"
+                                    data-hf-confirm-text="Os dados deste orçamento serão usados para criar ou atualizar o cadastro do cliente."
+                                    data-hf-confirm-button="Cadastrar"
+                                >
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item hf-actions-menu-item">
+                                        <i class="bi bi-person-plus"></i>
+                                        <span>Cadastrar cliente</span>
+                                    </button>
+                                </form>
+                            {% endif %}
+                            <a class="dropdown-item hf-actions-menu-item" href="{% url 'editar_orcamento' orcamento.pk %}">
+                                <i class="bi bi-pencil-square"></i>
+                                <span>Editar orcamento</span>
+                            </a>
+                            <button
+                                type="button"
+                                class="dropdown-item hf-actions-menu-item"
+                                data-bs-toggle="modal"
+                                data-bs-target="#pdfCustomizationModal"
+                            >
+                                <i class="bi bi-file-earmark-pdf"></i>
+                                <span>Gerar PDF</span>
+                            </button>
+                            <div class="dropdown-divider"></div>
+                            <form
+                                method="post"
+                                action="{% url 'deletar_orcamento' orcamento.pk %}"
+                                class="m-0"
+                                data-hf-confirm
+                                data-hf-confirm-icon="warning"
+                                data-hf-confirm-title="Excluir orcamento?"
+                                data-hf-confirm-text="Esta acao removera o orcamento permanentemente."
+                                data-hf-confirm-button="Excluir"
+                            >
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item hf-actions-menu-item hf-actions-menu-danger">
+                                    <i class="bi bi-trash"></i>
+                                    <span>Excluir orcamento</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </header>
             </article>
         </aside>
     </section>
+
+    {% if not orcamento.aprovado %}
+        <div
+            class="modal fade hf-pdf-modal hf-approval-modal"
+            id="approveBudgetModal"
+            tabindex="-1"
+            aria-labelledby="approveBudgetModalLabel"
+            aria-hidden="true"
+        >
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content hf-pdf-modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h2 class="modal-title" id="approveBudgetModalLabel">Aprovar orcamento</h2>
+                            <p>Escolha como este orcamento sera ligado ao cliente.</p>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="approval-options-grid">
+                            {% if orcamento.cliente %}
+                                <form
+                                    method="post"
+                                    action="{% url 'concluir_orcamento' orcamento.pk %}"
+                                    class="approval-option-card approval-option-card-featured"
+                                >
+                                    {% csrf_token %}
+                                    <i class="bi bi-person-check"></i>
+                                    <strong>Aprovar com cliente vinculado</strong>
+                                    <span>{{ orcamento.cliente.name }} ja esta ligado a este orcamento.</span>
+                                    <button type="submit" class="hf-btn hf-btn-primary">
+                                        <i class="bi bi-check2-circle"></i>
+                                        <span>Aprovar agora</span>
+                                    </button>
+                                </form>
+                            {% endif %}
+
+                            <form
+                                method="post"
+                                action="{% url 'vincular_cliente_orcamento' orcamento.pk %}"
+                                class="approval-option-card"
+                            >
+                                {% csrf_token %}
+                                <input type="hidden" name="voltar_para_aprovacao" value="1">
+                                <i class="bi bi-link-45deg"></i>
+                                <strong>Vincular cliente existente</strong>
+                                <span>Use um cadastro que ja esta na base antes de aprovar.</span>
+                                {% if total_clientes %}
+                                    <label for="{{ vinculo_form.cliente.id_for_label }}">Cliente</label>
+                                    {{ vinculo_form.cliente }}
+                                    {{ vinculo_form.cliente.errors }}
+                                    <button type="submit" class="hf-btn hf-btn-primary">
+                                        <i class="bi bi-link-45deg"></i>
+                                        <span>Vincular cliente</span>
+                                    </button>
+                                {% else %}
+                                    <p class="muted-copy mb-0">Nenhum cliente cadastrado ainda.</p>
+                                    <a href="{% url 'novo_cliente' %}" class="hf-btn hf-btn-light">
+                                        <i class="bi bi-person-plus"></i>
+                                        <span>Criar cadastro manual</span>
+                                    </a>
+                                {% endif %}
+                            </form>
+
+                            <form
+                                method="post"
+                                action="{% url 'cadastrar_cliente_orcamento' orcamento.pk %}"
+                                class="approval-option-card"
+                            >
+                                {% csrf_token %}
+                                <input type="hidden" name="voltar_para_aprovacao" value="1">
+                                <i class="bi bi-person-plus"></i>
+                                <strong>Criar cliente deste orcamento</strong>
+                                <span>Cria ou atualiza o cliente usando nome, contato e endereco antes da aprovacao.</span>
+                                <dl class="approval-client-preview">
+                                    <div>
+                                        <dt>Nome</dt>
+                                        <dd>{{ orcamento.name }}</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Email</dt>
+                                        <dd>{{ orcamento.email|default:"Sem email" }}</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Telefone</dt>
+                                        <dd>{{ orcamento.telefone|default:"Sem telefone" }}</dd>
+                                    </div>
+                                </dl>
+                                {% if orcamento.email %}
+                                    <button type="submit" class="hf-btn hf-btn-primary">
+                                        <i class="bi bi-person-plus"></i>
+                                        <span>Criar cliente</span>
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'editar_orcamento' orcamento.pk %}" class="hf-btn hf-btn-light">
+                                        <i class="bi bi-pencil-square"></i>
+                                        <span>Informar email</span>
+                                    </a>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 
     <div
         class="modal fade hf-pdf-modal"
@@ -302,7 +446,6 @@
             <form
                 method="post"
                 action="{% url 'gerar_orcamento_pdf' orcamento.pk %}"
-                enctype="multipart/form-data"
                 class="modal-content hf-pdf-modal-content"
             >
                 {% csrf_token %}
@@ -343,18 +486,6 @@
                             >{{ orcamento.descricao|default:"" }}</textarea>
                         </label>
 
-                        <label class="pdf-logo-upload pdf-customization-field-wide" for="pdf_logo">
-                            <i class="bi bi-cloud-arrow-up"></i>
-                            <span>Logo da empresa</span>
-                            <small data-pdf-logo-name>PNG, JPG ou WEBP ate 3 MB</small>
-                            <input
-                                id="pdf_logo"
-                                name="pdf_logo"
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp"
-                                data-pdf-logo-input
-                            >
-                        </label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -565,16 +696,15 @@
         })();
 
         (() => {
-            const logoInput = document.querySelector("[data-pdf-logo-input]");
-            const logoName = document.querySelector("[data-pdf-logo-name]");
-            if (!logoInput || !logoName) {
+            const approveModal = document.getElementById("approveBudgetModal");
+            if (!approveModal || !window.bootstrap) {
                 return;
             }
 
-            const defaultText = logoName.textContent;
-            logoInput.addEventListener("change", () => {
-                logoName.textContent = logoInput.files?.[0]?.name || defaultText;
-            });
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("aprovar") === "1") {
+                bootstrap.Modal.getOrCreateInstance(approveModal).show();
+            }
         })();
     </script>
 {% endblock %}

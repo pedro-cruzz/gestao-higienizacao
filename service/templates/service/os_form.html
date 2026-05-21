@@ -1,0 +1,157 @@
+{% extends "service/base.html" %}
+
+{% block title %}{% if is_edit %}Editar OS{% else %}Nova OS{% endif %} | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>{% if is_edit %}Editar OS #{{ ordem.pk }}{% else %}Nova Ordem de Servico{% endif %}</h1>
+            <p>Defina agenda, responsavel e instrucoes para execucao.</p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{% url 'ordens_servico' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-arrow-left"></i>
+                <span>OS</span>
+            </a>
+            <a href="{% url 'novo_tecnico' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-person-plus"></i>
+                <span>Nova equipe</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="catalog-form-layout">
+        <article class="catalog-form-panel">
+            <header>
+                <span class="status-pill status-soft-blue">Operacao</span>
+                <h2>{% if is_edit %}Atualizar OS{% else %}Agendar servico{% endif %}</h2>
+            </header>
+
+            <form method="post" class="catalog-form">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <div class="form-field span-2">
+                    <label for="{{ form.orcamento.id_for_label }}">{{ form.orcamento.label }}</label>
+                    {{ form.orcamento }}
+                    {{ form.orcamento.errors }}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.cliente.id_for_label }}">{{ form.cliente.label }}</label>
+                    {{ form.cliente }}
+                    {{ form.cliente.errors }}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                    {{ form.status }}
+                    {{ form.status.errors }}
+                </div>
+
+                <div class="form-field span-2">
+                    <label for="{{ form.titulo.id_for_label }}">{{ form.titulo.label }}</label>
+                    {{ form.titulo }}
+                    {{ form.titulo.errors }}
+                </div>
+
+                <div class="form-field span-2">
+                    <label for="{{ form.descricao.id_for_label }}">{{ form.descricao.label }}</label>
+                    {{ form.descricao }}
+                    {{ form.descricao.errors }}
+                </div>
+
+                <div class="form-field span-2">
+                    <label for="{{ form.endereco.id_for_label }}">{{ form.endereco.label }}</label>
+                    {{ form.endereco }}
+                    {{ form.endereco.errors }}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.data_agendada.id_for_label }}">{{ form.data_agendada.label }}</label>
+                    {{ form.data_agendada }}
+                    {{ form.data_agendada.errors }}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.hora_inicio.id_for_label }}">{{ form.hora_inicio.label }}</label>
+                    {{ form.hora_inicio }}
+                    {{ form.hora_inicio.errors }}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.hora_fim.id_for_label }}">{{ form.hora_fim.label }}</label>
+                    {{ form.hora_fim }}
+                    {{ form.hora_fim.errors }}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.valor.id_for_label }}">{{ form.valor.label }}</label>
+                    {{ form.valor }}
+                    {{ form.valor.errors }}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.tecnico.id_for_label }}">{{ form.tecnico.label }}</label>
+                    {{ form.tecnico }}
+                    {{ form.tecnico.errors }}
+                </div>
+
+                <div class="form-field os-check-field">
+                    <label for="{{ form.administrador_executa.id_for_label }}">
+                        {{ form.administrador_executa }}
+                        <span>{{ form.administrador_executa.label }}</span>
+                    </label>
+                    {{ form.administrador_executa.errors }}
+                </div>
+
+                <div class="form-field span-2">
+                    <label for="{{ form.instrucoes.id_for_label }}">{{ form.instrucoes.label }}</label>
+                    {{ form.instrucoes }}
+                    {{ form.instrucoes.errors }}
+                </div>
+
+                <div class="form-field span-2">
+                    <label for="{{ form.checklist.id_for_label }}">{{ form.checklist.label }}</label>
+                    {{ form.checklist }}
+                    {{ form.checklist.errors }}
+                </div>
+
+                <div class="form-actions span-2">
+                    <button type="submit" class="hf-btn hf-btn-primary">
+                        <i class="bi bi-check-lg"></i>
+                        <span>{% if is_edit %}Salvar alteracoes{% else %}Criar OS{% endif %}</span>
+                    </button>
+                    <a href="{% url 'ordens_servico' %}" class="hf-btn hf-btn-light">Cancelar</a>
+                </div>
+            </form>
+        </article>
+
+        <aside class="dashboard-card catalog-recent">
+            <header>
+                <h2>Equipe tecnica</h2>
+                <a href="{% url 'tecnicos' %}">Ver todos <i class="bi bi-chevron-right"></i></a>
+            </header>
+
+            <div class="recent-list">
+                {% if tecnicos_recentes %}
+                    {% for tecnico in tecnicos_recentes %}
+                        <div class="recent-row">
+                            <div>
+                                <strong>{{ tecnico.name }}</strong>
+                                <span>{{ tecnico.especialidade|default:"Equipe ativa" }}</span>
+                            </div>
+                            <div class="recent-meta">
+                                <span class="status-pill {% if tecnico.ativo %}status-soft-blue{% else %}status-gray{% endif %}">
+                                    {% if tecnico.ativo %}Ativo{% else %}Inativo{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-dashboard-state">Nenhuma equipe cadastrada ainda.</div>
+                {% endif %}
+            </div>
+        </aside>
+    </section>
+{% endblock %}
