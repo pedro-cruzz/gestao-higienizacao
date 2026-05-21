@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar | HigiFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="{% static 'service/css/dashboard.css' %}?v=20260520-auth">
+</head>
+<body class="higiflow-login">
+    <main class="hf-login-shell">
+        <section class="hf-login-panel" aria-label="Acesso ao HigiFlow">
+            <div class="hf-login-brand">
+                <img src="{% static 'service/img/higiflow-logo.png' %}" alt="HigiFlow">
+                <div>
+                    <strong>HigiFlow</strong>
+                    <span>Gestao simplificada</span>
+                </div>
+            </div>
+
+            <header class="hf-login-header">
+                <h1>Entrar no sistema</h1>
+                <p>Use seu usuario de administrador ou equipe para acessar o painel.</p>
+            </header>
+
+            {% if messages %}
+                <div class="hf-login-messages">
+                    {% for message in messages %}
+                        <div class="hf-login-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="hf-login-error">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post" class="hf-login-form">
+                {% csrf_token %}
+                <label>
+                    <span>Usuario</span>
+                    <div>
+                        <i class="bi bi-person"></i>
+                        <input type="text" name="{{ form.username.name }}" autocomplete="username" required autofocus>
+                    </div>
+                </label>
+                <label>
+                    <span>Senha</span>
+                    <div>
+                        <i class="bi bi-lock"></i>
+                        <input type="password" name="{{ form.password.name }}" autocomplete="current-password" required>
+                    </div>
+                </label>
+                <button type="submit">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    Entrar
+                </button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

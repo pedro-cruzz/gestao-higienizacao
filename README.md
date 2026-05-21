@@ -21,6 +21,7 @@ Projeto inicial em Django para gerenciamento de:
 - listagem de clientes
 - cadastro de equipe tecnica
 - ordens de servico com agenda, responsavel e conclusao
+- autenticacao com perfil de administrador e equipe
 - painel web com navbar e sidebar
 
 ## Modelos Principais
@@ -111,6 +112,8 @@ Campos principais:
 
 ## Rotas Principais
 
+- `/login/` - entrada do sistema
+- `/logout/` - saida do sistema
 - `/catalogo/` - listagem do catalogo
 - `/catalogo/novo/` - cadastro de produto
 - `/orcamentos/novo/` - criacao de orcamento
@@ -138,7 +141,16 @@ venv\Scripts\Activate.ps1
 python manage.py migrate
 ```
 
-### 3. Rodar o servidor
+### 3. Criar os grupos de acesso
+
+```powershell
+python manage.py setup_access_groups
+```
+
+Use o admin do Django para colocar usuarios no grupo `Administradores` ou `Equipe`.
+Superusuarios e usuarios staff tambem entram com acesso de administrador.
+
+### 4. Rodar o servidor
 
 ```powershell
 python manage.py runserver
