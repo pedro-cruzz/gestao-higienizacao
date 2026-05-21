@@ -395,3 +395,4 @@ def deletar_cliente(request: HttpRequest, pk: int) -> HttpResponse:
 
     messages.success(request, f"Cliente '{nome}' excluido com sucesso.")
     return redirect("clientes")
+

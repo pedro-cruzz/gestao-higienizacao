@@ -95,6 +95,14 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "Servico agenda teste")
         self.assertContains(response, "Administrador / dono")
 
+    def test_configuracoes_retorna_ok(self):
+        response = self.client.get(reverse("configuracoes"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Configura")
+        self.assertContains(response, "Esta pagina sera implementada futuramente")
+        self.assertNotContains(response, ">Equipe<")
+
     def test_cria_lead(self):
         response = self.client.post(
             reverse("novo_lead"),

@@ -243,5 +243,9 @@ def agenda(request: HttpRequest) -> HttpResponse:
     return render(request, "service/agenda.html", context)
 
 
+def configuracoes(request: HttpRequest) -> HttpResponse:
+    return render(request, "service/configuracoes.html")
+
+
 def teste(request: HttpRequest) -> HttpResponse:
     return render(request, "teste.html")

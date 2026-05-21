@@ -8,7 +8,7 @@ from service.views.catalogo import (
     novo_cliente,
     novo_lead,
 )
-from service.views.comum import inicio, teste
+from service.views.comum import configuracoes, inicio, teste
 from service.views.orcamentos import (
     aprovar_orcamento,
     buscar_cliente_dados,
@@ -49,6 +49,7 @@ __all__ = [
     "buscar_mapa_orcamento",
     "cadastrar_cliente_orcamento",
     "catalogo",
+    "configuracoes",
     "concluir_orcamento",
     "concluir_ordem_servico",
     "deletar_cliente",
