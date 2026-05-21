@@ -31,6 +31,16 @@
                     {{ form.name.errors }}
                 </div>
                 <div class="form-field">
+                    <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                    {{ form.username }}
+                    {{ form.username.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.senha.id_for_label }}">{{ form.senha.label }}</label>
+                    {{ form.senha }}
+                    {{ form.senha.errors }}
+                </div>
+                <div class="form-field">
                     <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
                     {{ form.email }}
                     {{ form.email.errors }}

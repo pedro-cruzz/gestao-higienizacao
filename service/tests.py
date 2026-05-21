@@ -1268,6 +1268,8 @@ class ServiceViewsTests(TestCase):
             reverse("novo_tecnico"),
             {
                 "name": "Equipe A",
+                "username": "equipe-a",
+                "senha": "senha-equipe",
                 "email": "equipe@teste.com",
                 "telefone": "11912345678",
                 "especialidade": "Sofas e tapetes",
@@ -1280,6 +1282,10 @@ class ServiceViewsTests(TestCase):
         tecnico = Tecnico.objects.get(name="Equipe A")
         self.assertTrue(tecnico.ativo)
         self.assertEqual(tecnico.especialidade, "Sofas e tapetes")
+        self.assertIsNotNone(tecnico.user)
+        self.assertEqual(tecnico.user.username, "equipe-a")
+        self.assertTrue(tecnico.user.groups.filter(name=TEAM_GROUP).exists())
+        self.assertTrue(self.client.login(username="equipe-a", password="senha-equipe"))
 
     def test_cria_os_a_partir_de_orcamento_com_tecnico(self):
         cliente = Cliente.objects.create(name="Cliente OS", email="os@teste.com")

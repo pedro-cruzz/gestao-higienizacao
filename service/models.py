@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -173,6 +174,13 @@ class Cliente(models.Model):
 
 
 class Tecnico(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tecnico_profile",
+    )
     name = models.CharField(max_length=100)
     email = models.EmailField(null=True, blank=True)
     telefone = models.CharField(max_length=20, null=True, blank=True)
