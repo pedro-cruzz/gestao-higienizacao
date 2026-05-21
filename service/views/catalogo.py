@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, Sum
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -60,22 +60,107 @@ def nova_categoria(request: HttpRequest) -> HttpResponse:
 
 def listar_clientes(request: HttpRequest) -> HttpResponse:
     busca = request.GET.get("q", "").strip()
-    clientes = Cliente.objects.order_by("name")
+    todos_clientes = Cliente.objects.prefetch_related("orcamentos").order_by("name")
+    clientes = todos_clientes
 
     if busca:
         clientes = clientes.filter(
             Q(name__icontains=busca)
             | Q(email__icontains=busca)
             | Q(telefone__icontains=busca)
+            | Q(endereco__icontains=busca)
+            | Q(bairro__icontains=busca)
+            | Q(cidade__icontains=busca)
+            | Q(uf__icontains=busca)
             | Q(status__icontains=busca)
         )
 
+    clientes = clientes.annotate(
+        total_servicos=Count("orcamentos", distinct=True),
+        total_gasto=Sum("orcamentos__valor"),
+        ticket_medio=Avg("orcamentos__valor"),
+    )
+
+    def tipo_cliente(cliente: Cliente) -> str:
+        texto = f"{cliente.name} {cliente.email}".lower()
+        termos_empresariais = ("empresa", "ltda", "tech", "hotel", "plaza", "clean", "corp", "comercial")
+        if any(termo in texto for termo in termos_empresariais):
+            return "Empresarial"
+        return "Residencial"
+
+    def mes_cliente(cliente: Cliente) -> str:
+        meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+        return f"{meses[cliente.created_at.month - 1]}/{cliente.created_at.year}"
+
+    def contato_cliente(cliente: Cliente) -> str:
+        return cliente.telefone or cliente.email or "-"
+
+    def localizacao_cliente(cliente: Cliente) -> str:
+        if cliente.bairro and cliente.cidade and cliente.uf:
+            return f"{cliente.bairro}, {cliente.cidade} - {cliente.uf}"
+        if cliente.cidade and cliente.uf:
+            return f"{cliente.cidade} - {cliente.uf}"
+        return cliente.endereco or "-"
+
+    linhas_clientes = [
+        {
+            "obj": cliente,
+            "name": cliente.name,
+            "desde": mes_cliente(cliente),
+            "contato": contato_cliente(cliente),
+            "localizacao": localizacao_cliente(cliente),
+            "tipo": tipo_cliente(cliente),
+            "tipo_class": "client-type-business" if tipo_cliente(cliente) == "Empresarial" else "client-type-residential",
+            "servicos": cliente.total_servicos or 0,
+            "total_gasto": cliente.total_gasto or 0,
+            "ticket_medio": cliente.ticket_medio or 0,
+        }
+        for cliente in clientes
+    ]
+
+    if not linhas_clientes and not busca:
+        linhas_clientes = _clientes_exemplo()
+
+    total_residenciais = sum(1 for cliente in linhas_clientes if cliente["tipo"] == "Residencial")
+    total_empresariais = sum(1 for cliente in linhas_clientes if cliente["tipo"] == "Empresarial")
+    faturamento_total = sum(cliente["total_gasto"] for cliente in linhas_clientes)
+
     context = {
         "busca": busca,
-        "clientes": clientes,
-        "total_clientes": clientes.count(),
+        "clientes": linhas_clientes,
+        "total_clientes": len(linhas_clientes),
+        "total_residenciais": total_residenciais,
+        "total_empresariais": total_empresariais,
+        "faturamento_total": faturamento_total,
     }
     return render(request, "service/clientes.html", context)
+
+
+def _clientes_exemplo() -> list[dict]:
+    nomes = [
+        ("Roberto Alves", "Mar/2026", "(11) 98765-4321", "Jardim Paulista, São Paulo - SP", "Residencial", 3, 1450, 483),
+        ("Empresa Clean Tech Ltda", "Jan/2026", "(11) 3456-7890", "Centro, São Paulo - SP", "Empresarial", 8, 6240, 780),
+        ("Maria Santos", "Abr/2026", "(11) 97654-3210", "Vila Mariana, São Paulo - SP", "Residencial", 2, 890, 445),
+        ("Carlos Oliveira", "Fev/2026", "(11) 96543-2109", "Pinheiros, São Paulo - SP", "Residencial", 5, 2180, 436),
+        ("Hotel Confort Plaza", "Jan/2026", "(11) 3789-0123", "Brooklin, São Paulo - SP", "Empresarial", 12, 9600, 800),
+        ("Ana Costa", "Abr/2026", "(11) 95432-1098", "Moema, São Paulo - SP", "Residencial", 1, 320, 320),
+        ("Paulo Mendes", "Mar/2026", "(11) 94321-0987", "Itaim Bibi, São Paulo - SP", "Residencial", 4, 1680, 420),
+    ]
+    return [
+        {
+            "obj": None,
+            "name": nome,
+            "desde": desde,
+            "contato": contato,
+            "localizacao": localizacao,
+            "tipo": tipo,
+            "tipo_class": "client-type-business" if tipo == "Empresarial" else "client-type-residential",
+            "servicos": servicos,
+            "total_gasto": total_gasto,
+            "ticket_medio": ticket_medio,
+        }
+        for nome, desde, contato, localizacao, tipo, servicos, total_gasto, ticket_medio in nomes
+    ]
 
 
 def listar_leads(request: HttpRequest) -> HttpResponse:
