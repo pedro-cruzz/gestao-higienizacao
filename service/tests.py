@@ -76,6 +76,8 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "Lead Dashboard")
         self.assertContains(response, "Cliente Dashboard")
         self.assertContains(response, "100%")
+        self.assertContains(response, "bi-house-door")
+        self.assertNotContains(response, "bi-columns-gap")
 
     def test_agenda_retorna_ok(self):
         OrdemServico.objects.create(
@@ -102,6 +104,15 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "Configura")
         self.assertContains(response, "Esta pagina sera implementada futuramente")
         self.assertNotContains(response, ">Equipe<")
+
+    def test_login_placeholder_e_link_de_saida(self):
+        login_response = self.client.get(reverse("login"))
+        inicio_response = self.client.get(reverse("inicio"))
+
+        self.assertEqual(login_response.status_code, 200)
+        self.assertContains(login_response, "Esta pagina de acesso sera implementada futuramente")
+        self.assertContains(inicio_response, f'href="{reverse("login")}"')
+        self.assertContains(inicio_response, ">Sair<")
 
     def test_cria_lead(self):
         response = self.client.post(

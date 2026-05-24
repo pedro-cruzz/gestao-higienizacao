@@ -247,5 +247,9 @@ def configuracoes(request: HttpRequest) -> HttpResponse:
     return render(request, "service/configuracoes.html")
 
 
+def login(request: HttpRequest) -> HttpResponse:
+    return render(request, "service/login.html")
+
+
 def teste(request: HttpRequest) -> HttpResponse:
     return render(request, "teste.html")

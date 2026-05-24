@@ -29,6 +29,7 @@ from service.views import (
     listar_orcamentos,
     listar_ordens_servico,
     listar_tecnicos,
+    login,
     nova_categoria,
     novo_cliente,
     novo_lead,
@@ -42,6 +43,7 @@ from service.views import (
 
 urlpatterns = [
     path("", inicio, name="inicio"),
+    path("login/", login, name="login"),
     path("teste/", teste, name="teste"),
     path("leads/", listar_leads, name="leads"),
     path("leads/novo/", novo_lead, name="novo_lead"),
