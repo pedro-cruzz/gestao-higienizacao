@@ -110,7 +110,11 @@ class ServiceViewsTests(TestCase):
         inicio_response = self.client.get(reverse("inicio"))
 
         self.assertEqual(login_response.status_code, 200)
-        self.assertContains(login_response, "Esta pagina de acesso sera implementada futuramente")
+        self.assertContains(login_response, "login-shell")
+        self.assertContains(login_response, "Bem-vindo ao HigiFlow")
+        self.assertContains(login_response, "seu@email.com")
+        self.assertContains(login_response, "Gerencie seu neg")
+        self.assertNotContains(login_response, "hf-sidebar")
         self.assertContains(inicio_response, f'href="{reverse("login")}"')
         self.assertContains(inicio_response, ">Sair<")
 

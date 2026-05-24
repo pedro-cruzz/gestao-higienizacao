@@ -1,18 +1,91 @@
-{% extends "service/base.html" %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | HigiFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+    <link rel="stylesheet" href="{% static 'service/css/dashboard.css' %}?v=20260524-login-center-1">
+</head>
+<body class="login-page">
+    <main class="login-shell">
+        <section class="login-panel login-panel-form" aria-label="Login">
+            <div class="login-form-stack">
+                <header class="login-heading">
+                    <h1>Bem-vindo ao HigiFlow</h1>
+                    <p>Gest&atilde;o simplificada para sua empresa</p>
+                </header>
 
-{% block title %}Login | HigiFlow{% endblock %}
+                <section class="login-card" aria-label="Formul&aacute;rio de acesso">
+                    <form class="login-form" action="{% url 'inicio' %}" method="get">
+                        <label class="login-field">
+                            <span>Email</span>
+                            <span class="login-input-wrap">
+                                <i class="bi bi-envelope"></i>
+                                <input type="email" name="email" placeholder="seu@email.com" autocomplete="email">
+                            </span>
+                        </label>
 
-{% block content %}
-    <section class="page-heading">
-        <div>
-            <h1>Login</h1>
-            <p>Esta pagina de acesso sera implementada futuramente.</p>
-        </div>
-    </section>
+                        <label class="login-field">
+                            <span>Senha</span>
+                            <span class="login-input-wrap">
+                                <i class="bi bi-lock"></i>
+                                <input type="password" name="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+                                <button type="button" class="login-eye-button" aria-label="Mostrar senha">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </span>
+                        </label>
 
-    <section class="dashboard-card">
-        <div class="empty-dashboard-state">
-            O fluxo de autenticacao ainda nao esta ativo.
-        </div>
-    </section>
-{% endblock %}
+                        <div class="login-options">
+                            <label class="login-remember">
+                                <input type="checkbox" name="remember">
+                                <span>Lembrar-me</span>
+                            </label>
+                            <a href="#">Esqueceu a senha?</a>
+                        </div>
+
+                        <button type="submit" class="login-submit">Entrar</button>
+                    </form>
+
+                    <div class="login-divider">
+                        <span>ou</span>
+                    </div>
+
+                    <p class="login-access-copy">
+                        N&atilde;o tem uma conta? <a href="#">Solicite acesso</a>
+                    </p>
+                </section>
+
+                <p class="login-copyright">&copy; 2024 HigiFlow. Todos os direitos reservados.</p>
+            </div>
+        </section>
+
+        <section class="login-panel login-panel-brand" aria-label="Benef&iacute;cios do HigiFlow">
+            <div class="login-brand-content">
+                <img class="login-brand-logo" src="{% static 'service/img/higiflow-logo.png' %}" alt="HigiFlow">
+                <h2>Gerencie seu neg&oacute;cio com efici&ecirc;ncia</h2>
+                <p>Controle completo de leads, or&ccedil;amentos, ordens de servi&ccedil;o e muito mais. Tudo em um s&oacute; lugar.</p>
+
+                <div class="login-proof-grid">
+                    <article>
+                        <strong>500+</strong>
+                        <span>Ordens conclu&iacute;das</span>
+                    </article>
+                    <article>
+                        <strong>98%</strong>
+                        <span>Satisfa&ccedil;&atilde;o dos clientes</span>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
