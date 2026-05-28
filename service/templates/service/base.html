@@ -33,7 +33,7 @@
                 {% if hf_is_dev %}
                     <a href="{% url 'admins' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'admins' or request.resolver_match.url_name == 'novo_admin' or request.resolver_match.url_name == 'editar_admin' %} active{% endif %}">
                         <i class="bi bi-person-badge"></i>
-                        <span>Admins</span>
+                        <span>Acessos</span>
                     </a>
                 {% endif %}
                 {% if hf_is_admin %}

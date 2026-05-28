@@ -1,24 +1,24 @@
 {% extends "service/base.html" %}
 
-{% block title %}Admins | HigiFlow{% endblock %}
+{% block title %}Acessos | HigiFlow{% endblock %}
 
 {% block content %}
     <section class="page-heading">
         <div>
-            <h1>Admins</h1>
-            <p>Cadastre os donos das empresas que usam o sistema.</p>
+            <h1>Acessos</h1>
+            <p>Cadastre devs e admins que usam o sistema.</p>
         </div>
         <a href="{% url 'novo_admin' %}" class="hf-btn hf-btn-primary">
             <i class="bi bi-person-plus"></i>
-            <span>Novo admin</span>
+            <span>Novo acesso</span>
         </a>
     </section>
 
-    <section class="orcamentos-panel" aria-label="Admins">
+    <section class="orcamentos-panel" aria-label="Acessos">
         <div class="leads-toolbar">
             <form method="get" class="leads-search orcamentos-search">
                 <i class="bi bi-search"></i>
-                <input type="search" name="q" value="{{ busca }}" placeholder="Buscar admin..." aria-label="Buscar admin">
+                <input type="search" name="q" value="{{ busca }}" placeholder="Buscar usuario..." aria-label="Buscar usuario">
             </form>
             <span class="filter-button">
                 <i class="bi bi-person-badge"></i>
@@ -33,6 +33,7 @@
                         <th>Nome</th>
                         <th>Usuario</th>
                         <th>Email</th>
+                        <th>Perfil</th>
                         <th>Status</th>
                         <th>Acoes</th>
                     </tr>
@@ -43,6 +44,11 @@
                             <td class="quote-number">{{ admin.get_full_name|default:admin.username }}</td>
                             <td>{{ admin.username }}</td>
                             <td>{{ admin.email|default:"-" }}</td>
+                            <td>
+                                <span class="status-pill {% if admin.perfil_label == 'Dev' %}status-purple{% else %}status-soft-blue{% endif %}">
+                                    {{ admin.perfil_label }}
+                                </span>
+                            </td>
                             <td>
                                 <span class="status-pill {% if admin.is_active %}status-soft-blue{% else %}status-gray{% endif %}">
                                     {% if admin.is_active %}Ativo{% else %}Inativo{% endif %}
@@ -56,8 +62,8 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="5">
-                                <div class="table-empty">Nenhum admin cadastrado ainda.</div>
+                            <td colspan="6">
+                                <div class="table-empty">Nenhum usuario cadastrado ainda.</div>
                             </td>
                         </tr>
                     {% endfor %}

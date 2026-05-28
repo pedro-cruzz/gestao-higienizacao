@@ -77,6 +77,7 @@ class AuthAccessTests(TestCase):
                 "first_name": "Dono Empresa",
                 "username": "dono",
                 "email": "dono@empresa.com",
+                "perfil": ADMIN_GROUP,
                 "senha": "senha-segura",
                 "is_active": "on",
             },
@@ -87,6 +88,30 @@ class AuthAccessTests(TestCase):
         self.assertTrue(admin.groups.filter(name=ADMIN_GROUP).exists())
         self.assertFalse(admin.is_staff)
         self.assertFalse(admin.is_superuser)
+
+    def test_dev_cria_outro_dev_superuser(self):
+        group = Group.objects.create(name=DEV_GROUP)
+        user = self.user_model.objects.create_user(username="dev", password="senha-segura")
+        user.groups.add(group)
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("novo_admin"),
+            {
+                "first_name": "Dev Dois",
+                "username": "dev-dois",
+                "email": "dev2@empresa.com",
+                "perfil": DEV_GROUP,
+                "senha": "senha-segura",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("admins"), fetch_redirect_response=False)
+        novo_dev = self.user_model.objects.get(username="dev-dois")
+        self.assertTrue(novo_dev.groups.filter(name=DEV_GROUP).exists())
+        self.assertTrue(novo_dev.is_staff)
+        self.assertTrue(novo_dev.is_superuser)
 
     def test_admin_nao_acessa_area_de_dev(self):
         group = Group.objects.create(name=ADMIN_GROUP)

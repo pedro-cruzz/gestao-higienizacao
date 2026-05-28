@@ -1,23 +1,23 @@
 {% extends "service/base.html" %}
 
-{% block title %}{% if is_edit %}Editar Admin{% else %}Novo Admin{% endif %} | HigiFlow{% endblock %}
+{% block title %}{% if is_edit %}Editar Acesso{% else %}Novo Acesso{% endif %} | HigiFlow{% endblock %}
 
 {% block content %}
     <section class="page-heading">
         <div>
-            <h1>{% if is_edit %}Editar admin{% else %}Novo admin{% endif %}</h1>
-            <p>Admins sao os donos das empresas e acessam as areas de gestao do sistema.</p>
+            <h1>{% if is_edit %}Editar acesso{% else %}Novo acesso{% endif %}</h1>
+            <p>Devs gerenciam acessos. Admins usam todas as funcoes do sistema, exceto a area dev.</p>
         </div>
         <a href="{% url 'admins' %}" class="hf-btn hf-btn-light">
             <i class="bi bi-arrow-left"></i>
-            <span>Admins</span>
+            <span>Acessos</span>
         </a>
     </section>
 
     <section class="catalog-form-layout">
         <article class="catalog-form-panel">
             <header>
-                <span class="status-pill status-soft-blue">Dono da empresa</span>
+                <span class="status-pill status-soft-blue">Usuario do sistema</span>
                 <h2>Dados de acesso</h2>
             </header>
 
@@ -34,6 +34,11 @@
                     <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
                     {{ form.username }}
                     {{ form.username.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.perfil.id_for_label }}">{{ form.perfil.label }}</label>
+                    {{ form.perfil }}
+                    {{ form.perfil.errors }}
                 </div>
                 <div class="form-field">
                     <label for="{{ form.senha.id_for_label }}">{{ form.senha.label }}</label>
@@ -56,7 +61,7 @@
                 <div class="form-actions span-2">
                     <button type="submit" class="hf-btn hf-btn-primary">
                         <i class="bi bi-check-lg"></i>
-                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar admin{% endif %}</span>
+                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar acesso{% endif %}</span>
                     </button>
                     <a href="{% url 'admins' %}" class="hf-btn hf-btn-light">Cancelar</a>
                 </div>

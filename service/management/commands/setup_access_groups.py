@@ -34,8 +34,8 @@ class Command(BaseCommand):
         user, created = user_model.objects.get_or_create(username=username)
         user.email = email
         user.is_active = True
-        user.is_staff = False
-        user.is_superuser = False
+        user.is_staff = True
+        user.is_superuser = True
         user.set_password(password)
         user.save()
         dev_group = Group.objects.get(name=DEV_GROUP)

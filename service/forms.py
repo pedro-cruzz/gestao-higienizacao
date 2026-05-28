@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Q
 
-from service.access import ADMIN_GROUP, TEAM_GROUP
+from service.access import ADMIN_GROUP, DEV_GROUP, TEAM_GROUP
 from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
 
 
@@ -668,6 +668,14 @@ class TecnicoForm(forms.ModelForm):
 
 
 class AdminUserForm(forms.ModelForm):
+    perfil = forms.ChoiceField(
+        label="Perfil",
+        choices=[
+            (ADMIN_GROUP, "Admin / dono"),
+            (DEV_GROUP, "Dev / super user"),
+        ],
+        widget=forms.Select(),
+    )
     senha = forms.CharField(
         label="Senha inicial",
         required=False,
@@ -690,8 +698,11 @@ class AdminUserForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.actor = kwargs.pop("actor", None)
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
+            perfil = DEV_GROUP if self.instance.is_superuser or self.instance.groups.filter(name=DEV_GROUP).exists() else ADMIN_GROUP
+            self.fields["perfil"].initial = perfil
             self.fields["senha"].label = "Nova senha"
             self.fields["senha"].widget.attrs["placeholder"] = "Preencha apenas para trocar a senha"
         else:
@@ -699,7 +710,21 @@ class AdminUserForm(forms.ModelForm):
             self.initial.setdefault("is_active", True)
 
         for name, field in self.fields.items():
-            field.widget.attrs["class"] = "form-check-input" if name == "is_active" else "form-control"
+            if name == "is_active":
+                field.widget.attrs["class"] = "form-check-input"
+            elif isinstance(field.widget, forms.Select):
+                field.widget.attrs["class"] = "form-select"
+            else:
+                field.widget.attrs["class"] = "form-control"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.actor and self.instance and self.instance.pk == self.actor.pk:
+            if cleaned_data.get("perfil") != DEV_GROUP:
+                self.add_error("perfil", "Voce nao pode remover o proprio perfil dev.")
+            if not cleaned_data.get("is_active"):
+                self.add_error("is_active", "Voce nao pode desativar o proprio usuario.")
+        return cleaned_data
 
     def clean_email(self):
         return normalizar_email(self.cleaned_data.get("email"))
@@ -716,16 +741,23 @@ class AdminUserForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data.get("email") or ""
-        user.is_staff = False
-        user.is_superuser = False
+        perfil = self.cleaned_data["perfil"]
+        user.is_staff = perfil == DEV_GROUP
+        user.is_superuser = perfil == DEV_GROUP
         senha = self.cleaned_data.get("senha")
         if senha:
             user.set_password(senha)
         if commit:
             user.save()
+            dev_group, _ = Group.objects.get_or_create(name=DEV_GROUP)
             admin_group, _ = Group.objects.get_or_create(name=ADMIN_GROUP)
             team_group, _ = Group.objects.get_or_create(name=TEAM_GROUP)
-            user.groups.add(admin_group)
+            if perfil == DEV_GROUP:
+                user.groups.add(dev_group)
+                user.groups.remove(admin_group)
+            else:
+                user.groups.add(admin_group)
+                user.groups.remove(dev_group)
             user.groups.remove(team_group)
             self.save_m2m()
         return user
