@@ -1,92 +1,143 @@
 {% extends "service/base.html" %}
 
-{% block title %}Clientes | ERP Higienizacao{% endblock %}
+{% block title %}Clientes | HigiFlow{% endblock %}
 
 {% block content %}
-    <section class="hero-card card border-0 p-4 p-lg-5 mb-4">
-        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
-            <div>
-                <span class="badge rounded-pill px-3 py-2 mb-3">Clientes</span>
-                <h1 class="display-6 fw-semibold">Cadastros de clientes.</h1>
-                <p class="mb-0 text-white-50">
-                    Consulte contatos, busque por nome ou email e acompanhe quem ja entrou para a base.
-                </p>
-            </div>
-            <div class="align-self-lg-start">
-                <a href="{% url 'novo_cliente' %}" class="btn btn-light btn-lg">
-                    <i class="bi bi-person-plus"></i>
-                    Novo cliente
-                </a>
-            </div>
+    <section class="page-heading">
+        <div>
+            <h1>Clientes</h1>
+            <p>Gerencie sua base de clientes ativos</p>
         </div>
+        <a href="{% url 'novo_cliente' %}" class="hf-btn hf-btn-primary">
+            <i class="bi bi-plus-lg"></i>
+            <span>Novo Cliente</span>
+        </a>
     </section>
 
-    <section class="content-card p-4 mb-4">
-        <form method="get" class="row g-3 align-items-end">
-            <div class="col-12 col-lg-8">
-                <label for="q" class="form-label fw-semibold">Buscar cliente</label>
-                <input id="q" name="q" value="{{ busca }}" placeholder="Nome, email ou telefone" class="form-control form-control-lg">
-            </div>
-            <div class="col-12 col-lg-4">
-                <button type="submit" class="btn btn-success btn-lg w-100">Buscar</button>
-            </div>
-        </form>
-        <p class="muted-copy mt-3 mb-0">Total encontrado: {{ total_clientes }} cliente(s).</p>
+    <section class="clientes-summary-grid" aria-label="Resumo dos clientes">
+        <article class="clientes-summary-card">
+            <span>Total de Clientes</span>
+            <strong>{{ total_clientes }}</strong>
+        </article>
+        <article class="clientes-summary-card">
+            <span><i class="bi bi-house-door"></i> Residencial</span>
+            <strong>{{ total_residenciais }}</strong>
+        </article>
+        <article class="clientes-summary-card">
+            <span><i class="bi bi-building"></i> Empresarial</span>
+            <strong>{{ total_empresariais }}</strong>
+        </article>
+        <article class="clientes-summary-card">
+            <span><i class="bi bi-graph-up-arrow"></i> Faturamento Total</span>
+            <strong class="summary-blue">R$ {{ faturamento_total|floatformat:0 }}</strong>
+        </article>
     </section>
 
-    <section class="section-card p-4">
-        <h2 class="h4 mb-4">Lista de clientes</h2>
-        {% if clientes %}
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead>
+    <section class="clientes-panel" aria-label="Lista de clientes">
+        <div class="leads-toolbar">
+            <form method="get" class="leads-search clientes-search">
+                <i class="bi bi-search"></i>
+                <input
+                    type="search"
+                    name="q"
+                    value="{{ busca }}"
+                    placeholder="Buscar por nome, telefone ou endereço..."
+                    aria-label="Buscar por nome, telefone ou endereço"
+                >
+            </form>
+            <button type="button" class="filter-button">
+                <i class="bi bi-funnel"></i>
+                <span>Filtros</span>
+            </button>
+        </div>
+
+        <div class="leads-table-wrap">
+            <table class="clientes-table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Contato</th>
+                        <th>Localização</th>
+                        <th>Tipo</th>
+                        <th>Serviços</th>
+                        <th>Total Gasto</th>
+                        <th>Ticket Médio</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
                         <tr>
-                            <th>Nome</th>
-                            <th>Email</th>
-                            <th>Telefone</th>
-                            <th>Endereco</th>
-                            <th>Status</th>
-                            <th>Orcamentos</th>
-                            <th></th>
+                            <td>
+                                <div class="client-name-cell">
+                                    <strong>{{ cliente.name }}</strong>
+                                    <span>Cliente desde {{ cliente.desde }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="client-info-cell">
+                                    <i class="bi bi-telephone"></i>
+                                    {{ cliente.contato }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="client-info-cell">
+                                    <i class="bi bi-geo-alt"></i>
+                                    {{ cliente.localizacao }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="client-type {{ cliente.tipo_class }}">
+                                    {% if cliente.tipo == "Empresarial" %}
+                                        <i class="bi bi-building"></i>
+                                    {% else %}
+                                        <i class="bi bi-house-door"></i>
+                                    {% endif %}
+                                    {{ cliente.tipo }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="client-services-count">
+                                    <strong>{{ cliente.servicos }}</strong>
+                                    <small>realizados</small>
+                                </span>
+                            </td>
+                            <td class="client-money">R$ {{ cliente.total_gasto|floatformat:0 }}</td>
+                            <td>R$ {{ cliente.ticket_medio|floatformat:0 }}</td>
+                            <td>
+                                {% if cliente.obj %}
+                                    <a href="{% url 'editar_cliente' cliente.obj.pk %}" class="client-profile-button">
+                                        <i class="bi bi-eye"></i>
+                                        <span>Ver Perfil</span>
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'novo_cliente' %}" class="client-profile-button">
+                                        <i class="bi bi-eye"></i>
+                                        <span>Ver Perfil</span>
+                                    </a>
+                                {% endif %}
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for cliente in clientes %}
-                            <tr>
-                                <td class="fw-semibold">{{ cliente.name }}</td>
-                                <td>{{ cliente.email }}</td>
-                                <td>{{ cliente.telefone|default:"-" }}</td>
-                                <td>{{ cliente.endereco|default:"-" }}</td>
-                                <td>{{ cliente.get_status_display }}</td>
-                                <td>{{ cliente.orcamentos.count }}</td>
-                                <td class="text-end">
-                                    <div class="d-flex justify-content-end gap-2">
-                                        <a href="{% url 'editar_cliente' cliente.pk %}" class="btn btn-outline-primary btn-sm">Editar</a>
-                                        <form
-                                            method="post"
-                                            action="{% url 'deletar_cliente' cliente.pk %}"
-                                            class="m-0"
-                                            data-hf-confirm
-                                            data-hf-confirm-icon="warning"
-                                            data-hf-confirm-title="Excluir cliente?"
-                                            data-hf-confirm-text="Esta acao remove o cliente da base, mas mantem os orcamentos vinculados no historico."
-                                            data-hf-confirm-button="Excluir"
-                                        >
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">Excluir</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8">
+                                <div class="table-empty">
+                                    Nenhum cliente encontrado para a busca atual.
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="clientes-pagination">
+            <p>Mostrando {{ total_clientes }} de {{ total_clientes }} clientes</p>
+            <div>
+                <button type="button" class="pagination-button" disabled>Anterior</button>
+                <button type="button" class="pagination-button active">1</button>
+                <button type="button" class="pagination-button" disabled>Próximo</button>
             </div>
-        {% else %}
-            <div class="empty-state text-center p-5">
-                Nenhum cliente cadastrado ainda.
-                <a href="{% url 'novo_cliente' %}" class="fw-semibold">Cadastrar cliente</a>
-            </div>
-        {% endif %}
+        </footer>
     </section>
 {% endblock %}
