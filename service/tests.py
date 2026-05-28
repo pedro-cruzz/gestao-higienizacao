@@ -2,18 +2,76 @@ from datetime import datetime, time
 import tempfile
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
+from service.access import TEAM_GROUP
 from service.services.nominatim import LocalizacaoMapa, NominatimService
 from service.services.viacep import EnderecoViaCep
 
 
+class AuthAccessTests(TestCase):
+    def setUp(self):
+        self.user_model = get_user_model()
+
+    def test_area_interna_redireciona_para_login_sem_usuario(self):
+        response = self.client.get(reverse("orcamentos"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("login"), response["Location"])
+
+    def test_login_admin_redireciona_para_inicio(self):
+        self.user_model.objects.create_user(
+            username="admin-login",
+            password="senha-segura",
+            is_staff=True,
+        )
+
+        response = self.client.post(
+            reverse("login"),
+            {"username": "admin-login", "password": "senha-segura"},
+        )
+
+        self.assertRedirects(response, reverse("inicio"), fetch_redirect_response=False)
+
+    def test_login_equipe_redireciona_para_agenda(self):
+        group = Group.objects.create(name=TEAM_GROUP)
+        user = self.user_model.objects.create_user(
+            username="equipe-login",
+            password="senha-segura",
+        )
+        user.groups.add(group)
+
+        response = self.client.post(
+            reverse("login"),
+            {"username": "equipe-login", "password": "senha-segura"},
+        )
+
+        self.assertRedirects(response, reverse("agenda"), fetch_redirect_response=False)
+
+    def test_equipe_acessa_ordens_mas_nao_acessa_orcamentos(self):
+        group = Group.objects.create(name=TEAM_GROUP)
+        user = self.user_model.objects.create_user(username="equipe", password="senha-segura")
+        user.groups.add(group)
+        self.client.force_login(user)
+
+        self.assertEqual(self.client.get(reverse("ordens_servico")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("orcamentos")).status_code, 403)
+
+
 class ServiceViewsTests(TestCase):
     def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="admin-teste",
+            password="senha-segura",
+            is_staff=True,
+        )
+        self.client.force_login(self.user)
         self.item_a = Service_catalog.objects.create(
             name="Banner 1x1",
             tipo="Impressao",
@@ -1233,6 +1291,8 @@ class ServiceViewsTests(TestCase):
             reverse("novo_tecnico"),
             {
                 "name": "Equipe A",
+                "username": "equipe-a",
+                "senha": "senha-equipe",
                 "email": "equipe@teste.com",
                 "telefone": "11912345678",
                 "especialidade": "Sofas e tapetes",
@@ -1245,6 +1305,10 @@ class ServiceViewsTests(TestCase):
         tecnico = Tecnico.objects.get(name="Equipe A")
         self.assertTrue(tecnico.ativo)
         self.assertEqual(tecnico.especialidade, "Sofas e tapetes")
+        self.assertIsNotNone(tecnico.user)
+        self.assertEqual(tecnico.user.username, "equipe-a")
+        self.assertTrue(tecnico.user.groups.filter(name=TEAM_GROUP).exists())
+        self.assertTrue(self.client.login(username="equipe-a", password="senha-equipe"))
 
     def test_cria_os_a_partir_de_orcamento_com_tecnico(self):
         cliente = Cliente.objects.create(name="Cliente OS", email="os@teste.com")

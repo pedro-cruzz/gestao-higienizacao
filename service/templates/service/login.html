@@ -24,12 +24,27 @@
                 </header>
 
                 <section class="login-card" aria-label="Formul&aacute;rio de acesso">
-                    <form class="login-form" action="{% url 'inicio' %}" method="get">
+                    {% if messages %}
+                        <div class="login-alerts">
+                            {% for message in messages %}
+                                <div class="login-message">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if form.non_field_errors %}
+                        <div class="login-error">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <form class="login-form" method="post">
+                        {% csrf_token %}
                         <label class="login-field">
-                            <span>Email</span>
+                            <span>Usu&aacute;rio</span>
                             <span class="login-input-wrap">
-                                <i class="bi bi-envelope"></i>
-                                <input type="email" name="email" placeholder="seu@email.com" autocomplete="email">
+                                <i class="bi bi-person"></i>
+                                <input type="text" name="{{ form.username.name }}" value="{{ form.username.value|default_if_none:'' }}" placeholder="seu.usuario" autocomplete="username" required autofocus>
                             </span>
                         </label>
 
@@ -37,7 +52,7 @@
                             <span>Senha</span>
                             <span class="login-input-wrap">
                                 <i class="bi bi-lock"></i>
-                                <input type="password" name="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+                                <input type="password" name="{{ form.password.name }}" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" required>
                                 <button type="button" class="login-eye-button" aria-label="Mostrar senha">
                                     <i class="bi bi-eye"></i>
                                 </button>

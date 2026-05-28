@@ -30,22 +30,24 @@
             </div>
 
             <nav class="hf-nav" aria-label="Menu principal">
-                <a href="{% url 'inicio' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'inicio' %} active{% endif %}">
-                    <i class="bi bi-house-door"></i>
-                    <span>Inicio</span>
-                </a>
-                <a href="{% url 'leads' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'leads' or request.resolver_match.url_name == 'novo_lead' %} active{% endif %}">
-                    <i class="bi bi-people"></i>
-                    <span>Leads</span>
-                </a>
-                <a href="{% url 'catalogo' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'catalogo' or request.resolver_match.url_name == 'novo_produto' or request.resolver_match.url_name == 'editar_produto' or request.resolver_match.url_name == 'nova_categoria' %} active{% endif %}">
-                    <i class="bi bi-grid"></i>
-                    <span>Catalogo</span>
-                </a>
-                <a href="{% url 'orcamentos' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'orcamentos' or request.resolver_match.url_name == 'novo_orcamento' or request.resolver_match.url_name == 'orcamento_detalhe' %} active{% endif %}">
-                    <i class="bi bi-file-earmark-text"></i>
-                    <span>Orcamentos</span>
-                </a>
+                {% if hf_is_admin %}
+                    <a href="{% url 'inicio' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'inicio' %} active{% endif %}">
+                        <i class="bi bi-house-door"></i>
+                        <span>Inicio</span>
+                    </a>
+                    <a href="{% url 'leads' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'leads' or request.resolver_match.url_name == 'novo_lead' %} active{% endif %}">
+                        <i class="bi bi-people"></i>
+                        <span>Leads</span>
+                    </a>
+                    <a href="{% url 'catalogo' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'catalogo' or request.resolver_match.url_name == 'novo_produto' or request.resolver_match.url_name == 'editar_produto' or request.resolver_match.url_name == 'nova_categoria' %} active{% endif %}">
+                        <i class="bi bi-grid"></i>
+                        <span>Catalogo</span>
+                    </a>
+                    <a href="{% url 'orcamentos' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'orcamentos' or request.resolver_match.url_name == 'novo_orcamento' or request.resolver_match.url_name == 'orcamento_detalhe' %} active{% endif %}">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Orcamentos</span>
+                    </a>
+                {% endif %}
                 <a href="{% url 'ordens_servico' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'ordens_servico' or request.resolver_match.url_name == 'nova_os' or request.resolver_match.url_name == 'os_detalhe' or request.resolver_match.url_name == 'editar_os' %} active{% endif %}">
                     <i class="bi bi-clipboard-check"></i>
                     <span>Ordens de Servico</span>
@@ -54,27 +56,32 @@
                     <i class="bi bi-calendar3"></i>
                     <span>Agenda</span>
                 </a>
-                <a href="{% url 'clientes' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'clientes' or request.resolver_match.url_name == 'novo_cliente' or request.resolver_match.url_name == 'editar_cliente' %} active{% endif %}">
-                    <i class="bi bi-person-circle"></i>
-                    <span>Clientes</span>
-                </a>
-                <a href="{% url 'configuracoes' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'configuracoes' %} active{% endif %}">
-                    <i class="bi bi-gear"></i>
-                    <span>Configura&ccedil;&otilde;es</span>
-                </a>
+                {% if hf_is_admin %}
+                    <a href="{% url 'clientes' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'clientes' or request.resolver_match.url_name == 'novo_cliente' or request.resolver_match.url_name == 'editar_cliente' %} active{% endif %}">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Clientes</span>
+                    </a>
+                    <a href="{% url 'tecnicos' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'tecnicos' or request.resolver_match.url_name == 'novo_tecnico' or request.resolver_match.url_name == 'editar_tecnico' %} active{% endif %}">
+                        <i class="bi bi-gear"></i>
+                        <span>Equipe</span>
+                    </a>
+                {% endif %}
             </nav>
 
             <div class="hf-sidebar-exit">
-                <a href="{% url 'login' %}" class="hf-nav-link hf-logout-link">
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Sair</span>
-                </a>
+                <form method="post" action="{% url 'logout' %}" class="hf-sidebar-logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="hf-nav-link hf-logout-link">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Sair</span>
+                    </button>
+                </form>
             </div>
         </aside>
 
         <div class="hf-main">
             <header class="hf-topbar">
-                <form class="hf-search" method="get" action="{% url 'leads' %}">
+                <form class="hf-search" method="get" action="{% if hf_is_admin %}{% url 'leads' %}{% else %}{% url 'ordens_servico' %}{% endif %}">
                     <i class="bi bi-search"></i>
                     <input type="search" name="q" placeholder="Buscar..." aria-label="Buscar">
                 </form>
@@ -84,12 +91,17 @@
                         <i class="bi bi-bell"></i>
                     </button>
                     <div class="hf-user">
-                        <span class="hf-avatar">JD</span>
+                        <span class="hf-avatar">{{ request.user.get_full_name|default:request.user.username|slice:":2"|upper }}</span>
                         <div>
-                            <strong>Joao Silva</strong>
-                            <span>Administrador</span>
+                            <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                            <span>{% if hf_is_admin %}Administrador{% else %}Equipe{% endif %}</span>
                         </div>
-                        <i class="bi bi-chevron-down text-secondary"></i>
+                        <form method="post" action="{% url 'logout' %}" class="hf-logout-form">
+                            {% csrf_token %}
+                            <button type="submit" class="hf-logout" aria-label="Sair">
+                                <i class="bi bi-box-arrow-right"></i>
+                            </button>
+                        </form>
                     </div>
                 </div>
             </header>

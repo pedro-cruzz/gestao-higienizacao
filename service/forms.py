@@ -1,6 +1,9 @@
 from django import forms
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.db.models import Q
 
+from service.access import TEAM_GROUP
 from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
 
 
@@ -571,6 +574,17 @@ class ClienteVinculoOrcamentoForm(forms.Form):
 
 
 class TecnicoForm(forms.ModelForm):
+    username = forms.CharField(
+        label="Usuario de acesso",
+        max_length=150,
+        widget=forms.TextInput(attrs={"placeholder": "Ex.: equipe-a"}),
+    )
+    senha = forms.CharField(
+        label="Senha inicial",
+        required=False,
+        widget=forms.PasswordInput(attrs={"placeholder": "Defina a senha de acesso"}),
+    )
+
     class Meta:
         model = Tecnico
         fields = ["name", "email", "telefone", "especialidade", "ativo", "observacoes"]
@@ -592,15 +606,65 @@ class TecnicoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and self.instance.user_id:
+            self.fields["username"].initial = self.instance.user.username
+            self.fields["senha"].label = "Nova senha"
+            self.fields["senha"].widget.attrs["placeholder"] = "Preencha apenas para trocar a senha"
+        else:
+            self.fields["senha"].required = True
+
+        self.fields["username"].widget.attrs["class"] = "form-control"
+        self.fields["senha"].widget.attrs["class"] = "form-control"
         for name, field in self.fields.items():
-            field.required = name == "name"
-            field.widget.attrs["class"] = "form-check-input" if name == "ativo" else "form-control"
+            if name not in ["username", "senha"]:
+                field.required = name == "name"
+                field.widget.attrs["class"] = "form-check-input" if name == "ativo" else "form-control"
 
     def clean(self):
         cleaned_data = super().clean()
         cleaned_data["email"] = normalizar_email(cleaned_data.get("email"))
         cleaned_data["telefone"] = normalizar_telefone(cleaned_data.get("telefone"))
         return cleaned_data
+
+    def clean_username(self):
+        username = (self.cleaned_data.get("username") or "").strip()
+        user_model = get_user_model()
+        existing_user = user_model.objects.filter(username__iexact=username).first()
+        current_user_id = self.instance.user_id if self.instance and self.instance.pk else None
+        if existing_user and existing_user.pk != current_user_id:
+            raise forms.ValidationError("Ja existe um usuario com este login.")
+        return username
+
+    def save(self, commit=True):
+        tecnico = super().save(commit=False)
+        if not commit:
+            return tecnico
+
+        tecnico.save()
+        user = self._save_user(tecnico)
+        if tecnico.user_id != user.pk:
+            tecnico.user = user
+            tecnico.save(update_fields=["user", "updated_at"])
+        self.save_m2m()
+        return tecnico
+
+    def _save_user(self, tecnico: Tecnico):
+        user_model = get_user_model()
+        user = tecnico.user or user_model()
+        user.username = self.cleaned_data["username"]
+        user.email = tecnico.email or ""
+        user.first_name = tecnico.name
+        user.is_active = tecnico.ativo
+        user.is_staff = False
+        user.is_superuser = False
+        senha = self.cleaned_data.get("senha")
+        if senha:
+            user.set_password(senha)
+        user.save()
+
+        group, _ = Group.objects.get_or_create(name=TEAM_GROUP)
+        user.groups.add(group)
+        return user
 
 
 class OrdemServicoForm(forms.ModelForm):

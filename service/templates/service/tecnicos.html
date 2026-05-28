@@ -39,6 +39,7 @@
                         <th>Nome</th>
                         <th>Contato</th>
                         <th>Especialidade</th>
+                        <th>Acesso</th>
                         <th>Status</th>
                         <th>Acoes</th>
                     </tr>
@@ -49,6 +50,7 @@
                             <td class="quote-number">{{ tecnico.name }}</td>
                             <td>{{ tecnico.telefone|default:tecnico.email|default:"-" }}</td>
                             <td>{{ tecnico.especialidade|default:"-" }}</td>
+                            <td>{{ tecnico.user.username|default:"-" }}</td>
                             <td>
                                 <span class="status-pill {% if tecnico.ativo %}status-soft-blue{% else %}status-gray{% endif %}">
                                     {% if tecnico.ativo %}Ativo{% else %}Inativo{% endif %}
@@ -62,7 +64,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="5">
+                            <td colspan="6">
                                 <div class="table-empty">Nenhuma equipe cadastrada ainda.</div>
                             </td>
                         </tr>

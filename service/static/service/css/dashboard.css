@@ -14,7 +14,8 @@
     box-sizing: border-box;
 }
 
-body.higiflow-app {
+body.higiflow-app,
+body.higiflow-login {
     min-height: 100vh;
     margin: 0;
     color: var(--hf-text);
@@ -125,6 +126,17 @@ body.login-page {
     padding: 17px 16px 16px;
 }
 
+.hf-sidebar-logout-form {
+    margin: 0;
+}
+
+.hf-sidebar-logout-form .hf-nav-link {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font: inherit;
+}
+
 .hf-logout-link:hover,
 .hf-logout-link:focus {
     color: #fff;
@@ -195,6 +207,34 @@ body.login-page {
     border-radius: 14px;
     padding: 33px;
     background: #fff;
+}
+
+.login-alerts,
+.login-error {
+    margin-bottom: 18px;
+}
+
+.login-message,
+.login-error {
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.login-message {
+    color: #075985;
+    background: #e0f2fe;
+}
+
+.login-error {
+    color: #b42318;
+    background: #fff1f0;
+}
+
+.login-error ul {
+    margin: 0;
+    padding-left: 18px;
 }
 
 .login-form {
@@ -525,6 +565,26 @@ body.login-page {
     color: var(--hf-muted);
     font-size: 12px;
     line-height: 16px;
+}
+
+.hf-logout-form {
+    margin: 0 0 0 auto;
+}
+
+.hf-logout {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 10px;
+    color: var(--hf-muted);
+    background: transparent;
+}
+
+.hf-logout:hover {
+    color: var(--hf-blue);
+    background: var(--hf-input);
 }
 
 .hf-content {
