@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Q
 
-from service.access import TEAM_GROUP
+from service.access import ADMIN_GROUP, TEAM_GROUP
 from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
 
 
@@ -664,6 +664,70 @@ class TecnicoForm(forms.ModelForm):
 
         group, _ = Group.objects.get_or_create(name=TEAM_GROUP)
         user.groups.add(group)
+        return user
+
+
+class AdminUserForm(forms.ModelForm):
+    senha = forms.CharField(
+        label="Senha inicial",
+        required=False,
+        widget=forms.PasswordInput(attrs={"placeholder": "Defina a senha de acesso"}),
+    )
+
+    class Meta:
+        model = get_user_model()
+        fields = ["first_name", "username", "email", "is_active"]
+        labels = {
+            "first_name": "Nome do admin/dono",
+            "username": "Usuario de acesso",
+            "email": "Email",
+            "is_active": "Ativo",
+        }
+        widgets = {
+            "first_name": forms.TextInput(attrs={"placeholder": "Ex.: Joao Silva"}),
+            "username": forms.TextInput(attrs={"placeholder": "Ex.: joao-admin"}),
+            "email": forms.EmailInput(attrs={"placeholder": "admin@empresa.com"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields["senha"].label = "Nova senha"
+            self.fields["senha"].widget.attrs["placeholder"] = "Preencha apenas para trocar a senha"
+        else:
+            self.fields["senha"].required = True
+            self.initial.setdefault("is_active", True)
+
+        for name, field in self.fields.items():
+            field.widget.attrs["class"] = "form-check-input" if name == "is_active" else "form-control"
+
+    def clean_email(self):
+        return normalizar_email(self.cleaned_data.get("email"))
+
+    def clean_username(self):
+        username = (self.cleaned_data.get("username") or "").strip()
+        user_model = get_user_model()
+        existing_user = user_model.objects.filter(username__iexact=username).first()
+        current_user_id = self.instance.pk if self.instance and self.instance.pk else None
+        if existing_user and existing_user.pk != current_user_id:
+            raise forms.ValidationError("Ja existe um usuario com este login.")
+        return username
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data.get("email") or ""
+        user.is_staff = False
+        user.is_superuser = False
+        senha = self.cleaned_data.get("senha")
+        if senha:
+            user.set_password(senha)
+        if commit:
+            user.save()
+            admin_group, _ = Group.objects.get_or_create(name=ADMIN_GROUP)
+            team_group, _ = Group.objects.get_or_create(name=TEAM_GROUP)
+            user.groups.add(admin_group)
+            user.groups.remove(team_group)
+            self.save_m2m()
         return user
 
 

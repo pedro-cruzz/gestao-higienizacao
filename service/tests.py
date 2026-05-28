@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
-from service.access import TEAM_GROUP
+from service.access import ADMIN_GROUP, DEV_GROUP, TEAM_GROUP
 from service.services.nominatim import LocalizacaoMapa, NominatimService
 from service.services.viacep import EnderecoViaCep
 
@@ -62,6 +62,39 @@ class AuthAccessTests(TestCase):
 
         self.assertEqual(self.client.get(reverse("ordens_servico")).status_code, 200)
         self.assertEqual(self.client.get(reverse("orcamentos")).status_code, 403)
+
+    def test_dev_acessa_area_de_admins_e_cria_admin(self):
+        group = Group.objects.create(name=DEV_GROUP)
+        user = self.user_model.objects.create_user(username="dev", password="senha-segura")
+        user.groups.add(group)
+        self.client.force_login(user)
+
+        self.assertEqual(self.client.get(reverse("admins")).status_code, 200)
+
+        response = self.client.post(
+            reverse("novo_admin"),
+            {
+                "first_name": "Dono Empresa",
+                "username": "dono",
+                "email": "dono@empresa.com",
+                "senha": "senha-segura",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("admins"), fetch_redirect_response=False)
+        admin = self.user_model.objects.get(username="dono")
+        self.assertTrue(admin.groups.filter(name=ADMIN_GROUP).exists())
+        self.assertFalse(admin.is_staff)
+        self.assertFalse(admin.is_superuser)
+
+    def test_admin_nao_acessa_area_de_dev(self):
+        group = Group.objects.create(name=ADMIN_GROUP)
+        user = self.user_model.objects.create_user(username="admin", password="senha-segura")
+        user.groups.add(group)
+        self.client.force_login(user)
+
+        self.assertEqual(self.client.get(reverse("admins")).status_code, 403)
 
 
 class ServiceViewsTests(TestCase):
@@ -161,19 +194,19 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Configura")
         self.assertContains(response, "Esta pagina sera implementada futuramente")
-        self.assertNotContains(response, ">Equipe<")
 
     def test_login_placeholder_e_link_de_saida(self):
-        login_response = self.client.get(reverse("login"))
         inicio_response = self.client.get(reverse("inicio"))
+        self.client.logout()
+        login_response = self.client.get(reverse("login"))
 
         self.assertEqual(login_response.status_code, 200)
         self.assertContains(login_response, "login-shell")
         self.assertContains(login_response, "Bem-vindo ao HigiFlow")
-        self.assertContains(login_response, "seu@email.com")
+        self.assertContains(login_response, "seu.usuario")
         self.assertContains(login_response, "Gerencie seu neg")
         self.assertNotContains(login_response, "hf-sidebar")
-        self.assertContains(inicio_response, f'href="{reverse("login")}"')
+        self.assertContains(inicio_response, f'action="{reverse("logout")}"')
         self.assertContains(inicio_response, ">Sair<")
 
     def test_cria_lead(self):

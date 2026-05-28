@@ -6,14 +6,21 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 
 
+DEV_GROUP = "Desenvolvedores"
 ADMIN_GROUP = "Administradores"
 TEAM_GROUP = "Equipe"
+
+
+def is_dev_user(user) -> bool:
+    if not user.is_authenticated:
+        return False
+    return user.is_superuser or user.groups.filter(name=DEV_GROUP).exists()
 
 
 def is_admin_user(user) -> bool:
     if not user.is_authenticated:
         return False
-    return user.is_superuser or user.is_staff or user.groups.filter(name=ADMIN_GROUP).exists()
+    return is_dev_user(user) or user.is_staff or user.groups.filter(name=ADMIN_GROUP).exists()
 
 
 def is_team_user(user) -> bool:
@@ -42,3 +49,4 @@ def _role_required(test_func: Callable) -> Callable:
 
 admin_required = _role_required(is_admin_user)
 team_required = _role_required(is_team_user)
+dev_required = _role_required(is_dev_user)

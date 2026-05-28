@@ -30,6 +30,12 @@
             </div>
 
             <nav class="hf-nav" aria-label="Menu principal">
+                {% if hf_is_dev %}
+                    <a href="{% url 'admins' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'admins' or request.resolver_match.url_name == 'novo_admin' or request.resolver_match.url_name == 'editar_admin' %} active{% endif %}">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Admins</span>
+                    </a>
+                {% endif %}
                 {% if hf_is_admin %}
                     <a href="{% url 'inicio' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'inicio' %} active{% endif %}">
                         <i class="bi bi-house-door"></i>
@@ -94,7 +100,7 @@
                         <span class="hf-avatar">{{ request.user.get_full_name|default:request.user.username|slice:":2"|upper }}</span>
                         <div>
                             <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
-                            <span>{% if hf_is_admin %}Administrador{% else %}Equipe{% endif %}</span>
+                            <span>{% if hf_is_dev %}Desenvolvedor{% elif hf_is_admin %}Administrador{% else %}Equipe{% endif %}</span>
                         </div>
                         <form method="post" action="{% url 'logout' %}" class="hf-logout-form">
                             {% csrf_token %}

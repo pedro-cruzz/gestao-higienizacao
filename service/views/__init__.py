@@ -1,3 +1,4 @@
+from service.views.admins import editar_admin, listar_admins, novo_admin
 from service.views.catalogo import (
     catalogo,
     deletar_cliente,
@@ -55,6 +56,7 @@ __all__ = [
     "deletar_cliente",
     "deletar_orcamento",
     "deletar_produto",
+    "editar_admin",
     "detalhe_orcamento",
     "detalhe_ordem_servico",
     "editar_cliente",
@@ -65,12 +67,14 @@ __all__ = [
     "gerar_orcamento_pdf",
     "inicio",
     "listar_clientes",
+    "listar_admins",
     "listar_leads",
     "listar_ordens_servico",
     "listar_orcamentos",
     "listar_tecnicos",
     "login",
     "nova_categoria",
+    "novo_admin",
     "novo_cliente",
     "novo_lead",
     "novo_orcamento",

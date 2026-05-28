@@ -1,6 +1,6 @@
 from django.urls import path
 
-from service.access import admin_required, team_required
+from service.access import admin_required, dev_required, team_required
 from service.views import (
     agenda,
     aprovar_orcamento,
@@ -16,6 +16,7 @@ from service.views import (
     deletar_cliente,
     deletar_orcamento,
     deletar_produto,
+    editar_admin,
     detalhe_orcamento,
     detalhe_ordem_servico,
     editar_cliente,
@@ -25,11 +26,13 @@ from service.views import (
     editar_tecnico,
     gerar_orcamento_pdf,
     listar_clientes,
+    listar_admins,
     listar_leads,
     listar_orcamentos,
     listar_ordens_servico,
     listar_tecnicos,
     nova_categoria,
+    novo_admin,
     novo_cliente,
     novo_lead,
     novo_orcamento,
@@ -45,6 +48,9 @@ urlpatterns = [
     path("", painel_inicial, name="inicio"),
     path("login/", ServiceLoginView.as_view(), name="login"),
     path("logout/", sair, name="logout"),
+    path("admins/", dev_required(listar_admins), name="admins"),
+    path("admins/novo/", dev_required(novo_admin), name="novo_admin"),
+    path("admins/<int:pk>/editar/", dev_required(editar_admin), name="editar_admin"),
     path("teste/", admin_required(teste), name="teste"),
     path("leads/", admin_required(listar_leads), name="leads"),
     path("leads/novo/", admin_required(novo_lead), name="novo_lead"),
