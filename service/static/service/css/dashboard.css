@@ -400,6 +400,11 @@ body.login-page {
     text-align: center;
 }
 
+.hf-main > .login-copyright {
+    margin: 0;
+    padding: 0 80px 24px;
+}
+
 .login-brand-content {
     width: min(500px, 100%);
     text-align: center;
@@ -4018,6 +4023,10 @@ body.service-map-open {
 
     .hf-content {
         padding: 20px 16px;
+    }
+
+    .hf-main > .login-copyright {
+        padding: 0 16px 20px;
     }
 
     .page-heading,
