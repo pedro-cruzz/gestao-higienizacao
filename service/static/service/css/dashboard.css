@@ -1801,11 +1801,12 @@ body.login-page {
 }
 
 .new-lead-shell {
-    width: min(672px, 100%);
+    width: min(1065px, 100%);
     margin: 0 auto;
 }
 
 .new-lead-card {
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 24px;
