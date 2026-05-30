@@ -13,7 +13,7 @@ from service.views.comum import inicio as dashboard_view
 
 class ServiceLoginView(LoginView):
     template_name = "service/login.html"
-    redirect_authenticated_user = True
+    redirect_authenticated_user = False
 
     def get_success_url(self):
         user = self.request.user
