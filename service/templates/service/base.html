@@ -61,9 +61,9 @@
                         <i class="bi bi-person-circle"></i>
                         <span>Clientes</span>
                     </a>
-                    <a href="{% url 'tecnicos' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'tecnicos' or request.resolver_match.url_name == 'novo_tecnico' or request.resolver_match.url_name == 'editar_tecnico' %} active{% endif %}">
+                    <a href="{% url 'configuracoes' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'configuracoes' %} active{% endif %}">
                         <i class="bi bi-gear"></i>
-                        <span>Equipe</span>
+                        <span>Configuracoes</span>
                     </a>
                 {% endif %}
             </nav>
