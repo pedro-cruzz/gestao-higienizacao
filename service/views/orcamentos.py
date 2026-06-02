@@ -405,6 +405,15 @@ def _orcamento_initial(orcamento: Orcamento) -> dict:
 def _salvar_dados_orcamento(orcamento: Orcamento, form: OrcamentoForm) -> Orcamento:
     itens = list(form.cleaned_data["itens"])
     quantidade = form.cleaned_data["quantidade"]
+    adicionais = 0
+    if form.cleaned_data.get("adicional_manchas"):
+        adicionais += 80
+    if form.cleaned_data.get("adicional_urina"):
+        adicionais += 120
+    if form.cleaned_data.get("adicional_mofo"):
+        adicionais += 100
+    multiplicador_tecido = float(form.cleaned_data.get("tipo_tecido_visual") or 1)
+    multiplicador_tamanho = float(form.cleaned_data.get("tamanho_visual") or 1)
 
     orcamento.name = form.cleaned_data["name"]
     orcamento.email = form.cleaned_data["email"]
@@ -419,7 +428,7 @@ def _salvar_dados_orcamento(orcamento: Orcamento, form: OrcamentoForm) -> Orcame
     orcamento.uf = form.cleaned_data["uf"] or None
     orcamento.descricao = form.cleaned_data["descricao"] or None
     orcamento.quantidade = quantidade
-    orcamento.valor = sum(item.valor for item in itens) * quantidade
+    orcamento.valor = (sum(item.valor for item in itens) + adicionais) * quantidade * multiplicador_tecido * multiplicador_tamanho
     orcamento.cliente = form.cleaned_data.get("cliente") or orcamento.cliente
     orcamento.lead = form.cleaned_data.get("lead") or orcamento.lead
     orcamento.save()

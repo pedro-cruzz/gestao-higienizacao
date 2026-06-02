@@ -1,209 +1,236 @@
 {% extends "service/base.html" %}
 
-{% block title %}{{ form_title|default:"Novo Orcamento" }} | HigiFlow{% endblock %}
+{% block title %}{{ form_title|default:"Criar Orcamento" }} | HigiFlow{% endblock %}
 
 {% block content %}
-    <section class="page-heading">
+    <section class="quote-create-heading">
+        <a href="{% url 'orcamentos' %}" class="quote-create-back" aria-label="Voltar para orcamentos">
+            <i class="bi bi-arrow-left"></i>
+        </a>
         <div>
-            <h1>{{ form_title|default:"Novo orcamento" }}</h1>
-            <p>{{ form_intro|default:"Monte a proposta com cliente, endereco, itens do catalogo e quantidade." }}</p>
-        </div>
-        <div class="dashboard-actions">
-            <a href="{% url 'orcamentos' %}" class="hf-btn hf-btn-light">
-                <i class="bi bi-arrow-left"></i>
-                <span>Orcamentos</span>
-            </a>
-            <a href="{% url 'catalogo' %}" class="hf-btn hf-btn-light">
-                <i class="bi bi-grid"></i>
-                <span>Catalogo</span>
-            </a>
+            <h1>{% if form_title %}{{ form_title }}{% else %}Criar Or&ccedil;amento{% endif %}</h1>
+            <p>{% if form_intro %}{{ form_intro }}{% else %}Preencha os dados para gerar um novo or&ccedil;amento{% endif %}</p>
         </div>
     </section>
 
-    <section class="catalog-form-layout orcamento-form-layout">
-        <article class="catalog-form-panel">
-            <header>
-                <span class="status-pill status-soft-blue">Proposta</span>
-                <h2>Dados do orcamento</h2>
-            </header>
+    <form
+        method="post"
+        class="quote-create-layout"
+        data-cep-url-template="{% url 'buscar_endereco_cep' '00000000' %}"
+        data-lead-url-template="{% url 'buscar_lead_dados' 0 %}"
+    >
+        {% csrf_token %}
+        {{ form.endereco }}
 
-            <form
-                method="post"
-                class="catalog-form orcamento-form"
-                data-cep-url-template="{% url 'buscar_endereco_cep' '00000000' %}"
-                data-lead-url-template="{% url 'buscar_lead_dados' 0 %}"
-            >
-                {% csrf_token %}
-                {% if form.non_field_errors %}
-                    <div class="form-field span-2">
-                        {{ form.non_field_errors }}
+        <div class="quote-create-main">
+            {% if form.non_field_errors %}
+                <section class="quote-create-card quote-create-errors">
+                    {{ form.non_field_errors }}
+                </section>
+            {% endif %}
+
+            <section class="quote-create-card">
+                <h2>Dados do Cliente</h2>
+                <div class="quote-create-grid">
+                    <div class="quote-create-field">
+                        <label for="{{ form.name.id_for_label }}">Nome completo</label>
+                        {{ form.name }}
+                        {{ form.name.errors }}
                     </div>
-                {% endif %}
-                {{ form.endereco }}
-
-                <div class="form-field span-2 orcamento-form-section">
-                    <div>
-                        <span class="status-pill status-gray">Cliente</span>
-                        <h3>Identificacao</h3>
+                    <div class="quote-create-field">
+                        <label for="{{ form.telefone.id_for_label }}">WhatsApp</label>
+                        {{ form.telefone }}
+                        {{ form.telefone.errors }}
+                    </div>
+                    <div class="quote-create-field">
+                        <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                        {{ form.email }}
+                        {{ form.email.errors }}
+                    </div>
+                    <div class="quote-create-field">
+                        <label for="{{ form.cliente.id_for_label }}">{{ form.cliente.label }}</label>
+                        {{ form.cliente }}
+                        {{ form.cliente.errors }}
+                    </div>
+                    <div class="quote-create-field quote-create-wide">
+                        <label for="{{ form.lead.id_for_label }}">{{ form.lead.label }}</label>
+                        {{ form.lead }}
+                        {{ form.lead.errors }}
+                    </div>
+                    <div class="quote-create-check quote-create-wide">
+                        <label for="{{ form.criar_cliente_automatico.id_for_label }}">
+                            {{ form.criar_cliente_automatico }}
+                            <span>{{ form.criar_cliente_automatico.label }}</span>
+                        </label>
+                        {{ form.criar_cliente_automatico.errors }}
                     </div>
                 </div>
+            </section>
 
-                <div class="form-field span-2">
-                    <label for="{{ form.cliente.id_for_label }}">{{ form.cliente.label }}</label>
-                    {{ form.cliente }}
-                    {{ form.cliente.errors }}
-                    <p class="field-helper">Selecionar cliente tem prioridade sobre o lead.</p>
+            <section class="quote-create-card">
+                <h2>Sele&ccedil;&atilde;o de Servi&ccedil;o</h2>
+                <div class="quote-create-stack">
+                    <div class="quote-create-field">
+                        <label for="{{ form.itens.id_for_label }}">Tipo de servi&ccedil;o</label>
+                        {{ form.itens }}
+                        {{ form.itens.errors }}
+                    </div>
+                    <div class="quote-create-field">
+                        <label>Pre&ccedil;o base</label>
+                        <div class="quote-price-preview">
+                            <span>R$</span>
+                            <strong data-quote-base-value>0,00</strong>
+                        </div>
+                    </div>
+                    <div class="quote-create-field">
+                        <label for="{{ form.quantidade.id_for_label }}">{{ form.quantidade.label }}</label>
+                        {{ form.quantidade }}
+                        {{ form.quantidade.errors }}
+                    </div>
                 </div>
+            </section>
 
-                <div class="form-field span-2">
-                    <label for="{{ form.lead.id_for_label }}">{{ form.lead.label }}</label>
-                    {{ form.lead }}
-                    {{ form.lead.errors }}
-                    <p class="field-helper">Use um lead para preencher contato e endereco automaticamente.</p>
-                </div>
+            <section class="quote-create-card">
+                <h2>Fotos do Produto</h2>
+                <p>Adicione fotos do item a ser higienizado para documenta&ccedil;&atilde;o</p>
+                <label class="quote-upload-zone">
+                    <input type="file" name="fotos_produto" accept="image/png,image/jpeg" multiple>
+                    <span class="quote-upload-icon"><i class="bi bi-upload"></i></span>
+                    <strong>Clique para adicionar fotos</strong>
+                    <small>ou arraste e solte aqui</small>
+                    <em>PNG, JPG at&eacute; 10MB</em>
+                </label>
+            </section>
 
-                <div class="form-field">
-                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
-                    {{ form.name }}
-                    {{ form.name.errors }}
-                </div>
-
-                <div class="form-field">
-                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-                    {{ form.email }}
-                    {{ form.email.errors }}
-                </div>
-
-                <div class="form-field">
-                    <label for="{{ form.telefone.id_for_label }}">{{ form.telefone.label }}</label>
-                    {{ form.telefone }}
-                    {{ form.telefone.errors }}
-                </div>
-
-                <div class="form-field orcamento-check-field">
-                    <label for="{{ form.criar_cliente_automatico.id_for_label }}">
-                        {{ form.criar_cliente_automatico }}
-                        <span>{{ form.criar_cliente_automatico.label }}</span>
+            <section class="quote-create-card">
+                <h2>Adicionais</h2>
+                <div class="quote-addons-list">
+                    <label class="quote-addon-row">
+                        <span>
+                            {{ form.adicional_manchas }}
+                            Manchas dif&iacute;ceis
+                        </span>
+                        <strong>+ R$ 80,00</strong>
                     </label>
-                    {{ form.criar_cliente_automatico.errors }}
+                    <label class="quote-addon-row">
+                        <span>
+                            {{ form.adicional_urina }}
+                            Urina de animais
+                        </span>
+                        <strong>+ R$ 120,00</strong>
+                    </label>
+                    <label class="quote-addon-row">
+                        <span>
+                            {{ form.adicional_mofo }}
+                            Mofo ou bolor
+                        </span>
+                        <strong>+ R$ 100,00</strong>
+                    </label>
                 </div>
+            </section>
 
-                <div class="form-field span-2 orcamento-form-section">
-                    <div>
-                        <span class="status-pill status-soft-blue">ViaCEP</span>
-                        <h3>Endereco do servico</h3>
-                        <p>Digite o CEP para preencher rua, bairro, cidade e UF automaticamente.</p>
+            <section class="quote-create-card">
+                <h2>Multiplicadores</h2>
+                <div class="quote-create-grid">
+                    <div class="quote-create-field">
+                        <label for="{{ form.tipo_tecido_visual.id_for_label }}">Tipo de tecido</label>
+                        {{ form.tipo_tecido_visual }}
+                        {{ form.tipo_tecido_visual.errors }}
+                    </div>
+                    <div class="quote-create-field">
+                        <label for="{{ form.tamanho_visual.id_for_label }}">Tamanho</label>
+                        {{ form.tamanho_visual }}
+                        {{ form.tamanho_visual.errors }}
                     </div>
                 </div>
+            </section>
 
-                <div class="form-field">
-                    <label for="{{ form.cep.id_for_label }}">{{ form.cep.label }}</label>
-                    <div class="orcamento-cep-row">
-                        {{ form.cep }}
-                        <button type="button" class="quote-icon-button orcamento-cep-button" data-cep-search aria-label="Buscar CEP">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                    {{ form.cep.errors }}
-                </div>
-
-                <div class="form-field">
-                    <label for="{{ form.logradouro.id_for_label }}">{{ form.logradouro.label }}</label>
-                    {{ form.logradouro }}
-                    {{ form.logradouro.errors }}
-                </div>
-
-                <div class="form-field">
-                    <label for="{{ form.numero.id_for_label }}">{{ form.numero.label }}</label>
-                    {{ form.numero }}
-                    {{ form.numero.errors }}
-                </div>
-
-                <div class="form-field">
-                    <label for="{{ form.complemento.id_for_label }}">{{ form.complemento.label }}</label>
-                    {{ form.complemento }}
-                    {{ form.complemento.errors }}
-                </div>
-
-                <div class="form-field">
-                    <label for="{{ form.bairro.id_for_label }}">{{ form.bairro.label }}</label>
-                    {{ form.bairro }}
-                    {{ form.bairro.errors }}
-                </div>
-
-                <div class="form-field">
-                    <label for="{{ form.cidade.id_for_label }}">{{ form.cidade.label }}</label>
-                    {{ form.cidade }}
-                    {{ form.cidade.errors }}
-                </div>
-
-                <div class="form-field">
-                    <label for="{{ form.uf.id_for_label }}">{{ form.uf.label }}</label>
-                    {{ form.uf }}
-                    {{ form.uf.errors }}
-                </div>
-
-                <div class="form-field span-2 orcamento-form-section">
-                    <div>
-                        <span class="status-pill status-gray">Itens</span>
-                        <h3>Servico e valores</h3>
-                    </div>
-                </div>
-
-                <div class="form-field">
-                    <label for="{{ form.quantidade.id_for_label }}">{{ form.quantidade.label }}</label>
-                    {{ form.quantidade }}
-                    {{ form.quantidade.errors }}
-                </div>
-
-                <div class="form-field span-2">
-                    <label for="{{ form.itens.id_for_label }}">{{ form.itens.label }}</label>
-                    {{ form.itens }}
-                    <p class="field-helper">Segure Ctrl para selecionar mais de um item.</p>
-                    {{ form.itens.errors }}
-                </div>
-
-                <div class="form-field span-2">
+            <section class="quote-create-card">
+                <h2>Observa&ccedil;&otilde;es</h2>
+                <div class="quote-create-field">
                     <label for="{{ form.descricao.id_for_label }}">{{ form.descricao.label }}</label>
                     {{ form.descricao }}
                     {{ form.descricao.errors }}
                 </div>
+            </section>
 
-                <div class="form-actions span-2">
-                    <button type="submit" class="hf-btn hf-btn-primary">
-                        <i class="bi bi-check-lg"></i>
-                        <span>{{ form_submit_label|default:"Salvar orcamento" }}</span>
-                    </button>
-                    <a href="{% url 'orcamentos' %}" class="hf-btn hf-btn-light">Cancelar</a>
+            <details class="quote-create-card quote-address-card">
+                <summary>Endere&ccedil;o do servi&ccedil;o</summary>
+                <p>Digite o CEP para preencher rua, bairro, cidade e UF automaticamente.</p>
+                <div class="quote-create-grid">
+                    <div class="quote-create-field">
+                        <label for="{{ form.cep.id_for_label }}">{{ form.cep.label }}</label>
+                        <div class="orcamento-cep-row">
+                            {{ form.cep }}
+                            <button type="button" class="quote-icon-button orcamento-cep-button" data-cep-search aria-label="Buscar CEP">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        {{ form.cep.errors }}
+                    </div>
+                    <div class="quote-create-field">
+                        <label for="{{ form.logradouro.id_for_label }}">{{ form.logradouro.label }}</label>
+                        {{ form.logradouro }}
+                        {{ form.logradouro.errors }}
+                    </div>
+                    <div class="quote-create-field">
+                        <label for="{{ form.numero.id_for_label }}">{{ form.numero.label }}</label>
+                        {{ form.numero }}
+                        {{ form.numero.errors }}
+                    </div>
+                    <div class="quote-create-field">
+                        <label for="{{ form.complemento.id_for_label }}">{{ form.complemento.label }}</label>
+                        {{ form.complemento }}
+                        {{ form.complemento.errors }}
+                    </div>
+                    <div class="quote-create-field">
+                        <label for="{{ form.bairro.id_for_label }}">{{ form.bairro.label }}</label>
+                        {{ form.bairro }}
+                        {{ form.bairro.errors }}
+                    </div>
+                    <div class="quote-create-field">
+                        <label for="{{ form.cidade.id_for_label }}">{{ form.cidade.label }}</label>
+                        {{ form.cidade }}
+                        {{ form.cidade.errors }}
+                    </div>
+                    <div class="quote-create-field">
+                        <label for="{{ form.uf.id_for_label }}">{{ form.uf.label }}</label>
+                        {{ form.uf }}
+                        {{ form.uf.errors }}
+                    </div>
                 </div>
-            </form>
-        </article>
+            </details>
+        </div>
 
-        <aside class="dashboard-card catalog-recent orcamento-recent-card">
-            <header>
-                <h2>Orcamentos recentes</h2>
-                <a href="{% url 'orcamentos' %}">Ver todos <i class="bi bi-chevron-right"></i></a>
-            </header>
-
-            <div class="recent-list">
-                {% if orcamentos_recentes %}
-                    {% for item in orcamentos_recentes %}
-                        <a href="{% url 'orcamento_detalhe' item.pk %}" class="recent-row orcamento-recent-link">
-                            <div>
-                                <strong>{{ item.name }}</strong>
-                                <span>{{ item.quantidade }} unidade(s)</span>
-                            </div>
-                            <div class="recent-meta">
-                                <strong>R$ {{ item.valor|floatformat:2 }}</strong>
-                            </div>
-                        </a>
-                    {% endfor %}
-                {% else %}
-                    <div class="empty-dashboard-state">Nenhum orcamento salvo ainda.</div>
-                {% endif %}
-            </div>
+        <aside class="quote-summary-column">
+            <section class="quote-summary-card">
+                <header>
+                    <i class="bi bi-calculator"></i>
+                    <h2>C&aacute;lculo do Valor</h2>
+                </header>
+                <div class="quote-summary-row">
+                    <span>Pre&ccedil;o base</span>
+                    <strong data-quote-base-total>R$ 0,00</strong>
+                </div>
+                <div class="quote-summary-row" data-quote-addon-row hidden>
+                    <span>Adicionais</span>
+                    <strong data-quote-addon-total>R$ 0,00</strong>
+                </div>
+                <div class="quote-summary-row" data-quote-quantity-row hidden>
+                    <span>Quantidade</span>
+                    <strong data-quote-quantity>1x</strong>
+                </div>
+                <div class="quote-summary-total">
+                    <span>Valor Total</span>
+                    <strong data-quote-total>R$ 0,00</strong>
+                </div>
+                <button type="submit" class="hf-btn hf-btn-primary quote-submit-button">
+                    {{ form_submit_label|default:"Gerar Orcamento" }}
+                </button>
+                <small>Validade: 15 dias</small>
+            </section>
         </aside>
-    </section>
+    </form>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -216,9 +243,27 @@
 
             const leadSelect = form.querySelector("[name='lead']");
             const clienteSelect = form.querySelector("[name='cliente']");
-            if (!leadSelect) {
-                return;
-            }
+            const itensSelect = form.querySelector("[name='itens']");
+            const quantidadeInput = form.querySelector("[name='quantidade']");
+            const tecidoSelect = form.querySelector("[name='tipo_tecido_visual']");
+            const tamanhoSelect = form.querySelector("[name='tamanho_visual']");
+            const basePreview = form.querySelector("[data-quote-base-value]");
+            const baseTotal = form.querySelector("[data-quote-base-total]");
+            const addonRow = form.querySelector("[data-quote-addon-row]");
+            const addonTotal = form.querySelector("[data-quote-addon-total]");
+            const quantityRow = form.querySelector("[data-quote-quantity-row]");
+            const quantityValue = form.querySelector("[data-quote-quantity]");
+            const totalValue = form.querySelector("[data-quote-total]");
+            const uploadInput = form.querySelector(".quote-upload-zone input[type='file']");
+            const uploadLabel = form.querySelector(".quote-upload-zone strong");
+            const addonValues = {
+                adicional_manchas: 80,
+                adicional_urina: 120,
+                adicional_mofo: 100,
+            };
+            const addonInputs = Object.keys(addonValues)
+                .map((name) => form.querySelector(`[name='${name}']`))
+                .filter(Boolean);
 
             const fields = {
                 name: form.querySelector("[name='name']"),
@@ -234,6 +279,58 @@
                 endereco: form.querySelector("[name='endereco']"),
             };
 
+            const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+            });
+
+            function formatCurrency(value) {
+                return currencyFormatter.format(Number.isFinite(value) ? value : 0);
+            }
+
+            function optionValue(option) {
+                const match = option.textContent.match(/R\$\s*([0-9.,]+)/);
+                if (!match) {
+                    return 0;
+                }
+                const rawValue = match[1];
+                return rawValue.includes(",")
+                    ? Number(rawValue.replace(/\./g, "").replace(",", "."))
+                    : Number(rawValue);
+            }
+
+            function selectedBaseValue() {
+                if (!itensSelect) {
+                    return 0;
+                }
+                return Array.from(itensSelect.selectedOptions).reduce((total, option) => total + optionValue(option), 0);
+            }
+
+            function selectedAddonValue() {
+                return addonInputs.reduce((total, input) => total + (input.checked ? addonValues[input.name] : 0), 0);
+            }
+
+            function multiplierValue(select) {
+                const value = Number(select?.value || 1);
+                return Number.isFinite(value) && value > 0 ? value : 1;
+            }
+
+            function updateQuoteSummary() {
+                const quantity = Math.max(1, Number(quantidadeInput?.value || 1));
+                const base = selectedBaseValue();
+                const addons = selectedAddonValue();
+                const multiplier = multiplierValue(tecidoSelect) * multiplierValue(tamanhoSelect);
+                const total = (base + addons) * quantity * multiplier;
+
+                if (basePreview) basePreview.textContent = formatCurrency(base).replace("R$", "").trim();
+                if (baseTotal) baseTotal.textContent = formatCurrency(base);
+                if (addonTotal) addonTotal.textContent = formatCurrency(addons);
+                if (totalValue) totalValue.textContent = formatCurrency(total);
+                if (quantityValue) quantityValue.textContent = `${quantity}x`;
+                if (addonRow) addonRow.hidden = addons <= 0;
+                if (quantityRow) quantityRow.hidden = quantity <= 1;
+            }
+
             function setField(name, value) {
                 if (fields[name]) {
                     fields[name].value = value || "";
@@ -241,7 +338,7 @@
             }
 
             async function preencherLead() {
-                const leadId = leadSelect.value;
+                const leadId = leadSelect?.value;
                 if (!leadId) {
                     return;
                 }
@@ -272,7 +369,18 @@
                 }
             }
 
-            leadSelect.addEventListener("change", preencherLead);
+            leadSelect?.addEventListener("change", preencherLead);
+            itensSelect?.addEventListener("change", updateQuoteSummary);
+            quantidadeInput?.addEventListener("input", updateQuoteSummary);
+            tecidoSelect?.addEventListener("change", updateQuoteSummary);
+            tamanhoSelect?.addEventListener("change", updateQuoteSummary);
+            addonInputs.forEach((input) => input.addEventListener("change", updateQuoteSummary));
+            uploadInput?.addEventListener("change", () => {
+                if (uploadLabel && uploadInput.files.length) {
+                    uploadLabel.textContent = `${uploadInput.files.length} arquivo(s) selecionado(s)`;
+                }
+            });
+            updateQuoteSummary();
         });
     </script>
 {% endblock %}

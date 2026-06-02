@@ -132,7 +132,7 @@ Campos principais:
 No PowerShell:
 
 ```powershell
-venv\Scripts\Activate.ps1
+.venv\Scripts\Activate.ps1
 ```
 
 ### 2. Aplicar migrations

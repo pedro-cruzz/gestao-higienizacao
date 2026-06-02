@@ -436,6 +436,25 @@ class OrcamentoForm(forms.Form):
         queryset=Service_catalog.objects.none(),
         widget=forms.SelectMultiple(attrs={"size": 8}),
     )
+    adicional_manchas = forms.BooleanField(required=False)
+    adicional_urina = forms.BooleanField(required=False)
+    adicional_mofo = forms.BooleanField(required=False)
+    tipo_tecido_visual = forms.ChoiceField(
+        required=False,
+        choices=[
+            ("1", "Tecido comum"),
+            ("1.15", "Tecido delicado"),
+            ("1.25", "Couro ou suede"),
+        ],
+    )
+    tamanho_visual = forms.ChoiceField(
+        required=False,
+        choices=[
+            ("1", "Padrao"),
+            ("1.2", "Grande"),
+            ("1.35", "Extra grande"),
+        ],
+    )
 
     def __init__(self, *args, **kwargs):
         if args and args[0] is not None:
@@ -467,6 +486,8 @@ class OrcamentoForm(forms.Form):
         self.fields["descricao"].widget.attrs["class"] = "form-control"
         self.fields["quantidade"].widget.attrs["class"] = "form-control"
         self.fields["itens"].widget.attrs["class"] = "form-select"
+        self.fields["tipo_tecido_visual"].widget.attrs["class"] = "form-select"
+        self.fields["tamanho_visual"].widget.attrs["class"] = "form-select"
 
     @staticmethod
     def _catalogo_item_label(item: Service_catalog) -> str:
