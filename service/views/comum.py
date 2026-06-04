@@ -1,11 +1,12 @@
 from datetime import datetime, time, timedelta
 
+from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from service.models import Cliente, Lead, Orcamento, OrdemServico, Service_catalog
+from service.models import Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
 
 
 def _month_boundaries() -> tuple[datetime, datetime]:
@@ -244,7 +245,32 @@ def agenda(request: HttpRequest) -> HttpResponse:
 
 
 def configuracoes(request: HttpRequest) -> HttpResponse:
-    return render(request, "service/configuracoes.html")
+    servicos = Service_catalog.objects.select_related("categoria").order_by("name")
+    usuarios = get_user_model().objects.order_by("first_name", "username")[:6]
+    tecnicos = Tecnico.objects.select_related("user").order_by("name")[:6]
+
+    context = {
+        "servicos_config": servicos,
+        "usuarios_config": usuarios,
+        "tecnicos_config": tecnicos,
+        "adicionais_config": [
+            {"nome": "Manchas dificeis", "valor": 80},
+            {"nome": "Urina de animais", "valor": 120},
+            {"nome": "Mofo ou bolor", "valor": 100},
+        ],
+        "tecidos_config": [
+            {"nome": "Padrao", "multiplicador": "1.0"},
+            {"nome": "Nobuck/Camurca", "multiplicador": "1.2"},
+            {"nome": "Seda/Delicado", "multiplicador": "1.5"},
+        ],
+        "tamanhos_config": [
+            {"nome": "Pequeno", "multiplicador": "1.0"},
+            {"nome": "Medio", "multiplicador": "1.3"},
+            {"nome": "Grande", "multiplicador": "1.6"},
+            {"nome": "Extra Grande", "multiplicador": "2.0"},
+        ],
+    }
+    return render(request, "service/configuracoes.html", context)
 
 
 def login(request: HttpRequest) -> HttpResponse:

@@ -1,18 +1,281 @@
 {% extends "service/base.html" %}
 
-{% block title %}Configura&ccedil;&otilde;es | HigiFlow{% endblock %}
+{% block title %}Configuracoes | HigiFlow{% endblock %}
 
 {% block content %}
-    <section class="page-heading">
-        <div>
-            <h1>Configura&ccedil;&otilde;es</h1>
-            <p>Central de ajustes do sistema.</p>
-        </div>
-    </section>
+    <div class="settings-page">
+        <section class="page-heading settings-heading">
+            <div>
+                <h1>Configuracoes</h1>
+                <p>Gerencie precos, usuarios e dados da empresa</p>
+            </div>
+        </section>
 
-    <section class="dashboard-card">
-        <div class="empty-dashboard-state">
-            Esta pagina sera implementada futuramente.
-        </div>
-    </section>
+        <section class="settings-panel" aria-label="Configuracoes do sistema">
+            <div class="settings-tabs" role="tablist" aria-label="Secoes de configuracao">
+                <button type="button" class="settings-tab active" data-settings-tab="precos" role="tab" aria-selected="true">
+                    <i class="bi bi-currency-dollar"></i>
+                    <span>Tabela de Precos</span>
+                </button>
+                <button type="button" class="settings-tab" data-settings-tab="usuarios" role="tab" aria-selected="false">
+                    <i class="bi bi-people"></i>
+                    <span>Usuarios e Permissoes</span>
+                </button>
+                <button type="button" class="settings-tab" data-settings-tab="empresa" role="tab" aria-selected="false">
+                    <i class="bi bi-building"></i>
+                    <span>Dados da Empresa</span>
+                </button>
+            </div>
+
+            <div class="settings-content">
+            <div class="settings-pane active" data-settings-pane="precos">
+                <header class="settings-section-header">
+                    <h2>Servicos Disponiveis</h2>
+                    <a href="{% url 'novo_produto' %}" class="hf-btn hf-btn-primary">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Novo Servico</span>
+                    </a>
+                </header>
+
+                <div class="settings-table-wrap">
+                    <table class="settings-table">
+                        <thead>
+                            <tr>
+                                <th>Servico</th>
+                                <th>Categoria</th>
+                                <th>Preco Base</th>
+                                <th>Acoes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for servico in servicos_config %}
+                                <tr>
+                                    <td>{{ servico.name }}</td>
+                                    <td>{{ servico.categoria_nome|default:"Servico" }}</td>
+                                    <td class="settings-price">R$ {{ servico.valor|floatformat:2 }}</td>
+                                    <td>
+                                        <div class="settings-row-actions">
+                                            <a href="{% url 'editar_produto' servico.pk %}" class="settings-icon-button" aria-label="Editar {{ servico.name }}">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <form
+                                                method="post"
+                                                action="{% url 'deletar_produto' servico.pk %}"
+                                                data-hf-confirm
+                                                data-hf-confirm-icon="warning"
+                                                data-hf-confirm-title="Excluir servico?"
+                                                data-hf-confirm-text="Este item sera removido do catalogo e deixara de aparecer em novos orcamentos."
+                                                data-hf-confirm-button="Excluir"
+                                            >
+                                                {% csrf_token %}
+                                                <button type="submit" class="settings-icon-button danger" aria-label="Excluir {{ servico.name }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="table-empty">Nenhum servico cadastrado ainda.</div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="settings-grid">
+                    <section class="settings-config-block" aria-label="Adicionais">
+                        <header>
+                            <h2>Adicionais</h2>
+                            <button type="button" class="settings-small-button">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>Adicionar</span>
+                            </button>
+                        </header>
+
+                        <div class="settings-list">
+                            {% for adicional in adicionais_config %}
+                                <article class="settings-list-item">
+                                    <span>{{ adicional.nome }}</span>
+                                    <strong>+ R$ {{ adicional.valor|floatformat:2 }}</strong>
+                                    <button type="button" class="settings-icon-button" aria-label="Editar {{ adicional.nome }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="settings-icon-button danger" aria-label="Excluir {{ adicional.nome }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <section class="settings-config-block" aria-label="Multiplicadores por tecido">
+                        <header>
+                            <h2>Multiplicadores - Tipo de Tecido</h2>
+                            <button type="button" class="settings-small-button">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>Adicionar</span>
+                            </button>
+                        </header>
+
+                        <div class="settings-list">
+                            {% for tecido in tecidos_config %}
+                                <article class="settings-list-item">
+                                    <span>{{ tecido.nome }}</span>
+                                    <strong>x {{ tecido.multiplicador }}</strong>
+                                    <button type="button" class="settings-icon-button" aria-label="Editar {{ tecido.nome }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="settings-icon-button danger" aria-label="Excluir {{ tecido.nome }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </div>
+
+                <section class="settings-config-block settings-wide-block" aria-label="Multiplicadores por tamanho">
+                    <header>
+                        <h2>Multiplicadores - Tamanho</h2>
+                        <button type="button" class="settings-small-button">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Adicionar</span>
+                        </button>
+                    </header>
+
+                    <div class="settings-size-grid">
+                        {% for tamanho in tamanhos_config %}
+                            <article class="settings-size-card">
+                                <div>
+                                    <span>{{ tamanho.nome }}</span>
+                                    <div class="settings-row-actions">
+                                        <button type="button" class="settings-icon-button" aria-label="Editar {{ tamanho.nome }}">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="settings-icon-button danger" aria-label="Excluir {{ tamanho.nome }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <strong>x {{ tamanho.multiplicador }}</strong>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+
+            <div class="settings-pane" data-settings-pane="usuarios" hidden>
+                <div class="settings-grid">
+                    <section class="settings-config-block">
+                        <header>
+                            <h2>Usuarios administrativos</h2>
+                            {% if hf_is_dev %}
+                                <a href="{% url 'novo_admin' %}" class="settings-small-button">
+                                    <i class="bi bi-plus-lg"></i>
+                                    <span>Adicionar</span>
+                                </a>
+                            {% endif %}
+                        </header>
+                        <div class="settings-list">
+                            {% for usuario in usuarios_config %}
+                                <article class="settings-user-row">
+                                    <span class="settings-user-avatar">{{ usuario.get_full_name|default:usuario.username|slice:":2"|upper }}</span>
+                                    <div>
+                                        <strong>{{ usuario.get_full_name|default:usuario.username }}</strong>
+                                        <span>{{ usuario.email|default:usuario.username }}</span>
+                                    </div>
+                                </article>
+                            {% empty %}
+                                <div class="table-empty">Nenhum usuario encontrado.</div>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <section class="settings-config-block">
+                        <header>
+                            <h2>Equipe tecnica</h2>
+                            <a href="{% url 'novo_tecnico' %}" class="settings-small-button">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>Adicionar</span>
+                            </a>
+                        </header>
+                        <div class="settings-list">
+                            {% for tecnico in tecnicos_config %}
+                                <article class="settings-user-row">
+                                    <span class="settings-user-avatar">{{ tecnico.name|slice:":2"|upper }}</span>
+                                    <div>
+                                        <strong>{{ tecnico.name }}</strong>
+                                        <span>{{ tecnico.especialidade|default:tecnico.email|default:"Equipe ativa" }}</span>
+                                    </div>
+                                    <a href="{% url 'editar_tecnico' tecnico.pk %}" class="settings-icon-button" aria-label="Editar {{ tecnico.name }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </article>
+                            {% empty %}
+                                <div class="table-empty">Nenhuma equipe cadastrada ainda.</div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div class="settings-pane" data-settings-pane="empresa" hidden>
+                <div class="settings-company-grid">
+                    <article class="settings-company-card">
+                        <i class="bi bi-building"></i>
+                        <div>
+                            <h2>HigiFlow</h2>
+                            <p>Gestao simplificada para empresas de higienizacao.</p>
+                        </div>
+                    </article>
+                    <article class="settings-company-card">
+                        <i class="bi bi-telephone"></i>
+                        <div>
+                            <h2>Contato</h2>
+                            <p>Configure telefone, e-mail e canais de atendimento futuramente.</p>
+                        </div>
+                    </article>
+                    <article class="settings-company-card">
+                        <i class="bi bi-geo-alt"></i>
+                        <div>
+                            <h2>Endereco</h2>
+                            <p>Dados fiscais e endereco comercial serao centralizados aqui.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+            </div>
+        </section>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const tabs = document.querySelectorAll("[data-settings-tab]");
+            const panes = document.querySelectorAll("[data-settings-pane]");
+
+            tabs.forEach((tab) => {
+                tab.addEventListener("click", () => {
+                    const target = tab.dataset.settingsTab;
+
+                    tabs.forEach((item) => {
+                        const isActive = item === tab;
+                        item.classList.toggle("active", isActive);
+                        item.setAttribute("aria-selected", String(isActive));
+                    });
+
+                    panes.forEach((pane) => {
+                        const isActive = pane.dataset.settingsPane === target;
+                        pane.classList.toggle("active", isActive);
+                        pane.hidden = !isActive;
+                    });
+                });
+            });
+        });
+    </script>
 {% endblock %}
