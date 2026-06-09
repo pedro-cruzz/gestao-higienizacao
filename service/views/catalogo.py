@@ -6,6 +6,7 @@ from django.utils.dateparse import parse_date
 
 from service.forms import CategoriaCatalogoForm, ClienteForm, LeadForm
 from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, Service_catalog
+from service.ownership import owned_queryset, set_owner
 
 
 def _lead_status_class(status: str) -> str:
@@ -50,7 +51,10 @@ def _lead_origin_icon(origem: str) -> str:
 
 def catalogo(request: HttpRequest) -> HttpResponse:
     busca = request.GET.get("q", "").strip()
-    itens = Service_catalog.objects.select_related("categoria").order_by("categoria__name", "tipo", "name")
+    itens = owned_queryset(
+        Service_catalog.objects.select_related("categoria"),
+        request.user,
+    ).order_by("categoria__name", "tipo", "name")
 
     if busca:
         itens = itens.filter(
@@ -60,7 +64,7 @@ def catalogo(request: HttpRequest) -> HttpResponse:
             | Q(descricao__icontains=busca)
         )
 
-    categorias = CategoriaCatalogo.objects.annotate(total=Count("itens")).order_by("name")
+    categorias = owned_queryset(CategoriaCatalogo.objects, request.user).annotate(total=Count("itens")).order_by("name")
 
     context = {
         "busca": busca,
@@ -77,7 +81,9 @@ def nova_categoria(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = CategoriaCatalogoForm(request.POST)
         if form.is_valid():
-            categoria = form.save()
+            categoria = form.save(commit=False)
+            set_owner(categoria, request.user)
+            categoria.save()
             messages.success(request, f"Categoria '{categoria.name}' cadastrada com sucesso.")
             return redirect("catalogo")
     else:
@@ -85,14 +91,54 @@ def nova_categoria(request: HttpRequest) -> HttpResponse:
 
     context = {
         "form": form,
-        "categorias": CategoriaCatalogo.objects.annotate(total=Count("itens")).order_by("name"),
+        "categorias": owned_queryset(CategoriaCatalogo.objects, request.user).annotate(total=Count("itens")).order_by("name"),
+        "is_edit": False,
     }
     return render(request, "service/categoria_form.html", context)
 
 
+def editar_categoria(request: HttpRequest, pk: int) -> HttpResponse:
+    categoria = get_object_or_404(owned_queryset(CategoriaCatalogo.objects, request.user), pk=pk)
+
+    if request.method == "POST":
+        form = CategoriaCatalogoForm(request.POST, instance=categoria)
+        if form.is_valid():
+            categoria = form.save()
+            messages.success(request, f"Categoria '{categoria.name}' atualizada com sucesso.")
+            return redirect("catalogo")
+    else:
+        form = CategoriaCatalogoForm(instance=categoria)
+
+    context = {
+        "form": form,
+        "categoria": categoria,
+        "categorias": owned_queryset(CategoriaCatalogo.objects, request.user).annotate(total=Count("itens")).order_by("name"),
+        "is_edit": True,
+    }
+    return render(request, "service/categoria_form.html", context)
+
+
+def deletar_categoria(request: HttpRequest, pk: int) -> HttpResponse:
+    if request.method != "POST":
+        return redirect("catalogo")
+
+    categoria = get_object_or_404(owned_queryset(CategoriaCatalogo.objects, request.user), pk=pk)
+    if categoria.itens.exists():
+        messages.error(
+            request,
+            f"Categoria '{categoria.name}' nao pode ser excluida porque possui itens vinculados.",
+        )
+        return redirect("catalogo")
+
+    nome = categoria.name
+    categoria.delete()
+    messages.success(request, f"Categoria '{nome}' excluida com sucesso.")
+    return redirect("catalogo")
+
+
 def listar_clientes(request: HttpRequest) -> HttpResponse:
     busca = request.GET.get("q", "").strip()
-    todos_clientes = Cliente.objects.prefetch_related("orcamentos").order_by("name")
+    todos_clientes = owned_queryset(Cliente.objects.prefetch_related("orcamentos"), request.user).order_by("name")
     clientes = todos_clientes
 
     if busca:
@@ -150,9 +196,6 @@ def listar_clientes(request: HttpRequest) -> HttpResponse:
         for cliente in clientes
     ]
 
-    if not linhas_clientes and not busca:
-        linhas_clientes = _clientes_exemplo()
-
     total_residenciais = sum(1 for cliente in linhas_clientes if cliente["tipo"] == "Residencial")
     total_empresariais = sum(1 for cliente in linhas_clientes if cliente["tipo"] == "Empresarial")
     faturamento_total = sum(cliente["total_gasto"] for cliente in linhas_clientes)
@@ -166,6 +209,27 @@ def listar_clientes(request: HttpRequest) -> HttpResponse:
         "faturamento_total": faturamento_total,
     }
     return render(request, "service/clientes.html", context)
+
+
+def detalhe_cliente(request: HttpRequest, pk: int) -> HttpResponse:
+    cliente = get_object_or_404(owned_queryset(Cliente.objects, request.user), pk=pk)
+    orcamentos_cliente = owned_queryset(cliente.orcamentos, request.user)
+    ordens_cliente = owned_queryset(cliente.ordens_servico.select_related("tecnico", "orcamento"), request.user)
+    resumo = orcamentos_cliente.aggregate(
+        total_servicos=Count("id"),
+        total_gasto=Sum("valor"),
+        ticket_medio=Avg("valor"),
+    )
+
+    context = {
+        "cliente": cliente,
+        "orcamentos": orcamentos_cliente.order_by("-created_at", "-id")[:6],
+        "ordens": ordens_cliente.order_by("-data_agendada", "-id")[:6],
+        "total_servicos": resumo["total_servicos"] or 0,
+        "total_gasto": resumo["total_gasto"] or 0,
+        "ticket_medio": resumo["ticket_medio"] or 0,
+    }
+    return render(request, "service/cliente_detalhe.html", context)
 
 
 def _clientes_exemplo() -> list[dict]:
@@ -201,7 +265,7 @@ def listar_leads(request: HttpRequest) -> HttpResponse:
     origem = request.GET.get("origem", "").strip()
     data_inicio = request.GET.get("data_inicio", "").strip()
     data_fim = request.GET.get("data_fim", "").strip()
-    leads_query = Lead.objects.select_related("cliente").order_by("-created_at", "-id")
+    leads_query = owned_queryset(Lead.objects.select_related("cliente"), request.user).order_by("-created_at", "-id")
 
     if busca:
         leads_query = leads_query.filter(
@@ -291,8 +355,8 @@ def _cliente_initial_lead(lead: Lead) -> dict:
     }
 
 
-def _orcamentos_origem_cliente():
-    orcamentos = Orcamento.objects.filter(cliente__isnull=True).order_by("-created_at", "-id")[:50]
+def _orcamentos_origem_cliente(request: HttpRequest):
+    orcamentos = owned_queryset(Orcamento.objects, request.user).filter(cliente__isnull=True).order_by("-created_at", "-id")[:50]
     return [
         {
             "id": orcamento.pk,
@@ -315,12 +379,14 @@ def _orcamentos_origem_cliente():
 
 def novo_cliente(request: HttpRequest) -> HttpResponse:
     lead_id = request.GET.get("lead")
-    lead = Lead.objects.filter(pk=lead_id, cliente__isnull=True).first() if lead_id else None
+    lead = owned_queryset(Lead.objects, request.user).filter(pk=lead_id, cliente__isnull=True).first() if lead_id else None
 
     if request.method == "POST":
-        form = ClienteForm(request.POST)
+        form = ClienteForm(request.POST, user=request.user)
         if form.is_valid():
-            cliente = form.save()
+            cliente = form.save(commit=False)
+            set_owner(cliente, request.user)
+            cliente.save()
             orcamento = form.cleaned_data.get("orcamento_origem")
             if orcamento:
                 orcamento.cliente = cliente
@@ -333,35 +399,35 @@ def novo_cliente(request: HttpRequest) -> HttpResponse:
             return redirect("clientes")
     else:
         orcamento_id = request.GET.get("orcamento") or request.GET.get("orcamento_origem")
-        orcamento = Orcamento.objects.filter(pk=orcamento_id, cliente__isnull=True).first() if orcamento_id else None
+        orcamento = owned_queryset(Orcamento.objects, request.user).filter(pk=orcamento_id, cliente__isnull=True).first() if orcamento_id else None
         initial = _cliente_initial_lead(lead) if lead else _cliente_initial_orcamento(orcamento) if orcamento else None
-        form = ClienteForm(initial=initial)
+        form = ClienteForm(initial=initial, user=request.user)
 
     context = {
         "form": form,
-        "clientes_recentes": Cliente.objects.order_by("-created_at", "-id")[:5],
-        "orcamentos_origem": _orcamentos_origem_cliente(),
+        "clientes_recentes": owned_queryset(Cliente.objects, request.user).order_by("-created_at", "-id")[:5],
+        "orcamentos_origem": _orcamentos_origem_cliente(request),
         "is_edit": False,
     }
     return render(request, "service/cliente_form.html", context)
 
 
 def editar_cliente(request: HttpRequest, pk: int) -> HttpResponse:
-    cliente = get_object_or_404(Cliente, pk=pk)
+    cliente = get_object_or_404(owned_queryset(Cliente.objects, request.user), pk=pk)
 
     if request.method == "POST":
-        form = ClienteForm(request.POST, instance=cliente)
+        form = ClienteForm(request.POST, instance=cliente, user=request.user)
         if form.is_valid():
             cliente = form.save()
             messages.success(request, f"Cliente '{cliente.name}' atualizado com sucesso.")
             return redirect("clientes")
     else:
-        form = ClienteForm(instance=cliente)
+        form = ClienteForm(instance=cliente, user=request.user)
 
     context = {
         "form": form,
         "cliente": cliente,
-        "clientes_recentes": Cliente.objects.exclude(pk=pk).order_by("-created_at", "-id")[:5],
+        "clientes_recentes": owned_queryset(Cliente.objects, request.user).exclude(pk=pk).order_by("-created_at", "-id")[:5],
         "orcamentos_origem": [],
         "is_edit": True,
     }
@@ -372,7 +438,9 @@ def novo_lead(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = LeadForm(request.POST)
         if form.is_valid():
-            lead = form.save()
+            lead = form.save(commit=False)
+            set_owner(lead, request.user)
+            lead.save()
             messages.success(request, f"Lead '{lead.name}' cadastrado com sucesso.")
             return redirect("leads")
     else:
@@ -380,7 +448,7 @@ def novo_lead(request: HttpRequest) -> HttpResponse:
 
     context = {
         "form": form,
-        "leads_recentes": Lead.objects.order_by("-created_at", "-id")[:5],
+        "leads_recentes": owned_queryset(Lead.objects, request.user).order_by("-created_at", "-id")[:5],
     }
     return render(request, "service/lead_form.html", context)
 
@@ -389,7 +457,7 @@ def deletar_cliente(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method != "POST":
         return redirect("clientes")
 
-    cliente = get_object_or_404(Cliente, pk=pk)
+    cliente = get_object_or_404(owned_queryset(Cliente.objects, request.user), pk=pk)
     nome = cliente.name
     cliente.delete()
 

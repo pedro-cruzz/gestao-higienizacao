@@ -1,0 +1,56 @@
+{% extends "service/base.html" %}
+
+{% block title %}{% if is_edit %}Editar Multiplicador{% else %}Novo Multiplicador{% endif %} | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>{% if is_edit %}Editar multiplicador{% else %}Novo multiplicador{% endif %}</h1>
+            <p>Defina um fator que ajusta o valor final dos orcamentos desta conta.</p>
+        </div>
+        <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">
+            <i class="bi bi-arrow-left"></i>
+            <span>Ajustes</span>
+        </a>
+    </section>
+
+    <section class="catalog-form-layout">
+        <article class="catalog-form-panel">
+            <header>
+                <span class="status-pill status-soft-blue">Fator de preco</span>
+                <h2>Dados do multiplicador</h2>
+            </header>
+
+            <form method="post" class="catalog-form">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <div class="form-field span-2">
+                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                    {{ form.name }}
+                    {{ form.name.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.fator.id_for_label }}">{{ form.fator.label }}</label>
+                    {{ form.fator }}
+                    {{ form.fator.errors }}
+                </div>
+                <div class="form-field os-check-field">
+                    <label for="{{ form.ativo.id_for_label }}">
+                        {{ form.ativo }}
+                        <span>{{ form.ativo.label }}</span>
+                    </label>
+                    {{ form.ativo.errors }}
+                </div>
+
+                <div class="form-actions span-2">
+                    <button type="submit" class="hf-btn hf-btn-primary">
+                        <i class="bi bi-check-lg"></i>
+                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar multiplicador{% endif %}</span>
+                    </button>
+                    <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">Cancelar</a>
+                </div>
+            </form>
+        </article>
+    </section>
+{% endblock %}

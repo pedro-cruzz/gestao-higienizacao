@@ -1,0 +1,186 @@
+{% extends "service/base.html" %}
+
+{% block title %}Ajustes do Orcamento | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>Ajustes do orcamento</h1>
+            <p>Cadastre adicionais e multiplicadores usados nos orcamentos desta conta.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'novo_multiplicador_orcamento' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-percent"></i>
+                <span>Novo multiplicador</span>
+            </a>
+            <a href="{% url 'novo_adicional_orcamento' %}" class="hf-btn hf-btn-primary">
+                <i class="bi bi-plus-lg"></i>
+                <span>Novo adicional</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="orcamentos-panel" aria-label="Adicionais de orcamento">
+        <div class="leads-toolbar">
+            <form method="get" class="leads-search orcamentos-search">
+                <i class="bi bi-search"></i>
+                <input type="search" name="q" value="{{ busca }}" placeholder="Buscar adicional..." aria-label="Buscar adicional">
+            </form>
+            <span class="filter-button">
+                <i class="bi bi-receipt"></i>
+                <span>{{ total_adicionais }} adicional(is) / {{ total_multiplicadores }} multiplicador(es)</span>
+            </span>
+        </div>
+
+        <div class="leads-table-wrap">
+            <table class="os-table">
+                <thead>
+                    <tr>
+                        <th>Adicional</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for adicional in adicionais %}
+                        <tr>
+                            <td class="quote-number">{{ adicional.name }}</td>
+                            <td><strong>R$ {{ adicional.valor|floatformat:2 }}</strong></td>
+                            <td>
+                                <span class="status-pill {% if adicional.ativo %}status-soft-blue{% else %}status-gray{% endif %}">
+                                    {% if adicional.ativo %}Ativo{% else %}Inativo{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="quote-actions dropdown">
+                                    <button
+                                        type="button"
+                                        class="quote-icon-button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-boundary="viewport"
+                                        aria-expanded="false"
+                                        aria-label="Abrir menu de acoes de {{ adicional.name }}"
+                                    >
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
+                                        <a href="{% url 'editar_adicional_orcamento' adicional.pk %}" class="dropdown-item hf-actions-menu-item">
+                                            <i class="bi bi-pencil-square"></i>
+                                            <span>Editar adicional</span>
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        <form
+                                            method="post"
+                                            action="{% url 'deletar_adicional_orcamento' adicional.pk %}"
+                                            class="m-0"
+                                            data-hf-confirm
+                                            data-hf-confirm-icon="warning"
+                                            data-hf-confirm-title="Excluir adicional?"
+                                            data-hf-confirm-text="Esta acao removera o adicional permanentemente."
+                                            data-hf-confirm-button="Excluir"
+                                        >
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item hf-actions-menu-item hf-actions-menu-danger">
+                                                <i class="bi bi-trash"></i>
+                                                <span>Excluir adicional</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="table-empty">Nenhum adicional cadastrado ainda.</div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="orcamentos-panel mt-4" aria-label="Multiplicadores de orcamento">
+        <div class="leads-toolbar">
+            <div>
+                <h2 class="h5 mb-1">Multiplicadores</h2>
+                <p class="muted-copy mb-0">Fatores que aumentam ou ajustam o valor final do orcamento.</p>
+            </div>
+            <a href="{% url 'novo_multiplicador_orcamento' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-plus-lg"></i>
+                <span>Novo multiplicador</span>
+            </a>
+        </div>
+
+        <div class="leads-table-wrap">
+            <table class="os-table">
+                <thead>
+                    <tr>
+                        <th>Multiplicador</th>
+                        <th>Fator</th>
+                        <th>Status</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for multiplicador in multiplicadores %}
+                        <tr>
+                            <td class="quote-number">{{ multiplicador.name }}</td>
+                            <td><strong>x{{ multiplicador.fator|floatformat:2 }}</strong></td>
+                            <td>
+                                <span class="status-pill {% if multiplicador.ativo %}status-soft-blue{% else %}status-gray{% endif %}">
+                                    {% if multiplicador.ativo %}Ativo{% else %}Inativo{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="quote-actions dropdown">
+                                    <button
+                                        type="button"
+                                        class="quote-icon-button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-boundary="viewport"
+                                        aria-expanded="false"
+                                        aria-label="Abrir menu de acoes de {{ multiplicador.name }}"
+                                    >
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
+                                        <a href="{% url 'editar_multiplicador_orcamento' multiplicador.pk %}" class="dropdown-item hf-actions-menu-item">
+                                            <i class="bi bi-pencil-square"></i>
+                                            <span>Editar multiplicador</span>
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        <form
+                                            method="post"
+                                            action="{% url 'deletar_multiplicador_orcamento' multiplicador.pk %}"
+                                            class="m-0"
+                                            data-hf-confirm
+                                            data-hf-confirm-icon="warning"
+                                            data-hf-confirm-title="Excluir multiplicador?"
+                                            data-hf-confirm-text="Esta acao removera o multiplicador permanentemente."
+                                            data-hf-confirm-button="Excluir"
+                                        >
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item hf-actions-menu-item hf-actions-menu-danger">
+                                                <i class="bi bi-trash"></i>
+                                                <span>Excluir multiplicador</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="table-empty">Nenhum multiplicador cadastrado ainda.</div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

@@ -8,6 +8,10 @@
             <h1>Orçamentos</h1>
             <p>Gerencie todos os orçamentos criados</p>
         </div>
+        <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">
+            <i class="bi bi-sliders"></i>
+            <span>Ajustes</span>
+        </a>
         <a href="{% url 'novo_orcamento' %}" class="hf-btn hf-btn-primary">
             <i class="bi bi-plus-lg"></i>
             <span>Novo Orçamento</span>
@@ -121,6 +125,23 @@
                                             <i class="bi bi-pencil-square"></i>
                                             <span>Editar orcamento</span>
                                         </a>
+                                        <div class="dropdown-divider"></div>
+                                        <form
+                                            method="post"
+                                            action="{% url 'deletar_orcamento' linha.obj.pk %}"
+                                            class="m-0"
+                                            data-hf-confirm
+                                            data-hf-confirm-icon="warning"
+                                            data-hf-confirm-title="Excluir orcamento?"
+                                            data-hf-confirm-text="Esta acao removera o orcamento permanentemente."
+                                            data-hf-confirm-button="Excluir"
+                                        >
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item hf-actions-menu-item hf-actions-menu-danger">
+                                                <i class="bi bi-trash"></i>
+                                                <span>Excluir orcamento</span>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </td>

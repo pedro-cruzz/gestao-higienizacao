@@ -60,6 +60,8 @@
                                     data-schedule="{{ evento.agenda }}"
                                     data-responsible="{{ evento.responsavel }}"
                                     data-address="{{ evento.endereco }}"
+                                    data-maps-url="{{ evento.maps_url }}"
+                                    data-route-url="{{ evento.rota_url }}"
                                     data-status="{{ evento.status_label }}"
                                     data-status-class="{{ evento.status_css }}"
                                     data-value="{{ evento.valor }}"
@@ -101,8 +103,22 @@
             {% for dia in dias %}
                 <article class="agenda-day{% if dia.is_today %} is-today{% endif %}">
                     <header>
-                        <span>{{ dia.data|date:"D" }}</span>
-                        <strong>{{ dia.data|date:"d/m" }}</strong>
+                        <div class="agenda-day-title">
+                            <span>{{ dia.data|date:"D" }}</span>
+                            <strong>{{ dia.data|date:"d/m" }}</strong>
+                        </div>
+                        {% if dia.rota_url %}
+                            <a
+                                href="{{ dia.rota_url }}"
+                                target="_blank"
+                                rel="noopener"
+                                class="agenda-route-button"
+                                aria-label="Tracar rota do dia {{ dia.data|date:'d/m' }}"
+                            >
+                                <i class="bi bi-sign-turn-right"></i>
+                                <span>Rota</span>
+                            </a>
+                        {% endif %}
                     </header>
 
                     <div class="agenda-day-list">
@@ -116,7 +132,9 @@
                                 data-client="{{ ordem.cliente_nome }}"
                                 data-schedule="{{ ordem.data_agendada|date:'d/m/Y' }} {{ ordem.hora_inicio|time:'H:i' }}"
                                 data-responsible="{{ ordem.responsavel_nome }}"
-                                data-address="{{ ordem.endereco|default:'Endereco nao informado' }}"
+                                data-address="{{ ordem.mapa.endereco|default:'Endereco nao informado' }}"
+                                data-maps-url="{{ ordem.mapa.maps_url }}"
+                                data-route-url="{{ ordem.mapa.rota_url }}"
                                 data-status="{{ ordem.get_status_display }}"
                                 data-status-class="{{ ordem.status_css }}"
                                 data-value="R$ {{ ordem.valor|floatformat:2 }}"
@@ -136,10 +154,12 @@
     </section>
 
     <section class="agenda-actions">
-        <a href="{% url 'nova_os' %}" class="hf-btn hf-btn-primary">
-            <i class="bi bi-plus-lg"></i>
-            <span>Agendar OS</span>
-        </a>
+        {% if hf_is_admin %}
+            <a href="{% url 'nova_os' %}" class="hf-btn hf-btn-primary">
+                <i class="bi bi-plus-lg"></i>
+                <span>Agendar OS</span>
+            </a>
+        {% endif %}
         <a href="{% url 'ordens_servico' %}" class="hf-btn hf-btn-light">
             <i class="bi bi-list-check"></i>
             <span>Ver OS</span>
@@ -182,6 +202,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="hf-btn hf-btn-light" data-bs-dismiss="modal">Fechar</button>
+                    <a href="#" class="hf-btn hf-btn-light d-none" target="_blank" rel="noopener" data-os-modal-route>
+                        <i class="bi bi-sign-turn-right"></i>
+                        <span>Rota</span>
+                    </a>
                     <a href="#" class="hf-btn hf-btn-primary" data-os-modal-detail>Ver detalhes</a>
                 </div>
             </div>
@@ -201,6 +225,7 @@
             const title = modalElement.querySelector("#agendaOsModalTitle");
             const status = modalElement.querySelector("[data-os-modal-status]");
             const detail = modalElement.querySelector("[data-os-modal-detail]");
+            const route = modalElement.querySelector("[data-os-modal-route]");
             const fields = {
                 client: modalElement.querySelector("[data-os-modal-client]"),
                 schedule: modalElement.querySelector("[data-os-modal-schedule]"),
@@ -222,6 +247,10 @@
                 fields.address.textContent = trigger.dataset.address || "-";
                 fields.value.textContent = trigger.dataset.value || "";
                 detail.href = trigger.dataset.detailUrl || "#";
+                if (route) {
+                    route.href = trigger.dataset.routeUrl || "#";
+                    route.classList.toggle("d-none", !trigger.dataset.routeUrl);
+                }
 
                 status.className = `status-pill ${trigger.dataset.statusClass || ""}`.trim();
                 status.textContent = trigger.dataset.status || "-";

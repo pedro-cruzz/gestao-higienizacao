@@ -9,7 +9,18 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
+from service.models import (
+    AdicionalOrcamento,
+    CategoriaCatalogo,
+    Cliente,
+    Lead,
+    MultiplicadorOrcamento,
+    Orcamento,
+    OrdemServico,
+    Service_catalog,
+    Tecnico,
+    UserProfile,
+)
 from service.access import ADMIN_GROUP, DEV_GROUP, TEAM_GROUP
 from service.services.nominatim import LocalizacaoMapa, NominatimService
 from service.services.viacep import EnderecoViaCep
@@ -113,6 +124,58 @@ class AuthAccessTests(TestCase):
         self.assertTrue(novo_dev.is_staff)
         self.assertTrue(novo_dev.is_superuser)
 
+    def test_dev_deleta_acesso_admin(self):
+        dev_group = Group.objects.create(name=DEV_GROUP)
+        admin_group = Group.objects.create(name=ADMIN_GROUP)
+        dev = self.user_model.objects.create_user(username="dev", password="senha-segura")
+        dev.groups.add(dev_group)
+        admin = self.user_model.objects.create_user(username="admin-remover", password="senha-segura")
+        admin.groups.add(admin_group)
+        self.client.force_login(dev)
+
+        response = self.client.post(reverse("deletar_admin", args=[admin.pk]))
+
+        self.assertRedirects(response, reverse("admins"), fetch_redirect_response=False)
+        self.assertFalse(self.user_model.objects.filter(pk=admin.pk).exists())
+
+    def test_dev_deleta_outro_dev(self):
+        group = Group.objects.create(name=DEV_GROUP)
+        dev = self.user_model.objects.create_user(username="dev", password="senha-segura")
+        outro_dev = self.user_model.objects.create_user(username="outro-dev", password="senha-segura")
+        dev.groups.add(group)
+        outro_dev.groups.add(group)
+        self.client.force_login(dev)
+
+        response = self.client.post(reverse("deletar_admin", args=[outro_dev.pk]))
+
+        self.assertRedirects(response, reverse("admins"), fetch_redirect_response=False)
+        self.assertFalse(self.user_model.objects.filter(pk=outro_dev.pk).exists())
+
+    def test_usuario_nao_deleta_o_proprio_acesso(self):
+        group = Group.objects.create(name=DEV_GROUP)
+        dev = self.user_model.objects.create_user(username="dev", password="senha-segura")
+        dev.groups.add(group)
+        self.client.force_login(dev)
+
+        response = self.client.post(reverse("deletar_admin", args=[dev.pk]))
+
+        self.assertRedirects(response, reverse("admins"), fetch_redirect_response=False)
+        self.assertTrue(self.user_model.objects.filter(pk=dev.pk).exists())
+
+    def test_admin_nao_deleta_dev(self):
+        dev_group = Group.objects.create(name=DEV_GROUP)
+        admin_group = Group.objects.create(name=ADMIN_GROUP)
+        dev = self.user_model.objects.create_user(username="dev-remover", password="senha-segura")
+        dev.groups.add(dev_group)
+        admin = self.user_model.objects.create_user(username="admin", password="senha-segura")
+        admin.groups.add(admin_group)
+        self.client.force_login(admin)
+
+        response = self.client.post(reverse("deletar_admin", args=[dev.pk]))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(self.user_model.objects.filter(pk=dev.pk).exists())
+
     def test_admin_nao_acessa_area_de_dev(self):
         group = Group.objects.create(name=ADMIN_GROUP)
         user = self.user_model.objects.create_user(username="admin", password="senha-segura")
@@ -131,12 +194,14 @@ class ServiceViewsTests(TestCase):
         )
         self.client.force_login(self.user)
         self.item_a = Service_catalog.objects.create(
+            owner=self.user,
             name="Banner 1x1",
             tipo="Impressao",
             valor=120.0,
             descricao="Banner em lona",
         )
         self.item_b = Service_catalog.objects.create(
+            owner=self.user,
             name="Adesivo vitrine",
             tipo="Recorte",
             valor=80.0,
@@ -152,7 +217,8 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "Orcar item")
 
     def test_lista_clientes_retorna_ok(self):
-        Cliente.objects.create(
+        cliente = Cliente.objects.create(
+            owner=self.user,
             name="Maria Cliente",
             email="maria@teste.com",
             telefone="11911112222",
@@ -164,6 +230,99 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Clientes")
         self.assertContains(response, "Maria Cliente")
+        self.assertContains(response, reverse("cliente_detalhe", args=[cliente.pk]))
+        self.assertContains(response, reverse("editar_cliente", args=[cliente.pk]))
+        self.assertContains(response, reverse("deletar_cliente", args=[cliente.pk]))
+        self.assertContains(response, "Ver perfil")
+        self.assertContains(response, "Editar cliente")
+        self.assertContains(response, "Excluir cliente")
+
+    def test_admin_ve_somente_dados_do_proprio_owner(self):
+        other_admin = get_user_model().objects.create_user(username="outro-admin", password="senha-segura")
+        dev_group = Group.objects.create(name=DEV_GROUP)
+        dev_user = get_user_model().objects.create_user(username="dev-owner", password="senha-segura")
+        dev_user.groups.add(dev_group)
+
+        cliente_proprio = Cliente.objects.create(owner=self.user, name="Cliente Proprio", email="proprio@teste.com")
+        cliente_outro = Cliente.objects.create(owner=other_admin, name="Cliente Outro Admin", email="outro@teste.com")
+        Cliente.objects.create(owner=dev_user, name="Cliente Teste Dev", email="dev@teste.com")
+        Lead.objects.create(owner=self.user, name="Lead Proprio", email="lead-proprio@teste.com")
+        Lead.objects.create(owner=other_admin, name="Lead Outro Admin", email="lead-outro@teste.com")
+        orcamento_proprio = Orcamento.objects.create(
+            owner=self.user,
+            name="Orcamento Proprio",
+            email="orcamento-proprio@teste.com",
+            quantidade=1,
+            valor=120.0,
+        )
+        orcamento_proprio.itens.set([self.item_a])
+        orcamento_outro = Orcamento.objects.create(
+            owner=other_admin,
+            name="Orcamento Outro Admin",
+            email="orcamento-outro@teste.com",
+            quantidade=1,
+            valor=90.0,
+        )
+        produto_outro = Service_catalog.objects.create(owner=other_admin, name="Produto Outro Admin", valor=50.0)
+
+        clientes_response = self.client.get(reverse("clientes"))
+        self.assertContains(clientes_response, "Cliente Proprio")
+        self.assertNotContains(clientes_response, "Cliente Outro Admin")
+        self.assertNotContains(clientes_response, "Cliente Teste Dev")
+        self.assertEqual(self.client.get(reverse("cliente_detalhe", args=[cliente_proprio.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("cliente_detalhe", args=[cliente_outro.pk])).status_code, 404)
+
+        leads_response = self.client.get(reverse("leads"))
+        self.assertContains(leads_response, "Lead Proprio")
+        self.assertNotContains(leads_response, "Lead Outro Admin")
+
+        orcamentos_response = self.client.get(reverse("orcamentos"))
+        self.assertContains(orcamentos_response, "Orcamento Proprio")
+        self.assertNotContains(orcamentos_response, "Orcamento Outro Admin")
+        self.assertEqual(self.client.get(reverse("orcamento_detalhe", args=[orcamento_outro.pk])).status_code, 404)
+
+        catalogo_response = self.client.get(reverse("catalogo"))
+        self.assertContains(catalogo_response, self.item_a.name)
+        self.assertNotContains(catalogo_response, produto_outro.name)
+
+    def test_detalhe_cliente_retorna_perfil(self):
+        cliente = Cliente.objects.create(
+            owner=self.user,
+            name="Cliente Perfil",
+            email="perfil@teste.com",
+            telefone="11933334444",
+            cidade="Sao Paulo",
+            uf="SP",
+            status=Cliente.Status.CONTATADO,
+        )
+        orcamento = Orcamento.objects.create(
+            owner=self.user,
+            name="Orcamento do Perfil",
+            email="perfil@teste.com",
+            quantidade=1,
+            valor=240.0,
+            aprovado=True,
+            cliente=cliente,
+        )
+        orcamento.itens.set([self.item_a])
+        OrdemServico.objects.create(
+            owner=self.user,
+            titulo="OS do Perfil",
+            cliente=cliente,
+            data_agendada=timezone.localdate(),
+            hora_inicio=time(9, 0),
+            administrador_executa=True,
+            valor=240.0,
+        )
+
+        response = self.client.get(reverse("cliente_detalhe", args=[cliente.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Cliente Perfil")
+        self.assertContains(response, "Contatado")
+        self.assertContains(response, "Orcamento do Perfil")
+        self.assertContains(response, "OS do Perfil")
+        self.assertContains(response, "R$ 240.00")
 
     def test_inicio_exibe_metricas_reais(self):
         Lead.objects.create(
@@ -231,8 +390,64 @@ class ServiceViewsTests(TestCase):
         self.assertContains(login_response, "seu.usuario")
         self.assertContains(login_response, "Gerencie seu neg")
         self.assertNotContains(login_response, "hf-sidebar")
+        self.assertContains(login_response, reverse("password_reset"))
         self.assertContains(inicio_response, f'action="{reverse("logout")}"')
+        self.assertContains(inicio_response, f'href="{reverse("perfil")}"')
+        self.assertNotContains(inicio_response, ">Perfil</span>")
         self.assertContains(inicio_response, ">Sair<")
+
+    def test_perfil_atualiza_dados_e_senha(self):
+        response = self.client.post(
+            reverse("perfil"),
+            {
+                "first_name": "Pedro",
+                "last_name": "Silva",
+                "username": "pedro-admin",
+                "email": " PEDRO@TESTE.COM ",
+                "senha_atual": "senha-segura",
+                "nova_senha": "nova-senha-segura",
+                "confirmar_senha": "nova-senha-segura",
+            },
+        )
+
+        self.assertRedirects(response, reverse("perfil"), fetch_redirect_response=False)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "Pedro")
+        self.assertEqual(self.user.last_name, "Silva")
+        self.assertEqual(self.user.username, "pedro-admin")
+        self.assertEqual(self.user.email, "pedro@teste.com")
+        self.assertTrue(self.user.check_password("nova-senha-segura"))
+
+    def test_perfil_salva_foto_de_perfil(self):
+        foto = SimpleUploadedFile(
+            "perfil.gif",
+            (
+                b"GIF87a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00"
+                b"\xff\xff\xff,\x00\x00\x00\x00\x01\x00\x01\x00"
+                b"\x00\x02\x02D\x01\x00;"
+            ),
+            content_type="image/gif",
+        )
+
+        with tempfile.TemporaryDirectory() as media_root, self.settings(MEDIA_ROOT=media_root):
+            response = self.client.post(
+                reverse("perfil"),
+                {
+                    "first_name": self.user.first_name,
+                    "last_name": self.user.last_name,
+                    "username": self.user.username,
+                    "email": self.user.email,
+                    "foto": foto,
+                },
+            )
+
+            self.assertRedirects(response, reverse("perfil"), fetch_redirect_response=False)
+            perfil = UserProfile.objects.get(user=self.user)
+            self.assertTrue(perfil.foto.name.startswith("perfis/"))
+
+            perfil_response = self.client.get(reverse("perfil"))
+            self.assertContains(perfil_response, perfil.foto.url)
+            self.assertContains(perfil_response, "profile-photo-preview")
 
     def test_cria_lead(self):
         response = self.client.post(
@@ -528,6 +743,41 @@ class ServiceViewsTests(TestCase):
         self.assertIsNotNone(lead.cliente)
         self.assertEqual(lead.cliente.email, lead.email)
 
+    def test_orcamento_vincula_cliente_existente_a_lead_convertido(self):
+        cliente = Cliente.objects.create(
+            name="Cliente Existente",
+            email="cliente-existente@teste.com",
+        )
+        first_lead = Lead.objects.create(
+            name="Lead 1",
+            email="lead1@teste.com",
+            cliente=cliente,
+            status=Lead.Status.CONVERTIDO,
+        )
+        second_lead = Lead.objects.create(
+            name="Lead 2",
+            email="lead2@teste.com",
+        )
+        orcamento = Orcamento.objects.create(
+            name=second_lead.name,
+            email=second_lead.email,
+            quantidade=1,
+            valor=120.0,
+            lead=second_lead,
+        )
+        orcamento.itens.set([self.item_a])
+
+        response = self.client.post(
+            reverse("cadastrar_cliente_orcamento", args=[orcamento.pk])
+        )
+
+        self.assertEqual(response.status_code, 302)
+        second_lead.refresh_from_db()
+        self.assertEqual(second_lead.status, Lead.Status.CONVERTIDO)
+        self.assertIsNotNone(second_lead.cliente)
+        self.assertEqual(second_lead.cliente, cliente)
+        self.assertEqual(Lead.objects.filter(cliente=cliente).count(), 2)
+
     def test_cria_cliente(self):
         response = self.client.post(
             reverse("novo_cliente"),
@@ -645,9 +895,13 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Cliente Lista")
         self.assertContains(response, "120.00")
+        self.assertContains(response, reverse("editar_orcamento", args=[orcamento.pk]))
+        self.assertContains(response, reverse("deletar_orcamento", args=[orcamento.pk]))
+        self.assertContains(response, "Editar orcamento")
+        self.assertContains(response, "Excluir orcamento")
 
     def test_lista_ordens_servico_retorna_ok(self):
-        OrdemServico.objects.create(
+        ordem = OrdemServico.objects.create(
             titulo="OS Cliente Ordem",
             data_agendada=timezone.localdate(),
             hora_inicio="09:00",
@@ -661,6 +915,111 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "service-orders-board")
         self.assertContains(response, "OS Cliente Ordem")
         self.assertContains(response, "R$ 120,00")
+        self.assertContains(response, reverse("editar_os", args=[ordem.pk]))
+        self.assertContains(response, reverse("deletar_os", args=[ordem.pk]))
+        self.assertContains(response, "Editar OS")
+        self.assertContains(response, "Excluir OS")
+        self.assertContains(response, "leaflet-routing-machine.js")
+        self.assertContains(response, "data-os-map-route")
+        self.assertContains(response, "data-os-map-route-external")
+        self.assertContains(response, "Rota no Maps")
+        self.assertContains(response, "Rota tracada")
+
+    def test_equipe_ve_apenas_ordens_do_proprio_tecnico(self):
+        group = Group.objects.create(name=TEAM_GROUP)
+        user_a = get_user_model().objects.create_user(username="equipe-a", password="senha-segura")
+        user_b = get_user_model().objects.create_user(username="equipe-b", password="senha-segura")
+        user_a.groups.add(group)
+        user_b.groups.add(group)
+        tecnico_a = Tecnico.objects.create(name="Equipe A", user=user_a, ativo=True)
+        tecnico_b = Tecnico.objects.create(name="Equipe B", user=user_b, ativo=True)
+        orcamento = Orcamento.objects.create(
+            name="Orcamento Equipe",
+            email="equipe@teste.com",
+            quantidade=1,
+            valor=120.0,
+            aprovado=True,
+        )
+        orcamento.itens.set([self.item_a])
+        ordem_propria = OrdemServico.objects.create(
+            titulo="OS propria da equipe",
+            orcamento=orcamento,
+            data_agendada=timezone.localdate(),
+            hora_inicio="09:00",
+            tecnico=tecnico_a,
+            valor=120.0,
+        )
+        ordem_outra = OrdemServico.objects.create(
+            titulo="OS de outra equipe",
+            data_agendada=timezone.localdate(),
+            hora_inicio="11:00",
+            tecnico=tecnico_b,
+            valor=90.0,
+        )
+        OrdemServico.objects.create(
+            titulo="OS do administrador",
+            data_agendada=timezone.localdate(),
+            hora_inicio="14:00",
+            administrador_executa=True,
+            valor=80.0,
+        )
+        self.client.force_login(user_a)
+
+        lista_response = self.client.get(reverse("ordens_servico"))
+        self.assertEqual(lista_response.status_code, 200)
+        self.assertContains(lista_response, "OS propria da equipe")
+        self.assertNotContains(lista_response, "OS de outra equipe")
+        self.assertNotContains(lista_response, "OS do administrador")
+        self.assertNotContains(lista_response, "Nova OS")
+        self.assertNotContains(lista_response, "Editar OS")
+        self.assertNotContains(lista_response, "Excluir OS")
+
+        agenda_response = self.client.get(reverse("agenda"))
+        self.assertEqual(agenda_response.status_code, 200)
+        self.assertContains(agenda_response, "OS propria da equipe")
+        self.assertNotContains(agenda_response, "OS de outra equipe")
+        self.assertNotContains(agenda_response, "Agendar OS")
+
+        detalhe_response = self.client.get(reverse("os_detalhe", args=[ordem_propria.pk]))
+        self.assertEqual(detalhe_response.status_code, 200)
+        self.assertNotContains(detalhe_response, ">Editar<")
+        self.assertNotContains(detalhe_response, ">Excluir<")
+        self.assertContains(detalhe_response, "Orcamento Equipe")
+        self.assertNotContains(detalhe_response, "Abrir orcamento")
+        self.assertEqual(self.client.get(reverse("os_detalhe", args=[ordem_outra.pk])).status_code, 404)
+        self.assertEqual(
+            self.client.post(
+                reverse("atualizar_status_os", args=[ordem_outra.pk]),
+                {"status": OrdemServico.Status.EM_ANDAMENTO},
+            ).status_code,
+            404,
+        )
+
+    def test_admin_mantem_botoes_de_agenda_e_orcamento_da_os(self):
+        orcamento = Orcamento.objects.create(
+            name="Orcamento Admin OS",
+            email="admin-os@teste.com",
+            quantidade=1,
+            valor=120.0,
+            aprovado=True,
+        )
+        orcamento.itens.set([self.item_a])
+        ordem = OrdemServico.objects.create(
+            titulo="OS com orcamento admin",
+            orcamento=orcamento,
+            data_agendada=timezone.localdate(),
+            hora_inicio="09:00",
+            administrador_executa=True,
+            valor=120.0,
+        )
+
+        agenda_response = self.client.get(reverse("agenda"))
+        self.assertEqual(agenda_response.status_code, 200)
+        self.assertContains(agenda_response, "Agendar OS")
+
+        detalhe_response = self.client.get(reverse("os_detalhe", args=[ordem.pk]))
+        self.assertEqual(detalhe_response.status_code, 200)
+        self.assertContains(detalhe_response, "Abrir orcamento")
 
     def test_atualiza_status_os_pelo_kanban(self):
         ordem = OrdemServico.objects.create(
@@ -721,7 +1080,7 @@ class ServiceViewsTests(TestCase):
         self.assertFalse(Orcamento.objects.filter(pk=orcamento.pk).exists())
 
     def test_cria_produto_no_catalogo(self):
-        categoria = CategoriaCatalogo.objects.create(name="Sofas")
+        categoria = CategoriaCatalogo.objects.create(owner=self.user, name="Sofas")
         response = self.client.post(
             reverse("novo_produto"),
             {
@@ -744,7 +1103,7 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(produto.tipo, "Sofas")
 
     def test_cria_produto_com_imagem_no_catalogo(self):
-        categoria = CategoriaCatalogo.objects.create(name="Tapetes")
+        categoria = CategoriaCatalogo.objects.create(owner=self.user, name="Tapetes")
         image = SimpleUploadedFile(
             "tapete.gif",
             b"GIF87a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00\xff\xff\xff,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
@@ -787,7 +1146,7 @@ class ServiceViewsTests(TestCase):
         self.assertTrue(CategoriaCatalogo.objects.filter(name="Tapetes").exists())
 
     def test_edita_item_do_catalogo(self):
-        categoria = CategoriaCatalogo.objects.create(name="Colchoes")
+        categoria = CategoriaCatalogo.objects.create(owner=self.user, name="Colchoes")
 
         response = self.client.post(
             reverse("editar_produto", args=[self.item_a.pk]),
@@ -810,6 +1169,39 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(self.item_a.name, "Colchao queen")
         self.assertEqual(self.item_a.categoria, categoria)
         self.assertEqual(self.item_a.tipo, "Colchoes")
+
+    def test_edita_categoria_do_catalogo(self):
+        categoria = CategoriaCatalogo.objects.create(owner=self.user, name="Sofas", descricao="Antiga")
+
+        response = self.client.post(
+            reverse("editar_categoria", args=[categoria.pk]),
+            {
+                "name": "Estofados",
+                "descricao": "Categoria atualizada",
+            },
+        )
+
+        self.assertRedirects(response, reverse("catalogo"), fetch_redirect_response=False)
+        categoria.refresh_from_db()
+        self.assertEqual(categoria.name, "Estofados")
+        self.assertEqual(categoria.descricao, "Categoria atualizada")
+
+    def test_deleta_categoria_sem_item_vinculado(self):
+        categoria = CategoriaCatalogo.objects.create(owner=self.user, name="Categoria vazia")
+
+        response = self.client.post(reverse("deletar_categoria", args=[categoria.pk]))
+
+        self.assertRedirects(response, reverse("catalogo"), fetch_redirect_response=False)
+        self.assertFalse(CategoriaCatalogo.objects.filter(pk=categoria.pk).exists())
+
+    def test_nao_deleta_categoria_com_item_vinculado(self):
+        categoria = CategoriaCatalogo.objects.create(owner=self.user, name="Categoria em uso")
+        Service_catalog.objects.create(owner=self.user, name="Item vinculado", categoria=categoria, valor=100.0)
+
+        response = self.client.post(reverse("deletar_categoria", args=[categoria.pk]))
+
+        self.assertRedirects(response, reverse("catalogo"), fetch_redirect_response=False)
+        self.assertTrue(CategoriaCatalogo.objects.filter(pk=categoria.pk).exists())
 
     def test_deleta_item_do_catalogo(self):
         response = self.client.post(reverse("deletar_produto", args=[self.item_b.pk]))
@@ -960,6 +1352,88 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, self.item_a.name)
         self.assertContains(response, f'value="{self.item_a.pk}" selected')
 
+    def test_cria_orcamento_com_adicional_cadastrado(self):
+        adicional = AdicionalOrcamento.objects.create(
+            owner=self.user,
+            name="Remocao de manchas",
+            valor=80.0,
+            ativo=True,
+        )
+
+        response = self.client.post(
+            reverse("novo_orcamento"),
+            {
+                "name": "Cliente Adicional",
+                "email": "adicional@teste.com",
+                "telefone": "11988887777",
+                "quantidade": 2,
+                "itens": [str(self.item_a.pk)],
+                "adicionais": [str(adicional.pk)],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        orcamento = Orcamento.objects.get(name="Cliente Adicional")
+        self.assertEqual(orcamento.owner, self.user)
+        self.assertEqual(orcamento.valor, 400.0)
+        self.assertEqual(list(orcamento.adicionais.all()), [adicional])
+
+    def test_cria_orcamento_com_multiplicador_cadastrado(self):
+        multiplicador = MultiplicadorOrcamento.objects.create(
+            owner=self.user,
+            name="Tecido delicado",
+            fator=1.25,
+            ativo=True,
+        )
+
+        response = self.client.post(
+            reverse("novo_orcamento"),
+            {
+                "name": "Cliente Multiplicador",
+                "email": "multiplicador@teste.com",
+                "telefone": "11988887777",
+                "quantidade": 2,
+                "itens": [str(self.item_a.pk)],
+                "multiplicadores": [str(multiplicador.pk)],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        orcamento = Orcamento.objects.get(name="Cliente Multiplicador")
+        self.assertEqual(orcamento.owner, self.user)
+        self.assertEqual(orcamento.valor, 300.0)
+        self.assertEqual(list(orcamento.multiplicadores.all()), [multiplicador])
+
+    def test_cadastra_adicional_orcamento(self):
+        response = self.client.post(
+            reverse("novo_adicional_orcamento"),
+            {
+                "name": "Deslocamento",
+                "valor": "35.50",
+                "ativo": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("adicionais_orcamento"), fetch_redirect_response=False)
+        adicional = AdicionalOrcamento.objects.get(name="Deslocamento")
+        self.assertEqual(adicional.owner, self.user)
+        self.assertEqual(adicional.valor, 35.5)
+
+    def test_cadastra_multiplicador_orcamento(self):
+        response = self.client.post(
+            reverse("novo_multiplicador_orcamento"),
+            {
+                "name": "Extra grande",
+                "fator": "1.35",
+                "ativo": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("adicionais_orcamento"), fetch_redirect_response=False)
+        multiplicador = MultiplicadorOrcamento.objects.get(name="Extra grande")
+        self.assertEqual(multiplicador.owner, self.user)
+        self.assertEqual(multiplicador.fator, 1.35)
+
     def test_edita_orcamento_e_recalcula_total(self):
         orcamento = Orcamento.objects.create(
             name="Cliente Editar",
@@ -1041,6 +1515,9 @@ class ServiceViewsTests(TestCase):
         orcamento.refresh_from_db()
         self.assertTrue(orcamento.aprovado)
         self.assertEqual(orcamento.cliente, cliente)
+        self.assertIsNotNone(getattr(orcamento, 'ordem_servico', None))
+        self.assertEqual(OrdemServico.objects.filter(orcamento=orcamento).count(), 1)
+        self.assertEqual(orcamento.ordem_servico.status, OrdemServico.Status.AGENDADA)
 
     def test_vincula_cliente_existente_e_volta_para_aprovacao(self):
         cliente = Cliente.objects.create(
@@ -1254,6 +1731,7 @@ class ServiceViewsTests(TestCase):
             email="modal-pdf@teste.com",
             quantidade=1,
             valor=120.0,
+            descricao="Observacao interna que nao deve virar frase do PDF.",
         )
         orcamento.itens.set([self.item_a])
 
@@ -1262,7 +1740,8 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Personalizar PDF")
         self.assertContains(response, 'name="pdf_phrase"')
-        self.assertNotContains(response, 'name="pdf_logo"')
+        self.assertContains(response, 'name="pdf_logo"')
+        self.assertNotContains(response, ">Observacao interna que nao deve virar frase do PDF.</textarea>")
 
     def test_gera_pdf_personalizado_com_logo_e_frase(self):
         orcamento = Orcamento.objects.create(
@@ -1283,19 +1762,23 @@ class ServiceViewsTests(TestCase):
             content_type="image/png",
         )
 
-        response = self.client.post(
-            reverse("gerar_orcamento_pdf", args=[orcamento.pk]),
-            {
-                "pdf_brand": "Minha Empresa",
-                "pdf_phrase": "Frase personalizada para o cliente.",
-                "pdf_accent_color": "#14532D",
-                "pdf_logo": logo,
-            },
-        )
+        with tempfile.TemporaryDirectory() as media_root, self.settings(MEDIA_ROOT=media_root):
+            response = self.client.post(
+                reverse("gerar_orcamento_pdf", args=[orcamento.pk]),
+                {
+                    "pdf_brand": "Minha Empresa",
+                    "pdf_phrase": "Frase personalizada para o cliente.",
+                    "pdf_accent_color": "#14532D",
+                    "pdf_logo": logo,
+                },
+            )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pdf")
-        self.assertTrue(response.content.startswith(b"%PDF"))
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response["Content-Type"], "application/pdf")
+            self.assertTrue(response.content.startswith(b"%PDF"))
+            orcamento.refresh_from_db()
+            self.assertEqual(orcamento.pdf_frase_cliente, "Frase personalizada para o cliente.")
+            self.assertTrue(orcamento.pdf_logo.name.startswith("orcamentos/logos/"))
 
     def test_gera_pdf_com_muitos_itens_e_textos_longos(self):
         itens = []

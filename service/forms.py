@@ -1,10 +1,23 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
 
 from service.access import ADMIN_GROUP, DEV_GROUP, TEAM_GROUP
-from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
+from service.models import (
+    AdicionalOrcamento,
+    CategoriaCatalogo,
+    Cliente,
+    Lead,
+    MultiplicadorOrcamento,
+    Orcamento,
+    OrdemServico,
+    Service_catalog,
+    Tecnico,
+    UserProfile,
+)
+from service.ownership import owned_queryset
 
 
 def normalizar_email(value: str | None) -> str:
@@ -44,6 +57,7 @@ class CategoriaCatalogoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         self.fields["descricao"].required = False
         for field in self.fields.values():
@@ -96,7 +110,10 @@ class ProdutoCatalogoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
+        if user:
+            self.fields["categoria"].queryset = owned_queryset(CategoriaCatalogo.objects, user).order_by("name")
         for field_name in [
             "categoria",
             "imagem",
@@ -181,13 +198,14 @@ class ClienteForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         if args and args[0] is not None:
-            args = (self._data_com_orcamento(args[0]), *args[1:])
+            args = (self._data_com_orcamento(args[0], self.user), *args[1:])
         elif kwargs.get("data") is not None:
-            kwargs["data"] = self._data_com_orcamento(kwargs["data"])
+            kwargs["data"] = self._data_com_orcamento(kwargs["data"], self.user)
 
         super().__init__(*args, **kwargs)
-        self.fields["orcamento_origem"].queryset = Orcamento.objects.filter(cliente__isnull=True).order_by(
+        self.fields["orcamento_origem"].queryset = owned_queryset(Orcamento.objects, self.user).filter(cliente__isnull=True).order_by(
             "-created_at", "-id"
         )
         self.fields["orcamento_origem"].label_from_instance = self._orcamento_label
@@ -217,13 +235,13 @@ class ClienteForm(forms.ModelForm):
         return f"#{orcamento.pk} - {orcamento.name} ({contato})"
 
     @staticmethod
-    def _data_com_orcamento(data):
+    def _data_com_orcamento(data, user=None):
         mutable_data = data.copy()
         orcamento_id = mutable_data.get("orcamento_origem")
         if not orcamento_id:
             return mutable_data
 
-        orcamento = Orcamento.objects.filter(pk=orcamento_id, cliente__isnull=True).first()
+        orcamento = owned_queryset(Orcamento.objects, user).filter(pk=orcamento_id, cliente__isnull=True).first()
         if not orcamento:
             return mutable_data
 
@@ -307,6 +325,7 @@ class LeadForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         for field_name in [
             "email",
@@ -335,6 +354,54 @@ class LeadForm(forms.ModelForm):
         cleaned_data["uf"] = (cleaned_data.get("uf") or "").strip().upper()
         cleaned_data["endereco"] = montar_endereco_limpo(cleaned_data) or (cleaned_data.get("endereco") or "").strip()
         return cleaned_data
+
+
+class AdicionalOrcamentoForm(forms.ModelForm):
+    class Meta:
+        model = AdicionalOrcamento
+        fields = ["name", "valor", "ativo"]
+        labels = {
+            "name": "Nome do adicional",
+            "valor": "Valor",
+            "ativo": "Ativo",
+        }
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Ex.: Remocao de manchas dificeis"}),
+            "valor": forms.NumberInput(attrs={"step": "0.01", "placeholder": "0.00"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["ativo"].initial = True if not self.instance.pk else self.instance.ativo
+        for name, field in self.fields.items():
+            field.widget.attrs["class"] = "form-check-input" if name == "ativo" else "form-control"
+
+
+class MultiplicadorOrcamentoForm(forms.ModelForm):
+    class Meta:
+        model = MultiplicadorOrcamento
+        fields = ["name", "fator", "ativo"]
+        labels = {
+            "name": "Nome do multiplicador",
+            "fator": "Fator",
+            "ativo": "Ativo",
+        }
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Ex.: Tecido delicado"}),
+            "fator": forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "placeholder": "1.15"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["ativo"].initial = True if not self.instance.pk else self.instance.ativo
+        for name, field in self.fields.items():
+            field.widget.attrs["class"] = "form-check-input" if name == "ativo" else "form-control"
+
+    def clean_fator(self):
+        fator = self.cleaned_data.get("fator")
+        if fator is None or fator <= 0:
+            raise forms.ValidationError("Informe um fator maior que zero.")
+        return fator
 
 
 class OrcamentoForm(forms.Form):
@@ -436,40 +503,38 @@ class OrcamentoForm(forms.Form):
         queryset=Service_catalog.objects.none(),
         widget=forms.SelectMultiple(attrs={"size": 8}),
     )
-    adicional_manchas = forms.BooleanField(required=False)
-    adicional_urina = forms.BooleanField(required=False)
-    adicional_mofo = forms.BooleanField(required=False)
-    tipo_tecido_visual = forms.ChoiceField(
+    adicionais = forms.ModelMultipleChoiceField(
+        label="Adicionais",
+        queryset=AdicionalOrcamento.objects.none(),
         required=False,
-        choices=[
-            ("1", "Tecido comum"),
-            ("1.15", "Tecido delicado"),
-            ("1.25", "Couro ou suede"),
-        ],
+        widget=forms.CheckboxSelectMultiple(),
     )
-    tamanho_visual = forms.ChoiceField(
+    multiplicadores = forms.ModelMultipleChoiceField(
+        label="Multiplicadores",
+        queryset=MultiplicadorOrcamento.objects.none(),
         required=False,
-        choices=[
-            ("1", "Padrao"),
-            ("1.2", "Grande"),
-            ("1.35", "Extra grande"),
-        ],
+        widget=forms.CheckboxSelectMultiple(),
     )
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         if args and args[0] is not None:
-            args = (self._data_com_origem(args[0]), *args[1:])
+            args = (self._data_com_origem(args[0], self.user), *args[1:])
         elif kwargs.get("data") is not None:
-            kwargs["data"] = self._data_com_origem(kwargs["data"])
+            kwargs["data"] = self._data_com_origem(kwargs["data"], self.user)
 
         super().__init__(*args, **kwargs)
-        self.fields["lead"].queryset = Lead.objects.filter(cliente__isnull=True).exclude(
+        self.fields["lead"].queryset = owned_queryset(Lead.objects, self.user).filter(cliente__isnull=True).exclude(
             status=Lead.Status.CONVERTIDO
         ).order_by("-created_at", "-id")
         self.fields["lead"].label_from_instance = self._lead_label
-        self.fields["cliente"].queryset = Cliente.objects.order_by("name", "email")
-        self.fields["itens"].queryset = Service_catalog.objects.select_related("categoria").order_by("categoria__name", "tipo", "name")
+        self.fields["cliente"].queryset = owned_queryset(Cliente.objects, self.user).order_by("name", "email")
+        self.fields["itens"].queryset = owned_queryset(Service_catalog.objects.select_related("categoria"), self.user).order_by("categoria__name", "tipo", "name")
+        self.fields["adicionais"].queryset = owned_queryset(AdicionalOrcamento.objects, self.user).filter(ativo=True).order_by("name", "id")
+        self.fields["multiplicadores"].queryset = owned_queryset(MultiplicadorOrcamento.objects, self.user).filter(ativo=True).order_by("name", "id")
         self.fields["itens"].label_from_instance = self._catalogo_item_label
+        self.fields["adicionais"].label_from_instance = self._adicional_label
+        self.fields["multiplicadores"].label_from_instance = self._multiplicador_label
         self.fields["lead"].widget.attrs["class"] = "form-select"
         self.fields["cliente"].widget.attrs["class"] = "form-select"
         self.fields["criar_cliente_automatico"].widget.attrs["class"] = "form-check-input"
@@ -486,8 +551,8 @@ class OrcamentoForm(forms.Form):
         self.fields["descricao"].widget.attrs["class"] = "form-control"
         self.fields["quantidade"].widget.attrs["class"] = "form-control"
         self.fields["itens"].widget.attrs["class"] = "form-select"
-        self.fields["tipo_tecido_visual"].widget.attrs["class"] = "form-select"
-        self.fields["tamanho_visual"].widget.attrs["class"] = "form-select"
+        self.fields["adicionais"].widget.attrs["class"] = "quote-addons-choices"
+        self.fields["multiplicadores"].widget.attrs["class"] = "quote-multipliers-choices"
 
     @staticmethod
     def _catalogo_item_label(item: Service_catalog) -> str:
@@ -501,7 +566,15 @@ class OrcamentoForm(forms.Form):
         return f"#{lead.pk} - {lead.name} ({contato})"
 
     @staticmethod
-    def _data_com_origem(data):
+    def _adicional_label(adicional: AdicionalOrcamento) -> str:
+        return f"{adicional.name} | R$ {adicional.valor:.2f}"
+
+    @staticmethod
+    def _multiplicador_label(multiplicador: MultiplicadorOrcamento) -> str:
+        return f"{multiplicador.name} | x{multiplicador.fator:.2f}"
+
+    @staticmethod
+    def _data_com_origem(data, user=None):
         mutable_data = data.copy()
         lead_id = mutable_data.get("lead")
         cliente_id = mutable_data.get("cliente")
@@ -510,7 +583,7 @@ class OrcamentoForm(forms.Form):
             return mutable_data
 
         if lead_id:
-            lead = Lead.objects.filter(pk=lead_id).first()
+            lead = owned_queryset(Lead.objects, user).filter(pk=lead_id).first()
             if lead:
                 for field_name in [
                     "name",
@@ -589,8 +662,9 @@ class ClienteVinculoOrcamentoForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        self.fields["cliente"].queryset = Cliente.objects.order_by("name", "email")
+        self.fields["cliente"].queryset = owned_queryset(Cliente.objects, self.user).order_by("name", "email")
         self.fields["cliente"].widget.attrs["class"] = "form-select"
 
 
@@ -626,6 +700,7 @@ class TecnicoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.user_id:
             self.fields["username"].initial = self.instance.user.username
@@ -658,6 +733,8 @@ class TecnicoForm(forms.ModelForm):
 
     def save(self, commit=True):
         tecnico = super().save(commit=False)
+        if self.user and not tecnico.owner_id:
+            tecnico.owner = self.user
         if not commit:
             return tecnico
 
@@ -784,6 +861,115 @@ class AdminUserForm(forms.ModelForm):
         return user
 
 
+class PerfilUsuarioForm(forms.ModelForm):
+    foto = forms.ImageField(
+        label="Foto de perfil",
+        required=False,
+        widget=forms.FileInput(attrs={"accept": "image/*"}),
+    )
+    senha_atual = forms.CharField(
+        label="Senha atual",
+        required=False,
+        widget=forms.PasswordInput(attrs={"placeholder": "Obrigatoria apenas para trocar a senha"}),
+    )
+    nova_senha = forms.CharField(
+        label="Nova senha",
+        required=False,
+        widget=forms.PasswordInput(attrs={"placeholder": "Preencha para trocar a senha"}),
+    )
+    confirmar_senha = forms.CharField(
+        label="Confirmar nova senha",
+        required=False,
+        widget=forms.PasswordInput(attrs={"placeholder": "Repita a nova senha"}),
+    )
+
+    class Meta:
+        model = get_user_model()
+        fields = ["first_name", "last_name", "username", "email"]
+        labels = {
+            "first_name": "Nome",
+            "last_name": "Sobrenome",
+            "username": "Usuario de acesso",
+            "email": "Email",
+        }
+        widgets = {
+            "first_name": forms.TextInput(attrs={"placeholder": "Seu nome"}),
+            "last_name": forms.TextInput(attrs={"placeholder": "Seu sobrenome"}),
+            "username": forms.TextInput(attrs={"placeholder": "seu.usuario"}),
+            "email": forms.EmailInput(attrs={"placeholder": "voce@empresa.com"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.get("instance")
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
+
+    def clean_foto(self):
+        foto = self.cleaned_data.get("foto")
+        if not foto:
+            return foto
+
+        if foto.size > 3 * 1024 * 1024:
+            raise forms.ValidationError("Envie uma imagem com ate 3 MB.")
+
+        content_type = getattr(foto, "content_type", "")
+        if content_type and not content_type.startswith("image/"):
+            raise forms.ValidationError("Envie um arquivo de imagem valido.")
+
+        return foto
+
+    def clean_email(self):
+        return normalizar_email(self.cleaned_data.get("email"))
+
+    def clean_username(self):
+        username = (self.cleaned_data.get("username") or "").strip()
+        user_model = get_user_model()
+        existing_user = user_model.objects.filter(username__iexact=username).first()
+        current_user_id = self.instance.pk if self.instance and self.instance.pk else None
+        if existing_user and existing_user.pk != current_user_id:
+            raise forms.ValidationError("Ja existe um usuario com este login.")
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        senha_atual = cleaned_data.get("senha_atual") or ""
+        nova_senha = cleaned_data.get("nova_senha") or ""
+        confirmar_senha = cleaned_data.get("confirmar_senha") or ""
+
+        if nova_senha or confirmar_senha or senha_atual:
+            if not senha_atual:
+                self.add_error("senha_atual", "Informe sua senha atual para trocar a senha.")
+            elif self.user and not self.user.check_password(senha_atual):
+                self.add_error("senha_atual", "Senha atual incorreta.")
+
+            if not nova_senha:
+                self.add_error("nova_senha", "Informe a nova senha.")
+            elif nova_senha != confirmar_senha:
+                self.add_error("confirmar_senha", "As senhas nao conferem.")
+            else:
+                validate_password(nova_senha, self.user)
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data.get("email") or ""
+        nova_senha = self.cleaned_data.get("nova_senha")
+        if nova_senha:
+            user.set_password(nova_senha)
+        if commit:
+            user.save()
+            foto = self.cleaned_data.get("foto")
+            if foto:
+                perfil, _ = UserProfile.objects.get_or_create(user=user)
+                if perfil.foto:
+                    perfil.foto.delete(save=False)
+                perfil.foto = foto
+                perfil.save()
+        return user
+
+
 class OrdemServicoForm(forms.ModelForm):
     class Meta:
         model = OrdemServico
@@ -837,23 +1023,26 @@ class OrdemServicoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         instance = kwargs.get("instance")
         if args and args[0] is not None:
-            args = (self._data_com_orcamento(args[0]), *args[1:])
+            args = (self._data_com_orcamento(args[0], self.user), *args[1:])
         elif kwargs.get("data") is not None:
-            kwargs["data"] = self._data_com_orcamento(kwargs["data"])
+            kwargs["data"] = self._data_com_orcamento(kwargs["data"], self.user)
 
         super().__init__(*args, **kwargs)
 
-        orcamentos = Orcamento.objects.filter(aprovado=True).filter(Q(ordem_servico__isnull=True))
+        orcamentos = owned_queryset(Orcamento.objects, self.user).filter(aprovado=True).filter(Q(ordem_servico__isnull=True))
         if instance and instance.orcamento_id:
-            orcamentos = Orcamento.objects.filter(Q(pk=instance.orcamento_id) | Q(aprovado=True, ordem_servico__isnull=True))
+            orcamentos = owned_queryset(Orcamento.objects, self.user).filter(
+                Q(pk=instance.orcamento_id) | Q(aprovado=True, ordem_servico__isnull=True)
+            )
         self.fields["orcamento"].queryset = orcamentos.order_by("-created_at", "-id")
         self.fields["orcamento"].label_from_instance = self._orcamento_label
         self.fields["orcamento"].required = False
-        self.fields["cliente"].queryset = Cliente.objects.order_by("name", "email")
+        self.fields["cliente"].queryset = owned_queryset(Cliente.objects, self.user).order_by("name", "email")
         self.fields["cliente"].required = False
-        self.fields["tecnico"].queryset = Tecnico.objects.filter(ativo=True).order_by("name")
+        self.fields["tecnico"].queryset = owned_queryset(Tecnico.objects, self.user).filter(ativo=True).order_by("name")
         self.fields["tecnico"].required = False
         self.fields["descricao"].required = False
         self.fields["endereco"].required = False
@@ -874,13 +1063,13 @@ class OrdemServicoForm(forms.ModelForm):
         return f"#{orcamento.pk} - {orcamento.name} | R$ {orcamento.valor:.2f}"
 
     @staticmethod
-    def _data_com_orcamento(data):
+    def _data_com_orcamento(data, user=None):
         mutable_data = data.copy()
         orcamento_id = mutable_data.get("orcamento")
         if not orcamento_id:
             return mutable_data
 
-        orcamento = Orcamento.objects.filter(pk=orcamento_id).first()
+        orcamento = owned_queryset(Orcamento.objects, user).filter(pk=orcamento_id).first()
         if not orcamento:
             return mutable_data
 

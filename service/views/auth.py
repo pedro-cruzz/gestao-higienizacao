@@ -1,13 +1,14 @@
 from django.contrib import messages
-from django.contrib.auth import logout
+from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 
 from service.access import has_service_access, is_admin_user, is_team_user
+from service.forms import PerfilUsuarioForm
 from service.views.comum import inicio as dashboard_view
 
 
@@ -43,3 +44,21 @@ def sair(request: HttpRequest) -> HttpResponse:
     logout(request)
     messages.success(request, "Voce saiu do HigiFlow com seguranca.")
     return redirect("login")
+
+
+@login_required
+def perfil_usuario(request: HttpRequest) -> HttpResponse:
+    if not is_admin_user(request.user):
+        raise PermissionDenied("Seu usuario nao tem permissao para acessar esta area.")
+
+    if request.method == "POST":
+        form = PerfilUsuarioForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, "Perfil atualizado com sucesso.")
+            return redirect("perfil")
+    else:
+        form = PerfilUsuarioForm(instance=request.user)
+
+    return render(request, "service/perfil.html", {"form": form})
