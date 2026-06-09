@@ -4223,6 +4223,220 @@ body.service-map-open {
     line-height: 16px;
 }
 
+.settings-users-shell {
+    width: min(768px, 100%);
+    display: grid;
+    gap: 24px;
+    margin: 0 auto;
+}
+
+.settings-users-card {
+    min-width: 0;
+}
+
+.settings-users-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.settings-users-header h2 {
+    margin: 0;
+    color: var(--hf-text);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+}
+
+.settings-users-header p {
+    margin: 2px 0 0;
+    color: var(--hf-muted);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.settings-users-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.settings-users-table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+}
+
+.settings-users-table th,
+.settings-users-table td {
+    height: 64px;
+    border-bottom: 1px solid #ececf0;
+    padding: 8px 24px;
+    text-align: left;
+    vertical-align: middle;
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.settings-users-table th {
+    height: 41px;
+    color: #717182;
+    background: rgba(236, 236, 240, 0.3);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+}
+
+.settings-users-table td:first-child {
+    color: var(--hf-text);
+    font-weight: 500;
+}
+
+.settings-users-table td:nth-child(2) {
+    color: var(--hf-muted);
+}
+
+.settings-role-pill,
+.settings-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px;
+    line-height: 16px;
+    white-space: nowrap;
+}
+
+.settings-role-admin {
+    color: #fff;
+    background: var(--hf-blue);
+}
+
+.settings-role-assistant {
+    color: #1447e6;
+    background: #dbeafe;
+}
+
+.settings-role-team,
+.settings-status-active {
+    color: var(--hf-blue);
+    background: #eff6ff;
+}
+
+.settings-status-inactive {
+    color: #4a5565;
+    background: #f3f4f6;
+}
+
+.settings-icon-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.settings-access-panel {
+    border: 1px solid #bedbff;
+    border-radius: 10px;
+    padding: 17px;
+    background: #eff6ff;
+}
+
+.settings-access-panel h2 {
+    margin: 0;
+    color: #1c398e;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+}
+
+.settings-access-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 16px;
+    margin-top: 12px;
+}
+
+.settings-access-grid article {
+    min-width: 0;
+}
+
+.settings-access-grid strong {
+    display: block;
+    color: #1c398e;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.settings-access-grid p {
+    margin: 4px 0 0;
+    color: #1447e6;
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.settings-team-panel {
+    padding-top: 8px;
+}
+
+.settings-team-list {
+    display: grid;
+    gap: 8px;
+}
+
+.settings-team-row {
+    min-height: 64px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--hf-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    background: var(--hf-card);
+}
+
+.settings-team-row div {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.settings-team-row strong,
+.settings-team-row span:not(.settings-user-avatar):not(.settings-status-pill) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.settings-team-row strong {
+    color: var(--hf-text);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+}
+
+.settings-team-row div span {
+    color: var(--hf-muted);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.settings-team-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    border: 1px solid var(--hf-border);
+    border-radius: 10px;
+    padding: 32px;
+    color: var(--hf-muted);
+    background: var(--hf-card);
+    text-align: center;
+}
+
 .settings-company-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4438,12 +4652,14 @@ body.service-map-open {
     }
 
     .settings-section-header,
-    .settings-config-block > header {
+    .settings-config-block > header,
+    .settings-users-header {
         align-items: stretch;
         flex-direction: column;
     }
 
     .settings-section-header .hf-btn,
+    .settings-users-header .hf-btn,
     .settings-small-button {
         width: 100%;
     }
@@ -4848,6 +5064,10 @@ body.service-map-open {
         gap: 16px;
     }
 
+    .settings-access-grid {
+        grid-template-columns: 1fr;
+    }
+
     .metric-card,
     .dashboard-card,
     .catalog-card,
@@ -4868,6 +5088,19 @@ body.service-map-open {
     }
 
     .settings-list-item strong {
+        justify-self: start;
+    }
+
+    .settings-users-table {
+        min-width: 680px;
+    }
+
+    .settings-team-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .settings-team-row .settings-icon-button {
+        grid-column: 2 / -1;
         justify-self: start;
     }
 
