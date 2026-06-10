@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 import tempfile
 from unittest.mock import patch
 
@@ -902,6 +902,7 @@ class ServiceViewsTests(TestCase):
 
     def test_lista_ordens_servico_retorna_ok(self):
         ordem = OrdemServico.objects.create(
+            owner=self.user,
             titulo="OS Cliente Ordem",
             data_agendada=timezone.localdate(),
             hora_inicio="09:00",
@@ -924,6 +925,67 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "data-os-map-route-external")
         self.assertContains(response, "Rota no Maps")
         self.assertContains(response, "Rota tracada")
+
+    def test_admin_recebe_notificacao_de_servico_do_dia(self):
+        ordem = OrdemServico.objects.create(
+            owner=self.user,
+            titulo="OS Hoje Admin",
+            data_agendada=timezone.localdate(),
+            hora_inicio="09:00",
+            administrador_executa=True,
+            valor=120.0,
+        )
+
+        response = self.client.get(reverse("ordens_servico"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "hf-notification-badge")
+        self.assertContains(response, "Servico de hoje")
+        self.assertContains(response, "OS #")
+        self.assertContains(response, "OS Hoje Admin")
+        self.assertContains(response, reverse("os_detalhe", args=[ordem.pk]))
+
+    def test_equipe_recebe_notificacoes_apenas_das_os_designadas(self):
+        group = Group.objects.create(name=TEAM_GROUP)
+        user_a = get_user_model().objects.create_user(username="equipe-notificacao-a", password="senha-segura")
+        user_b = get_user_model().objects.create_user(username="equipe-notificacao-b", password="senha-segura")
+        user_a.groups.add(group)
+        user_b.groups.add(group)
+        tecnico_a = Tecnico.objects.create(name="Equipe Notificacao A", user=user_a, ativo=True)
+        tecnico_b = Tecnico.objects.create(name="Equipe Notificacao B", user=user_b, ativo=True)
+        ordem_propria = OrdemServico.objects.create(
+            titulo="OS Notificacao Propria",
+            data_agendada=timezone.localdate(),
+            hora_inicio="10:00",
+            tecnico=tecnico_a,
+            valor=120.0,
+        )
+        ordem_futura = OrdemServico.objects.create(
+            titulo="OS Futura Designada",
+            data_agendada=timezone.localdate() + timedelta(days=2),
+            hora_inicio="08:00",
+            tecnico=tecnico_a,
+            valor=140.0,
+        )
+        OrdemServico.objects.create(
+            titulo="OS Notificacao Outra Equipe",
+            data_agendada=timezone.localdate(),
+            hora_inicio="11:00",
+            tecnico=tecnico_b,
+            valor=90.0,
+        )
+        self.client.force_login(user_a)
+
+        response = self.client.get(reverse("agenda"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Servico de hoje")
+        self.assertContains(response, "OS Notificacao Propria")
+        self.assertContains(response, reverse("os_detalhe", args=[ordem_propria.pk]))
+        self.assertContains(response, "OS designada para")
+        self.assertContains(response, "OS Futura Designada")
+        self.assertContains(response, reverse("os_detalhe", args=[ordem_futura.pk]))
+        self.assertNotContains(response, "OS Notificacao Outra Equipe")
 
     def test_equipe_ve_apenas_ordens_do_proprio_tecnico(self):
         group = Group.objects.create(name=TEAM_GROUP)

@@ -108,9 +108,48 @@
                     <button type="button" class="hf-theme-toggle" data-theme-toggle aria-label="Ativar modo escuro">
                         <i class="bi bi-moon-stars" data-theme-toggle-icon></i>
                     </button>
-                    <button type="button" class="hf-notification" aria-label="Notificacoes">
-                        <i class="bi bi-bell"></i>
-                    </button>
+                    <div class="hf-notification-wrap">
+                        <button
+                            type="button"
+                            class="hf-notification"
+                            aria-label="Notificacoes"
+                            aria-expanded="false"
+                            data-notification-toggle
+                        >
+                            <i class="bi bi-bell"></i>
+                            {% if hf_notification_count %}
+                                <span class="hf-notification-badge">{{ hf_notification_count }}</span>
+                            {% endif %}
+                        </button>
+                        <div class="hf-notification-panel" hidden data-notification-panel>
+                            <header>
+                                <div>
+                                    <strong>Notificacoes</strong>
+                                    <span>{{ hf_today_services_count }} servico(s) hoje</span>
+                                </div>
+                                <a href="{% url 'agenda' %}">Agenda</a>
+                            </header>
+                            {% if hf_notifications %}
+                                <div class="hf-notification-list">
+                                    {% for notification in hf_notifications %}
+                                        <a href="{{ notification.url }}" class="hf-notification-item hf-notification-item-{{ notification.tone }}">
+                                            <i class="bi {% if notification.tone == 'today' %}bi-calendar-event{% else %}bi-clipboard-check{% endif %}"></i>
+                                            <span>
+                                                <strong>{{ notification.title }}</strong>
+                                                <small>{{ notification.text }}</small>
+                                                <em>{{ notification.meta }}</em>
+                                            </span>
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="hf-notification-empty">
+                                    <i class="bi bi-check2-circle"></i>
+                                    <span>Nenhum alerta operacional agora.</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                     <div class="hf-user">
                         {% if request.user.hf_profile.foto %}
                             <img
@@ -235,6 +274,42 @@
                         } catch (error) {
                         }
                         syncThemeButton();
+                    });
+                });
+
+                document.querySelectorAll("[data-notification-toggle]").forEach((button) => {
+                    const panel = button.closest(".hf-notification-wrap")?.querySelector("[data-notification-panel]");
+                    if (!panel) {
+                        return;
+                    }
+
+                    function closePanel() {
+                        panel.hidden = true;
+                        button.setAttribute("aria-expanded", "false");
+                    }
+
+                    button.addEventListener("click", (event) => {
+                        event.stopPropagation();
+                        const shouldOpen = panel.hidden;
+                        document.querySelectorAll("[data-notification-panel]").forEach((currentPanel) => {
+                            currentPanel.hidden = true;
+                        });
+                        document.querySelectorAll("[data-notification-toggle]").forEach((currentButton) => {
+                            currentButton.setAttribute("aria-expanded", "false");
+                        });
+                        panel.hidden = !shouldOpen;
+                        button.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+                    });
+
+                    panel.addEventListener("click", (event) => {
+                        event.stopPropagation();
+                    });
+
+                    document.addEventListener("click", closePanel);
+                    document.addEventListener("keydown", (event) => {
+                        if (event.key === "Escape") {
+                            closePanel();
+                        }
                     });
                 });
 
