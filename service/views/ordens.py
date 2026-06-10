@@ -1,4 +1,5 @@
 from calendar import Calendar
+import json
 from datetime import date, timedelta
 from urllib.parse import quote_plus
 
@@ -16,6 +17,22 @@ from service.services.nominatim import (
     NominatimLookupError,
     NominatimService,
     NominatimTemporaryUnavailableError,
+)
+
+
+ROUTE_ADDRESS_HINTS = (
+    " rua ",
+    " r. ",
+    " avenida ",
+    " av. ",
+    " travessa ",
+    " alameda ",
+    " rodovia ",
+    " estrada ",
+    " praça ",
+    " praca ",
+    " largo ",
+    " viela ",
 )
 
 
@@ -65,6 +82,36 @@ def _endereco_para_mapa_ordem(ordem: OrdemServico) -> str:
     return endereco_estruturado or (getattr(origem, "endereco", "") or "").strip()
 
 
+def _parece_endereco_especifico(endereco: str) -> bool:
+    texto = f" {endereco.strip().lower()} "
+    return any(char.isdigit() for char in texto) or any(indicio in texto for indicio in ROUTE_ADDRESS_HINTS)
+
+
+def _endereco_para_rota_do_dia(ordem: OrdemServico) -> str:
+    if ordem.endereco:
+        endereco = ordem.endereco.strip()
+        return endereco if _parece_endereco_especifico(endereco) else ""
+
+    origem = ordem.cliente or ordem.orcamento
+    if not origem:
+        return ""
+
+    logradouro = (getattr(origem, "logradouro", "") or "").strip()
+    if logradouro:
+        partes = [
+            logradouro,
+            getattr(origem, "numero", None),
+            getattr(origem, "bairro", None),
+            getattr(origem, "cidade", None),
+            getattr(origem, "uf", None),
+            getattr(origem, "cep", None),
+        ]
+        return ", ".join(str(parte).strip() for parte in partes if parte)
+
+    endereco = (getattr(origem, "endereco", "") or "").strip()
+    return endereco if _parece_endereco_especifico(endereco) else ""
+
+
 def _links_mapa_ordem(ordem: OrdemServico) -> dict[str, str]:
     endereco = _endereco_para_mapa_ordem(ordem)
     if not endereco:
@@ -78,18 +125,9 @@ def _links_mapa_ordem(ordem: OrdemServico) -> dict[str, str]:
     }
 
 
-def _rota_do_dia_url(ordens: list[OrdemServico]) -> str:
-    enderecos = [_endereco_para_mapa_ordem(ordem) for ordem in ordens]
-    enderecos = [endereco for endereco in enderecos if endereco]
-    if not enderecos:
-        return ""
-
-    destino = quote_plus(enderecos[-1])
-    params = f"api=1&destination={destino}&travelmode=driving"
-    if len(enderecos) > 1:
-        paradas = "%7C".join(quote_plus(endereco) for endereco in enderecos[:-1])
-        params += f"&waypoints={paradas}"
-    return f"https://www.google.com/maps/dir/?{params}"
+def _rota_do_dia_paradas(ordens: list[OrdemServico]) -> list[str]:
+    enderecos = [_endereco_para_rota_do_dia(ordem) for ordem in ordens]
+    return [endereco for endereco in enderecos if endereco]
 
 
 def _colunas_ordens(ordens: list[OrdemServico]) -> list[dict]:
@@ -280,11 +318,13 @@ def agenda(request: HttpRequest) -> HttpResponse:
     ordens_por_dia = []
     for dia in dias_datas:
         ordens_do_dia = [ordem for ordem in ordens if ordem.data_agendada == dia]
+        rota_stops = _rota_do_dia_paradas(ordens_do_dia)
         ordens_por_dia.append(
             {
                 "data": dia,
                 "ordens": ordens_do_dia,
-                "rota_url": _rota_do_dia_url(ordens_do_dia),
+                "rota_stops": rota_stops,
+                "rota_stops_json": json.dumps(rota_stops, ensure_ascii=False),
                 "is_today": dia == timezone.localdate(),
             }
         )

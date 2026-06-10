@@ -356,6 +356,7 @@ class ServiceViewsTests(TestCase):
 
     def test_agenda_retorna_ok(self):
         OrdemServico.objects.create(
+            owner=self.user,
             titulo="Servico agenda teste",
             data_agendada=timezone.localdate(),
             hora_inicio="09:00",
@@ -371,6 +372,67 @@ class ServiceViewsTests(TestCase):
         self.assertNotContains(response, "agenda-calendar-card")
         self.assertContains(response, "Servico agenda teste")
         self.assertContains(response, "Administrador / dono")
+
+    def test_rota_do_dia_usa_paradas_em_ordem_cronologica(self):
+        hoje = timezone.localdate()
+        OrdemServico.objects.create(
+            owner=self.user,
+            titulo="Segundo atendimento",
+            endereco="Rua Segundo, 200",
+            data_agendada=hoje,
+            hora_inicio="14:00",
+            administrador_executa=True,
+            valor=120.0,
+        )
+        OrdemServico.objects.create(
+            owner=self.user,
+            titulo="Primeiro atendimento",
+            endereco="Rua Primeiro, 100",
+            data_agendada=hoje,
+            hora_inicio="08:00",
+            administrador_executa=True,
+            valor=120.0,
+        )
+        cliente_sem_rua = Cliente.objects.create(
+            owner=self.user,
+            name="Cliente cidade solta",
+            email="cidade@teste.com",
+            cidade="Varginha",
+            uf="MG",
+        )
+        OrdemServico.objects.create(
+            owner=self.user,
+            cliente=cliente_sem_rua,
+            titulo="Atendimento sem rua",
+            data_agendada=hoje,
+            hora_inicio="10:00",
+            administrador_executa=True,
+            valor=120.0,
+        )
+        OrdemServico.objects.create(
+            owner=self.user,
+            titulo="Cidade solta no campo endereco",
+            endereco="Itajuba, MG",
+            data_agendada=hoje,
+            hora_inicio="11:00",
+            administrador_executa=True,
+            valor=120.0,
+        )
+
+        response = self.client.get(reverse("agenda"))
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "data-route-day")
+        self.assertContains(response, "data-route-stops")
+        self.assertLess(content.index("Rua Primeiro, 100"), content.index("Rua Segundo, 200"))
+        route_button_index = content.index("data-route-stops")
+        route_stops_end = content.index("aria-label", route_button_index)
+        route_stops_markup = content[route_button_index:route_stops_end]
+        self.assertIn("Rua Primeiro, 100", route_stops_markup)
+        self.assertIn("Rua Segundo, 200", route_stops_markup)
+        self.assertNotIn("Varginha", route_stops_markup)
+        self.assertNotIn("Itajuba, MG", route_stops_markup)
 
     def test_configuracoes_retorna_ok(self):
         response = self.client.get(reverse("configuracoes"))
@@ -902,6 +964,7 @@ class ServiceViewsTests(TestCase):
 
     def test_lista_ordens_servico_retorna_ok(self):
         ordem = OrdemServico.objects.create(
+            owner=self.user,
             titulo="OS Cliente Ordem",
             data_agendada=timezone.localdate(),
             hora_inicio="09:00",
@@ -1852,9 +1915,10 @@ class ServiceViewsTests(TestCase):
         self.assertTrue(self.client.login(username="equipe-a", password="senha-equipe"))
 
     def test_cria_os_a_partir_de_orcamento_com_tecnico(self):
-        cliente = Cliente.objects.create(name="Cliente OS", email="os@teste.com")
-        tecnico = Tecnico.objects.create(name="Equipe OS", ativo=True)
+        cliente = Cliente.objects.create(owner=self.user, name="Cliente OS", email="os@teste.com")
+        tecnico = Tecnico.objects.create(owner=self.user, name="Equipe OS", ativo=True)
         orcamento = Orcamento.objects.create(
+            owner=self.user,
             name="Cliente OS",
             email="os@teste.com",
             endereco="Rua OS, 10",

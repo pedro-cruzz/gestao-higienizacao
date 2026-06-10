@@ -3416,6 +3416,8 @@ body.login-page {
     line-height: 18px;
     text-decoration: none;
     white-space: nowrap;
+    cursor: pointer;
+    appearance: none;
 }
 
 .agenda-route-button:hover,
@@ -3423,6 +3425,11 @@ body.login-page {
     color: var(--hf-blue);
     border-color: rgba(38, 100, 235, 0.28);
     background: #eff6ff;
+}
+
+.agenda-route-button:disabled {
+    cursor: wait;
+    opacity: 0.72;
 }
 
 .agenda-day-list {
