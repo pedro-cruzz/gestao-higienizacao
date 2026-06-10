@@ -1,11 +1,14 @@
 from datetime import datetime, time, timedelta
 
+from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
 
-from service.models import Cliente, Lead, Orcamento, OrdemServico, Service_catalog
+from service.access import ADMIN_GROUP, DEV_GROUP, TEAM_GROUP, is_dev_user
+from service.models import Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
 from service.ownership import owned_queryset
 
 
@@ -244,8 +247,85 @@ def agenda(request: HttpRequest) -> HttpResponse:
     return render(request, "service/agenda.html", context)
 
 
+def _usuario_config_item(user, actor) -> dict:
+    grupos = set(user.groups.values_list("name", flat=True))
+    tecnico = getattr(user, "tecnico_profile", None)
+
+    if user.is_superuser or user.is_staff or DEV_GROUP in grupos or ADMIN_GROUP in grupos:
+        perfil = "Administrador"
+        perfil_class = "settings-role-admin"
+    elif TEAM_GROUP in grupos or tecnico:
+        perfil = "Tecnico"
+        perfil_class = "settings-role-team"
+    else:
+        perfil = "Assistente"
+        perfil_class = "settings-role-assistant"
+
+    edit_url = None
+    if tecnico:
+        edit_url = reverse("editar_tecnico", args=[tecnico.pk])
+    elif is_dev_user(actor) and (user.is_superuser or user.is_staff or DEV_GROUP in grupos or ADMIN_GROUP in grupos):
+        edit_url = reverse("editar_admin", args=[user.pk])
+
+    return {
+        "nome": user.get_full_name() or user.username,
+        "email": user.email or user.username,
+        "perfil": perfil,
+        "perfil_class": perfil_class,
+        "status": "Ativo" if user.is_active else "Inativo",
+        "status_class": "settings-status-active" if user.is_active else "settings-status-inactive",
+        "edit_url": edit_url,
+    }
+
+
 def configuracoes(request: HttpRequest) -> HttpResponse:
-    return render(request, "service/configuracoes.html")
+    servicos = Service_catalog.objects.select_related("categoria").order_by("name")
+    usuarios = (
+        get_user_model()
+        .objects.select_related("tecnico_profile")
+        .prefetch_related("groups")
+        .order_by("first_name", "username")[:8]
+    )
+    tecnicos = Tecnico.objects.select_related("user").order_by("name")[:6]
+    active_tab = request.GET.get("tab") if request.GET.get("tab") in {"precos", "usuarios", "empresa"} else "precos"
+
+    context = {
+        "servicos_config": servicos,
+        "usuarios_config": [_usuario_config_item(usuario, request.user) for usuario in usuarios],
+        "tecnicos_config": tecnicos,
+        "active_settings_tab": active_tab,
+        "adicionais_config": [
+            {"nome": "Manchas dificeis", "valor": 80},
+            {"nome": "Urina de animais", "valor": 120},
+            {"nome": "Mofo ou bolor", "valor": 100},
+        ],
+        "perfis_acesso_config": [
+            {
+                "nome": "Administrador",
+                "descricao": "Acesso total ao sistema, incluindo configuracoes e relatorios",
+            },
+            {
+                "nome": "Assistente",
+                "descricao": "Acesso operacional completo para leads, orcamentos, OS e clientes",
+            },
+            {
+                "nome": "Tecnico",
+                "descricao": "Acesso restrito apenas as OS atribuidas a ele",
+            },
+        ],
+        "tecidos_config": [
+            {"nome": "Padrao", "multiplicador": "1.0"},
+            {"nome": "Nobuck/Camurca", "multiplicador": "1.2"},
+            {"nome": "Seda/Delicado", "multiplicador": "1.5"},
+        ],
+        "tamanhos_config": [
+            {"nome": "Pequeno", "multiplicador": "1.0"},
+            {"nome": "Medio", "multiplicador": "1.3"},
+            {"nome": "Grande", "multiplicador": "1.6"},
+            {"nome": "Extra Grande", "multiplicador": "2.0"},
+        ],
+    }
+    return render(request, "service/configuracoes.html", context)
 
 
 def login(request: HttpRequest) -> HttpResponse:
