@@ -224,6 +224,9 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "Usuarios do Sistema")
         self.assertContains(response, "Perfis de Acesso")
         self.assertContains(response, "Equipe tecnica")
+        self.assertContains(response, "Razao Social")
+        self.assertContains(response, "HigiFlow Limpeza Profissional Ltda")
+        self.assertContains(response, "Salvar Alteracoes")
 
     def test_login_placeholder_e_link_de_saida(self):
         inicio_response = self.client.get(reverse("inicio"))

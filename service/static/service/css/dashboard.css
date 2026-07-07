@@ -4437,6 +4437,71 @@ body.service-map-open {
     text-align: center;
 }
 
+.settings-company-form {
+    width: min(672px, 100%);
+    display: grid;
+    gap: 16px;
+    margin: 0 auto;
+}
+
+.settings-company-form h2 {
+    margin: 0;
+    color: var(--hf-text);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 27px;
+}
+
+.settings-company-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.settings-company-field {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.settings-company-wide {
+    grid-column: 1 / -1;
+}
+
+.settings-company-field span {
+    color: var(--hf-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.settings-company-field input {
+    width: 100%;
+    height: 40px;
+    border: 0;
+    border-radius: 10px;
+    outline: 0;
+    padding: 8px 16px;
+    color: var(--hf-text);
+    background: var(--hf-input);
+    font: inherit;
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.settings-company-field input:focus {
+    box-shadow: 0 0 0 3px rgba(38, 100, 235, 0.14);
+}
+
+.settings-company-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid var(--hf-border);
+    margin-top: 8px;
+    padding-top: 12px;
+}
+
 .settings-company-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -5093,6 +5158,14 @@ body.service-map-open {
 
     .settings-users-table {
         min-width: 680px;
+    }
+
+    .settings-company-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-company-actions .hf-btn {
+        width: 100%;
     }
 
     .settings-team-row {

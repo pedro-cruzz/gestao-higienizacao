@@ -1,5 +1,6 @@
 from datetime import datetime, time, timedelta
 
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse
@@ -277,7 +278,27 @@ def _usuario_config_item(user, actor) -> dict:
     }
 
 
+def _empresa_config_default() -> dict:
+    return {
+        "razao_social": "HigiFlow Limpeza Profissional Ltda",
+        "cnpj": "12.345.678/0001-90",
+        "telefone": "(11) 3456-7890",
+        "email": "contato@higiflow.com.br",
+        "cep": "01234-567",
+        "endereco": "Rua das Flores, 123",
+        "bairro": "Centro",
+        "cidade": "Sao Paulo",
+    }
+
+
 def configuracoes(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST" and request.POST.get("settings_section") == "empresa":
+        request.session["empresa_config"] = {
+            key: request.POST.get(key, "").strip()
+            for key in _empresa_config_default()
+        }
+        messages.success(request, "Dados da empresa atualizados com sucesso.")
+
     servicos = Service_catalog.objects.select_related("categoria").order_by("name")
     usuarios = (
         get_user_model()
@@ -286,13 +307,19 @@ def configuracoes(request: HttpRequest) -> HttpResponse:
         .order_by("first_name", "username")[:8]
     )
     tecnicos = Tecnico.objects.select_related("user").order_by("name")[:6]
-    active_tab = request.GET.get("tab") if request.GET.get("tab") in {"precos", "usuarios", "empresa"} else "precos"
+    active_tab = (
+        "empresa"
+        if request.method == "POST"
+        else request.GET.get("tab") if request.GET.get("tab") in {"precos", "usuarios", "empresa"} else "precos"
+    )
+    empresa_config = {**_empresa_config_default(), **request.session.get("empresa_config", {})}
 
     context = {
         "servicos_config": servicos,
         "usuarios_config": [_usuario_config_item(usuario, request.user) for usuario in usuarios],
         "tecnicos_config": tecnicos,
         "active_settings_tab": active_tab,
+        "empresa_config": empresa_config,
         "adicionais_config": [
             {"nome": "Manchas dificeis", "valor": 80},
             {"nome": "Urina de animais", "valor": 120},
