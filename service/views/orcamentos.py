@@ -1,9 +1,10 @@
 import textwrap
-from datetime import timedelta
+from datetime import timedelta, time
 from io import BytesIO
 from urllib.parse import quote_plus
 
 from django.contrib import messages
+from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -14,8 +15,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
-from service.forms import ClienteVinculoOrcamentoForm, OrcamentoForm
-from service.models import Cliente, Lead, Orcamento
+from service.forms import AdicionalOrcamentoForm, ClienteVinculoOrcamentoForm, MultiplicadorOrcamentoForm, OrcamentoForm
+from service.models import AdicionalOrcamento, Cliente, Lead, MultiplicadorOrcamento, Orcamento, OrdemServico
+from service.ownership import owned_queryset
 from service.services.nominatim import (
     NominatimLookupError,
     NominatimService,
@@ -52,9 +54,10 @@ def _links_mapa_orcamento(orcamento: Orcamento) -> dict[str, str]:
 
 
 def _criar_ou_atualizar_cliente_do_orcamento(orcamento: Orcamento) -> Cliente:
-    cliente = Cliente.objects.filter(email=orcamento.email).first()
+    cliente = Cliente.objects.filter(owner=orcamento.owner, email=orcamento.email).first()
     if cliente is None:
         return Cliente.objects.create(
+            owner=orcamento.owner,
             name=orcamento.name,
             email=orcamento.email,
             telefone=orcamento.telefone,
@@ -86,7 +89,10 @@ def _criar_ou_atualizar_cliente_do_orcamento(orcamento: Orcamento) -> Cliente:
 
 def listar_orcamentos(request: HttpRequest) -> HttpResponse:
     busca = request.GET.get("q", "").strip()
-    todos_orcamentos = Orcamento.objects.prefetch_related("itens", "cliente").order_by("-created_at", "-id")
+    todos_orcamentos = owned_queryset(
+        Orcamento.objects.prefetch_related("itens", "cliente"),
+        request.user,
+    ).order_by("-created_at", "-id")
     orcamentos = todos_orcamentos
 
     if busca:
@@ -143,11 +149,143 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
     return render(request, "service/orcamentos.html", context)
 
 
+def listar_adicionais_orcamento(request: HttpRequest) -> HttpResponse:
+    busca = request.GET.get("q", "").strip()
+    adicionais = owned_queryset(AdicionalOrcamento.objects, request.user).order_by("name", "id")
+    multiplicadores = owned_queryset(MultiplicadorOrcamento.objects, request.user).order_by("name", "id")
+    if busca:
+        adicionais = adicionais.filter(name__icontains=busca)
+        multiplicadores = multiplicadores.filter(name__icontains=busca)
+
+    context = {
+        "busca": busca,
+        "adicionais": adicionais,
+        "multiplicadores": multiplicadores,
+        "total_adicionais": adicionais.count(),
+        "total_multiplicadores": multiplicadores.count(),
+    }
+    return render(request, "service/adicionais_orcamento.html", context)
+
+
+def novo_adicional_orcamento(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        form = AdicionalOrcamentoForm(request.POST)
+        if form.is_valid():
+            adicional = form.save(commit=False)
+            adicional.owner = request.user
+            adicional.save()
+            messages.success(request, f"Adicional '{adicional.name}' cadastrado com sucesso.")
+            return redirect("adicionais_orcamento")
+    else:
+        form = AdicionalOrcamentoForm(initial={"ativo": True})
+
+    return render(request, "service/adicional_orcamento_form.html", {"form": form, "is_edit": False})
+
+
+def editar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
+    adicional = get_object_or_404(owned_queryset(AdicionalOrcamento.objects, request.user), pk=pk)
+    if request.method == "POST":
+        form = AdicionalOrcamentoForm(request.POST, instance=adicional)
+        if form.is_valid():
+            adicional = form.save()
+            messages.success(request, f"Adicional '{adicional.name}' atualizado com sucesso.")
+            return redirect("adicionais_orcamento")
+    else:
+        form = AdicionalOrcamentoForm(instance=adicional)
+
+    return render(request, "service/adicional_orcamento_form.html", {"form": form, "adicional": adicional, "is_edit": True})
+
+
+def deletar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
+    if request.method != "POST":
+        return redirect("adicionais_orcamento")
+
+    adicional = get_object_or_404(owned_queryset(AdicionalOrcamento.objects, request.user), pk=pk)
+    nome = adicional.name
+    adicional.delete()
+    messages.success(request, f"Adicional '{nome}' excluido com sucesso.")
+    return redirect("adicionais_orcamento")
+
+
+def novo_multiplicador_orcamento(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        form = MultiplicadorOrcamentoForm(request.POST)
+        if form.is_valid():
+            multiplicador = form.save(commit=False)
+            multiplicador.owner = request.user
+            multiplicador.save()
+            messages.success(request, f"Multiplicador '{multiplicador.name}' cadastrado com sucesso.")
+            return redirect("adicionais_orcamento")
+    else:
+        form = MultiplicadorOrcamentoForm(initial={"ativo": True, "fator": 1})
+
+    return render(request, "service/multiplicador_orcamento_form.html", {"form": form, "is_edit": False})
+
+
+def editar_multiplicador_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
+    multiplicador = get_object_or_404(owned_queryset(MultiplicadorOrcamento.objects, request.user), pk=pk)
+    if request.method == "POST":
+        form = MultiplicadorOrcamentoForm(request.POST, instance=multiplicador)
+        if form.is_valid():
+            multiplicador = form.save()
+            messages.success(request, f"Multiplicador '{multiplicador.name}' atualizado com sucesso.")
+            return redirect("adicionais_orcamento")
+    else:
+        form = MultiplicadorOrcamentoForm(instance=multiplicador)
+
+    return render(
+        request,
+        "service/multiplicador_orcamento_form.html",
+        {"form": form, "multiplicador": multiplicador, "is_edit": True},
+    )
+
+
+def deletar_multiplicador_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
+    if request.method != "POST":
+        return redirect("adicionais_orcamento")
+
+    multiplicador = get_object_or_404(owned_queryset(MultiplicadorOrcamento.objects, request.user), pk=pk)
+    nome = multiplicador.name
+    multiplicador.delete()
+    messages.success(request, f"Multiplicador '{nome}' excluido com sucesso.")
+    return redirect("adicionais_orcamento")
+
+
 def _nome_servico_ordem(orcamento: Orcamento) -> str:
     itens = list(orcamento.itens.all())
     if itens:
         return " + ".join(item.name for item in itens[:2])
     return orcamento.descricao or "Servico cadastrado"
+
+
+def _criar_ordem_servico_automaticamente(orcamento: Orcamento) -> None:
+    try:
+        if orcamento.ordem_servico is not None:
+            return
+    except OrdemServico.DoesNotExist:
+        pass
+
+    OrdemServico.objects.create(
+        owner=orcamento.owner,
+        orcamento=orcamento,
+        cliente=orcamento.cliente,
+        titulo=_nome_servico_ordem(orcamento),
+        descricao=orcamento.descricao,
+        endereco=orcamento.endereco or _endereco_para_mapa(orcamento),
+        data_agendada=timezone.localdate(),
+        hora_inicio=time(8, 0),
+        status=OrdemServico.Status.AGENDADA,
+        valor=orcamento.valor or 0,
+    )
+
+
+def _deve_criar_ordem_servico(request: HttpRequest) -> bool:
+    return request.POST.get("criar_ordem_servico", "1") != "0"
+
+
+def _criar_ordem_servico_se_solicitado(orcamento: Orcamento, request: HttpRequest) -> None:
+    if _deve_criar_ordem_servico(request):
+        _criar_ordem_servico_automaticamente(orcamento)
 
 
 def _dinheiro_ordem(valor: float) -> str:
@@ -240,7 +378,10 @@ def _colunas_ordens_exemplo() -> list[dict]:
 
 
 def listar_ordens_servico(request: HttpRequest) -> HttpResponse:
-    orcamentos = list(Orcamento.objects.prefetch_related("itens", "cliente").order_by("-updated_at", "-id")[:12])
+    orcamentos = list(
+        owned_queryset(Orcamento.objects.prefetch_related("itens", "cliente"), request.user)
+        .order_by("-updated_at", "-id")[:12]
+    )
 
     if not orcamentos:
         colunas = _colunas_ordens_exemplo()
@@ -293,14 +434,31 @@ def _orcamento_initial_lead(lead: Lead, item_inicial: str | None = None) -> dict
     return initial
 
 
+def _adicionais_context(request: HttpRequest, form: OrcamentoForm) -> dict:
+    if form.is_bound:
+        selecionados = set(form.data.getlist("adicionais"))
+        multiplicadores_selecionados = set(form.data.getlist("multiplicadores"))
+    else:
+        selecionados = {str(pk) for pk in (form.initial.get("adicionais") or [])}
+        multiplicadores_selecionados = {str(pk) for pk in (form.initial.get("multiplicadores") or [])}
+
+    return {
+        "adicionais_disponiveis": owned_queryset(AdicionalOrcamento.objects, request.user).filter(ativo=True).order_by("name", "id"),
+        "adicionais_selecionados": selecionados,
+        "multiplicadores_disponiveis": owned_queryset(MultiplicadorOrcamento.objects, request.user).filter(ativo=True).order_by("name", "id"),
+        "multiplicadores_selecionados": multiplicadores_selecionados,
+    }
+
+
 def novo_orcamento(request: HttpRequest) -> HttpResponse:
     lead_id = request.GET.get("lead")
-    lead = Lead.objects.filter(pk=lead_id).first() if lead_id else None
+    lead = owned_queryset(Lead.objects, request.user).filter(pk=lead_id).first() if lead_id else None
 
     if request.method == "POST":
-        form = OrcamentoForm(request.POST)
+        form = OrcamentoForm(request.POST, user=request.user)
         if form.is_valid():
             orcamento = Orcamento.objects.create(
+                owner=request.user,
                 name=form.cleaned_data["name"] or form.cleaned_data["cliente"].name,
                 email=form.cleaned_data["email"] or None,
                 quantidade=form.cleaned_data["quantidade"],
@@ -319,11 +477,12 @@ def novo_orcamento(request: HttpRequest) -> HttpResponse:
     else:
         item_inicial = request.GET.get("item")
         initial = _orcamento_initial_lead(lead, item_inicial) if lead else {"itens": [item_inicial]} if item_inicial else None
-        form = OrcamentoForm(initial=initial)
+        form = OrcamentoForm(initial=initial, user=request.user)
 
     context = {
         "form": form,
-        "orcamentos_recentes": Orcamento.objects.prefetch_related("itens").order_by("-id")[:5],
+        "orcamentos_recentes": owned_queryset(Orcamento.objects.prefetch_related("itens"), request.user).order_by("-id")[:5],
+        **_adicionais_context(request, form),
     }
     return render(request, "service/orcamento_form.html", context)
 
@@ -332,7 +491,7 @@ def buscar_cliente_dados(request: HttpRequest, pk: int) -> JsonResponse:
     if request.method != "GET":
         return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
 
-    cliente = get_object_or_404(Cliente, pk=pk)
+    cliente = get_object_or_404(owned_queryset(Cliente.objects, request.user), pk=pk)
     return JsonResponse(
         {
             "ok": True,
@@ -358,7 +517,7 @@ def buscar_lead_dados(request: HttpRequest, pk: int) -> JsonResponse:
     if request.method != "GET":
         return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
 
-    lead = get_object_or_404(Lead, pk=pk)
+    lead = get_object_or_404(owned_queryset(Lead.objects, request.user), pk=pk)
     return JsonResponse(
         {
             "ok": True,
@@ -398,22 +557,21 @@ def _orcamento_initial(orcamento: Orcamento) -> dict:
         "descricao": orcamento.descricao,
         "quantidade": orcamento.quantidade,
         "itens": list(orcamento.itens.values_list("pk", flat=True)),
+        "adicionais": list(orcamento.adicionais.values_list("pk", flat=True)),
+        "multiplicadores": list(orcamento.multiplicadores.values_list("pk", flat=True)),
         "criar_cliente_automatico": False,
     }
 
 
 def _salvar_dados_orcamento(orcamento: Orcamento, form: OrcamentoForm) -> Orcamento:
     itens = list(form.cleaned_data["itens"])
+    adicionais = list(form.cleaned_data.get("adicionais") or [])
+    multiplicadores = list(form.cleaned_data.get("multiplicadores") or [])
     quantidade = form.cleaned_data["quantidade"]
-    adicionais = 0
-    if form.cleaned_data.get("adicional_manchas"):
-        adicionais += 80
-    if form.cleaned_data.get("adicional_urina"):
-        adicionais += 120
-    if form.cleaned_data.get("adicional_mofo"):
-        adicionais += 100
-    multiplicador_tecido = float(form.cleaned_data.get("tipo_tecido_visual") or 1)
-    multiplicador_tamanho = float(form.cleaned_data.get("tamanho_visual") or 1)
+    valor_adicionais = sum(adicional.valor for adicional in adicionais)
+    fator_multiplicadores = 1
+    for multiplicador in multiplicadores:
+        fator_multiplicadores *= float(multiplicador.fator or 1)
 
     orcamento.name = form.cleaned_data["name"]
     orcamento.email = form.cleaned_data["email"]
@@ -428,11 +586,13 @@ def _salvar_dados_orcamento(orcamento: Orcamento, form: OrcamentoForm) -> Orcame
     orcamento.uf = form.cleaned_data["uf"] or None
     orcamento.descricao = form.cleaned_data["descricao"] or None
     orcamento.quantidade = quantidade
-    orcamento.valor = (sum(item.valor for item in itens) + adicionais) * quantidade * multiplicador_tecido * multiplicador_tamanho
+    orcamento.valor = (sum(item.valor for item in itens) + valor_adicionais) * quantidade * fator_multiplicadores
     orcamento.cliente = form.cleaned_data.get("cliente") or orcamento.cliente
     orcamento.lead = form.cleaned_data.get("lead") or orcamento.lead
     orcamento.save()
     orcamento.itens.set(itens)
+    orcamento.adicionais.set(adicionais)
+    orcamento.multiplicadores.set(multiplicadores)
     return orcamento
 
 
@@ -477,25 +637,29 @@ def _aplicar_fluxo_cliente(orcamento: Orcamento, form: OrcamentoForm) -> None:
 
 
 def editar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
-    orcamento = get_object_or_404(Orcamento.objects.prefetch_related("itens"), pk=pk)
+    orcamento = get_object_or_404(
+        owned_queryset(Orcamento.objects.prefetch_related("itens"), request.user),
+        pk=pk,
+    )
 
     if request.method == "POST":
-        form = OrcamentoForm(request.POST)
+        form = OrcamentoForm(request.POST, user=request.user)
         if form.is_valid():
             _salvar_dados_orcamento(orcamento, form)
             _aplicar_fluxo_cliente(orcamento, form)
             messages.success(request, "Orcamento atualizado com sucesso.")
             return redirect("orcamento_detalhe", pk=orcamento.pk)
     else:
-        form = OrcamentoForm(initial=_orcamento_initial(orcamento))
+        form = OrcamentoForm(initial=_orcamento_initial(orcamento), user=request.user)
 
     context = {
         "form": form,
         "orcamento": orcamento,
-        "orcamentos_recentes": Orcamento.objects.prefetch_related("itens").exclude(pk=orcamento.pk).order_by("-id")[:5],
+        "orcamentos_recentes": owned_queryset(Orcamento.objects.prefetch_related("itens"), request.user).exclude(pk=orcamento.pk).order_by("-id")[:5],
         "form_title": "Editar orcamento",
         "form_intro": "Atualize os dados do cliente, endereco, itens e quantidade deste orcamento.",
         "form_submit_label": "Salvar alteracoes",
+        **_adicionais_context(request, form),
     }
     return render(request, "service/orcamento_form.html", context)
 
@@ -518,7 +682,7 @@ def buscar_mapa_orcamento(request: HttpRequest, pk: int) -> JsonResponse:
     if request.method != "GET":
         return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
 
-    orcamento = get_object_or_404(Orcamento, pk=pk)
+    orcamento = get_object_or_404(owned_queryset(Orcamento.objects, request.user), pk=pk)
     endereco = _endereco_para_mapa(orcamento)
     if not endereco:
         return JsonResponse(
@@ -552,7 +716,7 @@ def buscar_mapa_orcamento(request: HttpRequest, pk: int) -> JsonResponse:
 
 def detalhe_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     orcamento = get_object_or_404(
-        Orcamento.objects.prefetch_related("itens", "cliente"),
+        owned_queryset(Orcamento.objects.prefetch_related("itens", "cliente"), request.user),
         pk=pk,
     )
     context = {
@@ -561,9 +725,10 @@ def detalhe_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         "mapa": _links_mapa_orcamento(orcamento),
         "ordem_servico": getattr(orcamento, "ordem_servico", None),
         "vinculo_form": ClienteVinculoOrcamentoForm(
-            initial={"cliente": orcamento.cliente_id} if orcamento.cliente_id else None
+            initial={"cliente": orcamento.cliente_id} if orcamento.cliente_id else None,
+            user=request.user,
         ),
-        "total_clientes": Cliente.objects.count(),
+        "total_clientes": owned_queryset(Cliente.objects, request.user).count(),
     }
     return render(request, "service/orcamento_detalhe.html", context)
 
@@ -572,8 +737,8 @@ def vincular_cliente_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method != "POST":
         return redirect("orcamento_detalhe", pk=pk)
 
-    orcamento = get_object_or_404(Orcamento, pk=pk)
-    form = ClienteVinculoOrcamentoForm(request.POST)
+    orcamento = get_object_or_404(owned_queryset(Orcamento.objects, request.user), pk=pk)
+    form = ClienteVinculoOrcamentoForm(request.POST, user=request.user)
     if form.is_valid():
         cliente = form.cleaned_data["cliente"]
         orcamento.cliente = cliente
@@ -584,6 +749,7 @@ def vincular_cliente_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         orcamento.save(update_fields=update_fields)
         _marcar_lead_convertido(orcamento, cliente)
         if orcamento.aprovado:
+            _criar_ordem_servico_se_solicitado(orcamento, request)
             messages.success(request, f"Orcamento aprovado e vinculado ao cliente '{cliente.name}'.")
         else:
             messages.success(request, f"Cliente '{cliente.name}' vinculado ao orcamento.")
@@ -599,7 +765,7 @@ def deletar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method != "POST":
         return redirect("orcamento_detalhe", pk=pk)
 
-    orcamento = get_object_or_404(Orcamento, pk=pk)
+    orcamento = get_object_or_404(owned_queryset(Orcamento.objects, request.user), pk=pk)
     nome = orcamento.name
     orcamento.delete()
 
@@ -611,7 +777,7 @@ def concluir_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method != "POST":
         return redirect("orcamento_detalhe", pk=pk)
 
-    orcamento = get_object_or_404(Orcamento, pk=pk)
+    orcamento = get_object_or_404(owned_queryset(Orcamento.objects, request.user), pk=pk)
     if not orcamento.aprovado:
         if not orcamento.cliente_id:
             messages.error(
@@ -622,6 +788,7 @@ def concluir_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         orcamento.aprovado = True
         orcamento.save(update_fields=["aprovado", "updated_at"])
         _marcar_lead_convertido(orcamento, orcamento.cliente)
+        _criar_ordem_servico_se_solicitado(orcamento, request)
         messages.success(request, "Orcamento aprovado com sucesso.")
     else:
         messages.info(request, "Este orcamento ja esta aprovado.")
@@ -633,7 +800,7 @@ def cadastrar_cliente_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method != "POST":
         return redirect("orcamento_detalhe", pk=pk)
 
-    orcamento = get_object_or_404(Orcamento, pk=pk)
+    orcamento = get_object_or_404(owned_queryset(Orcamento.objects, request.user), pk=pk)
 
     if not orcamento.email:
         messages.error(
@@ -650,8 +817,8 @@ def cadastrar_cliente_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         update_fields.append("aprovado")
     orcamento.save(update_fields=update_fields)
     _marcar_lead_convertido(orcamento, cliente)
-
     if orcamento.aprovado:
+        _criar_ordem_servico_se_solicitado(orcamento, request)
         messages.success(request, "Orcamento aprovado e cliente vinculado com sucesso.")
     else:
         messages.success(
@@ -667,7 +834,7 @@ def aprovar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method != "POST":
         return redirect("orcamento_detalhe", pk=pk)
 
-    orcamento = get_object_or_404(Orcamento, pk=pk)
+    orcamento = get_object_or_404(owned_queryset(Orcamento.objects, request.user), pk=pk)
 
     if not orcamento.email:
         messages.error(
@@ -681,6 +848,7 @@ def aprovar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     orcamento.aprovado = True
     orcamento.save(update_fields=["cliente", "aprovado", "updated_at"])
     _marcar_lead_convertido(orcamento, cliente)
+    _criar_ordem_servico_se_solicitado(orcamento, request)
 
     messages.success(
         request,
@@ -691,7 +859,7 @@ def aprovar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
 
 def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
     orcamento = get_object_or_404(
-        Orcamento.objects.prefetch_related("itens", "cliente"),
+        owned_queryset(Orcamento.objects.prefetch_related("itens", "cliente"), request.user),
         pk=pk,
     )
     itens = list(orcamento.itens.all())
@@ -707,7 +875,13 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
                 return value
         return "#2577B5"
 
-    def load_logo():
+    def image_reader_from_bytes(logo_bytes: bytes):
+        try:
+            return ImageReader(BytesIO(logo_bytes))
+        except Exception:
+            return None
+
+    def load_uploaded_logo_bytes():
         uploaded_logo = request.FILES.get("pdf_logo")
         if not uploaded_logo:
             return None
@@ -720,15 +894,40 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
         if len(logo_bytes) > 3 * 1024 * 1024:
             return None
 
+        if image_reader_from_bytes(logo_bytes) is None:
+            return None
+        return logo_bytes
+
+    def load_saved_logo():
+        if not orcamento.pdf_logo:
+            return None
         try:
-            return ImageReader(BytesIO(logo_bytes))
+            orcamento.pdf_logo.open("rb")
+            return image_reader_from_bytes(orcamento.pdf_logo.read())
         except Exception:
             return None
+        finally:
+            try:
+                orcamento.pdf_logo.close()
+            except Exception:
+                pass
 
     pdf_brand = clean_text(request.POST.get("pdf_brand", ""), 42) or "ERP Higienizacao"
-    pdf_phrase = clean_text(request.POST.get("pdf_phrase", ""), 180)
+    pdf_phrase = clean_text(request.POST.get("pdf_phrase", orcamento.pdf_frase_cliente or ""), 180)
     accent_color = clean_color(request.POST.get("pdf_accent_color", ""))
-    uploaded_logo = load_logo()
+    uploaded_logo_bytes = load_uploaded_logo_bytes()
+    if request.method == "POST":
+        orcamento.pdf_frase_cliente = pdf_phrase
+        update_fields = ["pdf_frase_cliente", "updated_at"]
+        if uploaded_logo_bytes:
+            orcamento.pdf_logo.save(
+                request.FILES["pdf_logo"].name,
+                ContentFile(uploaded_logo_bytes),
+                save=False,
+            )
+            update_fields.append("pdf_logo")
+        orcamento.save(update_fields=update_fields)
+    uploaded_logo = image_reader_from_bytes(uploaded_logo_bytes) if uploaded_logo_bytes else load_saved_logo()
 
     page_width, page_height = A4
     buffer = BytesIO()
@@ -749,11 +948,7 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
     content_w = page_width - (margin * 2)
     emission_date = timezone.localdate().strftime("%d/%m/%Y")
     doc_number = f"PF-{timezone.localdate().year}-{orcamento.pk:04d}"
-    note_text = (
-        pdf_phrase
-        or orcamento.descricao
-        or "Valido mediante confirmacao da agenda, avaliacao tecnica e disponibilidade da equipe."
-    )
+    note_text = pdf_phrase
 
     table_title_h = 42
     table_head_h = 30
@@ -1176,18 +1371,16 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
         total_x = margin + note_w + 16
 
         draw_panel(margin, y, note_w, h, 14)
-        pdf.setFillColor(accent)
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(margin + 18, y + h - 24, "MENSAGEM PARA O CLIENTE")
-        draw_lines(
-            wrap_pdf_text(note_text, note_w - 36, "Helvetica", 9.2, 4),
-            margin + 18,
-            y + h - 45,
-            "Helvetica",
-            9.2,
-            11,
-            muted,
-        )
+        if note_text:
+            draw_lines(
+                wrap_pdf_text(note_text, note_w - 36, "Helvetica", 9.2, 4),
+                margin + 18,
+                y + h - 28,
+                "Helvetica",
+                9.2,
+                11,
+                muted,
+            )
         pdf.setStrokeColor(line)
         pdf.line(margin + 18, y + 20, margin + note_w - 18, y + 20)
         pdf.setFillColor(soft_text)

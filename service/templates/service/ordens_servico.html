@@ -2,6 +2,11 @@
 
 {% block title %}Ordens de Servico | HigiFlow{% endblock %}
 
+{% block extra_head %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
+{% endblock %}
+
 {% block content %}
     <section class="page-heading service-orders-heading">
         <div>
@@ -13,10 +18,12 @@
                 <i class="bi bi-calendar3"></i>
                 <span>Agenda</span>
             </a>
-            <a href="{% url 'nova_os' %}" class="hf-btn hf-btn-primary">
-                <i class="bi bi-plus-lg"></i>
-                <span>Nova OS</span>
-            </a>
+            {% if hf_is_admin %}
+                <a href="{% url 'nova_os' %}" class="hf-btn hf-btn-primary">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Nova OS</span>
+                </a>
+            {% endif %}
         </div>
     </section>
 
@@ -97,7 +104,7 @@
         {% endfor %}
     </section>
 
-    <section class="orcamentos-panel" aria-label="Lista de ordens de servico">
+    <section class="orcamentos-panel" aria-label="Lista de ordens de servico" data-os-inline-panel>
         <div class="leads-toolbar">
             <form method="get" class="leads-search orcamentos-search">
                 <i class="bi bi-search"></i>
@@ -109,10 +116,12 @@
                     aria-label="Buscar OS"
                 >
             </form>
-            <a href="{% url 'tecnicos' %}" class="filter-button text-decoration-none">
-                <i class="bi bi-person-gear"></i>
-                <span>Equipe tecnica</span>
-            </a>
+            {% if hf_is_admin %}
+                <a href="{% url 'tecnicos' %}" class="filter-button text-decoration-none">
+                    <i class="bi bi-person-gear"></i>
+                    <span>Equipe tecnica</span>
+                </a>
+            {% endif %}
         </div>
 
         <div class="leads-table-wrap os-table-wrap">
@@ -125,6 +134,7 @@
                         <th>Responsavel</th>
                         <th>Status</th>
                         <th>Valor</th>
+                        <th>Mapa</th>
                         <th>Acoes</th>
                     </tr>
                 </thead>
@@ -137,34 +147,132 @@
                                     <span>{{ ordem.endereco|default:"Sem endereco" }}</span>
                                 </div>
                             </td>
-                            <td data-label="Cliente">{{ ordem.cliente_nome }}</td>
+                            <td data-label="Cliente">
+                                {% if can_manage_os_links %}
+                                    <select
+                                        class="os-inline-select"
+                                        data-os-link-select
+                                        data-field="cliente"
+                                        data-update-url="{% url 'atualizar_vinculos_os' ordem.pk %}"
+                                        aria-label="Vincular cliente da OS #{{ ordem.pk }}"
+                                    >
+                                        <option value="">Cliente nao vinculado</option>
+                                        {% for cliente in clientes %}
+                                            <option value="{{ cliente.pk }}"{% if ordem.cliente_id == cliente.pk %} selected{% endif %}>
+                                                {{ cliente.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    {{ ordem.cliente_nome }}
+                                {% endif %}
+                            </td>
                             <td data-label="Agenda">
                                 <span class="quote-date">
                                     <i class="bi bi-calendar3"></i>
                                     {{ ordem.data_agendada|date:"d/m/Y" }} {{ ordem.hora_inicio|time:"H:i" }}
                                 </span>
                             </td>
-                            <td data-label="Responsavel">{{ ordem.responsavel_nome }}</td>
+                            <td data-label="Responsavel">
+                                {% if can_manage_os_links %}
+                                    <select
+                                        class="os-inline-select"
+                                        data-os-link-select
+                                        data-field="responsavel"
+                                        data-update-url="{% url 'atualizar_vinculos_os' ordem.pk %}"
+                                        aria-label="Vincular equipe responsavel da OS #{{ ordem.pk }}"
+                                    >
+                                        <option value="admin"{% if ordem.administrador_executa or not ordem.tecnico_id %} selected{% endif %}>
+                                            Administrador / dono
+                                        </option>
+                                        {% for tecnico in tecnicos %}
+                                            <option value="{{ tecnico.pk }}"{% if ordem.tecnico_id == tecnico.pk and not ordem.administrador_executa %} selected{% endif %}>
+                                                {{ tecnico.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    {{ ordem.responsavel_nome }}
+                                {% endif %}
+                            </td>
                             <td data-label="Status">
                                 <span class="status-pill {{ ordem.status_css }}">{{ ordem.get_status_display }}</span>
                             </td>
                             <td class="quote-value" data-label="Valor">
                                 <strong>R$ {{ ordem.valor|floatformat:2 }}</strong>
                             </td>
+                            <td data-label="Mapa">
+                                <div class="os-map-actions">
+                                    {% if ordem.mapa %}
+                                        <button
+                                            type="button"
+                                            class="os-map-button"
+                                            data-os-map-trigger
+                                            data-location-url="{% url 'buscar_mapa_os' ordem.pk %}"
+                                            data-maps-url="{{ ordem.mapa.maps_url }}"
+                                            data-route-url="{{ ordem.mapa.rota_url }}"
+                                            data-address="{{ ordem.mapa.endereco }}"
+                                            data-title="OS #{{ ordem.pk }} - {{ ordem.titulo }}"
+                                            aria-label="Abrir mapa da OS #{{ ordem.pk }}"
+                                        >
+                                            <i class="bi bi-map"></i>
+                                            <span>Mapa</span>
+                                        </button>
+                                    {% else %}
+                                        <span class="os-map-button is-disabled" aria-label="OS sem endereco para mapa">
+                                            <i class="bi bi-map"></i>
+                                            <span>Mapa</span>
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </td>
                             <td data-label="Acoes">
-                                <div class="quote-actions">
-                                    <a href="{% url 'os_detalhe' ordem.pk %}" class="quote-icon-button" aria-label="Abrir OS #{{ ordem.pk }}">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{% url 'editar_os' ordem.pk %}" class="quote-icon-button" aria-label="Editar OS #{{ ordem.pk }}">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
+                                <div class="quote-actions dropdown">
+                                    <button
+                                        type="button"
+                                        class="quote-icon-button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-boundary="viewport"
+                                        aria-expanded="false"
+                                        aria-label="Abrir menu de acoes da OS #{{ ordem.pk }}"
+                                    >
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
+                                        <a href="{% url 'os_detalhe' ordem.pk %}" class="dropdown-item hf-actions-menu-item">
+                                            <i class="bi bi-eye"></i>
+                                            <span>Abrir OS</span>
+                                        </a>
+                                        {% if hf_is_admin %}
+                                            <a href="{% url 'editar_os' ordem.pk %}" class="dropdown-item hf-actions-menu-item">
+                                                <i class="bi bi-pencil-square"></i>
+                                                <span>Editar OS</span>
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <form
+                                                method="post"
+                                                action="{% url 'deletar_os' ordem.pk %}"
+                                                class="m-0"
+                                                data-hf-confirm
+                                                data-hf-confirm-icon="warning"
+                                                data-hf-confirm-title="Excluir OS?"
+                                                data-hf-confirm-text="Esta acao removera a ordem de servico permanentemente."
+                                                data-hf-confirm-button="Excluir"
+                                            >
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-item hf-actions-menu-item hf-actions-menu-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                    <span>Excluir OS</span>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="7">
+                            <td colspan="8">
                                 <div class="table-empty">
                                     Nenhuma OS encontrada.
                                 </div>
@@ -177,14 +285,52 @@
 
         <footer class="orcamentos-pagination">
             <p>Mostrando {{ total_filtrado }} de {{ total_ordens }} OS</p>
-            <div>
-                <a href="{% url 'nova_os' %}" class="pagination-button text-decoration-none">Criar OS</a>
-            </div>
+            {% if hf_is_admin %}
+                <div>
+                    <a href="{% url 'nova_os' %}" class="pagination-button text-decoration-none">Criar OS</a>
+                </div>
+            {% endif %}
         </footer>
     </section>
+
+    <div class="modal fade os-map-modal" id="osMapModal" tabindex="-1" aria-labelledby="osMapModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content agenda-os-modal">
+                <div class="modal-header">
+                    <div>
+                        <span class="agenda-os-modal-kicker">Mapa da OS</span>
+                        <h2 class="modal-title" id="osMapModalTitle">Local do servico</h2>
+                        <p class="muted-copy mb-0" data-os-map-address></p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="service-map-canvas os-map-modal-canvas" data-os-map-canvas></div>
+                    <div class="service-map-status muted-copy" data-os-map-status>Localizando endereco do servico...</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="hf-btn hf-btn-light" data-bs-dismiss="modal">Fechar</button>
+                    <a href="#" class="hf-btn hf-btn-light" target="_blank" rel="noopener" data-os-map-view>
+                        <i class="bi bi-map"></i>
+                        <span>Ver no Maps</span>
+                    </a>
+                    <a href="#" class="hf-btn hf-btn-light" target="_blank" rel="noopener" data-os-map-route-external>
+                        <i class="bi bi-sign-turn-right"></i>
+                        <span>Rota no Maps</span>
+                    </a>
+                    <button type="button" class="hf-btn hf-btn-primary" data-os-map-route disabled>
+                        <i class="bi bi-sign-turn-right"></i>
+                        <span>Calcular rota</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_scripts %}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script>
         (() => {
             const board = document.querySelector("[data-kanban-board]");
@@ -379,6 +525,289 @@
             });
 
             refreshCounts();
+        })();
+
+        (() => {
+            const panel = document.querySelector("[data-os-inline-panel]");
+            if (!panel) {
+                return;
+            }
+
+            function getCookie(name) {
+                return document.cookie
+                    .split(";")
+                    .map((cookie) => cookie.trim())
+                    .find((cookie) => cookie.startsWith(`${name}=`))
+                    ?.slice(name.length + 1) || "";
+            }
+
+            panel.querySelectorAll("[data-os-link-select]").forEach((select) => {
+                select.dataset.previousValue = select.value;
+
+                select.addEventListener("change", async () => {
+                    const previousValue = select.dataset.previousValue || "";
+                    select.disabled = true;
+                    select.classList.add("is-saving");
+
+                    try {
+                        const response = await fetch(select.dataset.updateUrl, {
+                            method: "POST",
+                            headers: {
+                                "X-CSRFToken": getCookie("csrftoken"),
+                                "X-Requested-With": "XMLHttpRequest",
+                                "Content-Type": "application/x-www-form-urlencoded",
+                            },
+                            body: new URLSearchParams({
+                                campo: select.dataset.field,
+                                valor: select.value,
+                            }),
+                        });
+                        const payload = await response.json();
+                        if (!response.ok || !payload.ok) {
+                            throw new Error(payload.error || "Nao foi possivel atualizar a OS.");
+                        }
+                        select.dataset.previousValue = select.value;
+                        select.classList.add("is-saved");
+                        window.setTimeout(() => select.classList.remove("is-saved"), 1200);
+                    } catch (error) {
+                        select.value = previousValue;
+                        window.hfAlert?.({
+                            icon: "error",
+                            title: "Vinculo nao atualizado",
+                            text: error.message,
+                        });
+                    } finally {
+                        select.disabled = false;
+                        select.classList.remove("is-saving");
+                    }
+                });
+            });
+        })();
+
+        (() => {
+            const modalElement = document.getElementById("osMapModal");
+            if (!modalElement || !window.bootstrap) {
+                return;
+            }
+
+            const modal = new bootstrap.Modal(modalElement);
+            const title = modalElement.querySelector("#osMapModalTitle");
+            const address = modalElement.querySelector("[data-os-map-address]");
+            const status = modalElement.querySelector("[data-os-map-status]");
+            const canvas = modalElement.querySelector("[data-os-map-canvas]");
+            const viewMaps = modalElement.querySelector("[data-os-map-view]");
+            const routeMaps = modalElement.querySelector("[data-os-map-route-external]");
+            const routeButton = modalElement.querySelector("[data-os-map-route]");
+
+            let activeTrigger = null;
+            let map = null;
+            let marker = null;
+            let destination = null;
+            let routeControl = null;
+            let userMarker = null;
+
+            function setStatus(message, tone = "muted") {
+                if (!status) {
+                    return;
+                }
+                status.textContent = message;
+                status.dataset.tone = tone;
+            }
+
+            function ensureMap() {
+                if (!canvas || !window.L) {
+                    setStatus("Nao foi possivel carregar o mapa nesta tela.", "error");
+                    return null;
+                }
+
+                if (map) {
+                    return map;
+                }
+
+                map = L.map(canvas, {scrollWheelZoom: false}).setView([-14.235, -51.9253], 4);
+                L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    maxZoom: 19,
+                }).addTo(map);
+                return map;
+            }
+
+            function setRouteButtonLoading(isLoading) {
+                if (!routeButton) {
+                    return;
+                }
+                routeButton.disabled = isLoading || !destination;
+                routeButton.innerHTML = isLoading
+                    ? '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Tracando rota'
+                    : '<i class="bi bi-sign-turn-right"></i><span>Calcular rota</span>';
+            }
+
+            function clearRoute() {
+                if (routeControl && map) {
+                    map.removeControl(routeControl);
+                    routeControl = null;
+                }
+                if (userMarker && map) {
+                    map.removeLayer(userMarker);
+                    userMarker = null;
+                }
+            }
+
+            function formatDistance(meters) {
+                if (!Number.isFinite(meters)) {
+                    return "-";
+                }
+                return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
+            }
+
+            function formatDuration(seconds) {
+                if (!Number.isFinite(seconds)) {
+                    return "-";
+                }
+                const minutes = Math.max(1, Math.round(seconds / 60));
+                if (minutes < 60) {
+                    return `${minutes} min`;
+                }
+                const hours = Math.floor(minutes / 60);
+                const rest = minutes % 60;
+                return rest ? `${hours} h ${rest} min` : `${hours} h`;
+            }
+
+            function traceRoute(origin) {
+                const currentMap = ensureMap();
+                if (!currentMap || !destination || !window.L?.Routing) {
+                    setStatus("Nao foi possivel carregar o calculo de rota nesta tela.", "error");
+                    setRouteButtonLoading(false);
+                    return;
+                }
+
+                clearRoute();
+                userMarker = L.marker(origin)
+                    .addTo(currentMap)
+                    .bindPopup("Sua localizacao");
+
+                routeControl = L.Routing.control({
+                    waypoints: [origin, destination],
+                    addWaypoints: false,
+                    draggableWaypoints: false,
+                    fitSelectedRoutes: true,
+                    routeWhileDragging: false,
+                    show: false,
+                    showAlternatives: false,
+                    lineOptions: {
+                        styles: [{color: "#2664eb", opacity: 0.85, weight: 6}],
+                    },
+                    createMarker: () => null,
+                    router: L.Routing.osrmv1({
+                        serviceUrl: "https://router.project-osrm.org/route/v1",
+                        profile: "driving",
+                    }),
+                }).addTo(currentMap);
+
+                routeControl.on("routesfound", (event) => {
+                    const summary = event.routes[0]?.summary || {};
+                    setStatus(
+                        `Rota tracada: ${formatDistance(summary.totalDistance)} - ${formatDuration(summary.totalTime)}.`,
+                        "success",
+                    );
+                    setRouteButtonLoading(false);
+                });
+
+                routeControl.on("routingerror", () => {
+                    setStatus("Nao foi possivel tracar a rota dentro do app. Use o Maps como alternativa.", "error");
+                    setRouteButtonLoading(false);
+                });
+            }
+
+            async function loadMap(trigger) {
+                const currentMap = ensureMap();
+                if (!currentMap || !trigger) {
+                    return;
+                }
+
+                currentMap.invalidateSize();
+                setStatus("Localizando endereco do servico...", "muted");
+                destination = null;
+                setRouteButtonLoading(false);
+                clearRoute();
+
+                if (marker) {
+                    currentMap.removeLayer(marker);
+                    marker = null;
+                }
+
+                try {
+                    const response = await fetch(trigger.dataset.locationUrl, {
+                        headers: {"Accept": "application/json"},
+                    });
+                    const payload = await response.json();
+                    if (!response.ok || !payload.ok) {
+                        throw new Error(payload.error || "Nao foi possivel localizar o endereco.");
+                    }
+
+                    destination = L.latLng(
+                        payload.localizacao.latitude,
+                        payload.localizacao.longitude,
+                    );
+
+                    marker = L.marker(destination)
+                        .addTo(currentMap)
+                        .bindPopup("Local do servico");
+                    currentMap.setView(destination, 16);
+                    setRouteButtonLoading(false);
+                    setStatus("Endereco localizado. Use Calcular rota para tracar no mapa do sistema.", "success");
+                } catch (error) {
+                    setStatus(error.message, "error");
+                }
+            }
+
+            routeButton?.addEventListener("click", () => {
+                if (!destination) {
+                    return;
+                }
+                if (!navigator.geolocation) {
+                    setStatus("Este navegador nao permite usar a localizacao atual.", "error");
+                    return;
+                }
+
+                setRouteButtonLoading(true);
+                setStatus("Aguardando permissao de localizacao...", "muted");
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        traceRoute(L.latLng(position.coords.latitude, position.coords.longitude));
+                    },
+                    () => {
+                        setStatus("Nao foi possivel acessar sua localizacao.", "error");
+                        setRouteButtonLoading(false);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 12000,
+                        maximumAge: 60000,
+                    },
+                );
+            });
+
+            document.addEventListener("click", (event) => {
+                const trigger = event.target.closest("[data-os-map-trigger]");
+                if (!trigger) {
+                    return;
+                }
+
+                activeTrigger = trigger;
+                title.textContent = trigger.dataset.title || "Local do servico";
+                address.textContent = trigger.dataset.address || "Endereco nao informado";
+                viewMaps.href = trigger.dataset.mapsUrl || "#";
+                routeMaps.href = trigger.dataset.routeUrl || "#";
+                destination = null;
+                setRouteButtonLoading(false);
+                setStatus("Localizando endereco do servico...", "muted");
+                modal.show();
+            });
+
+            modalElement.addEventListener("shown.bs.modal", () => {
+                loadMap(activeTrigger);
+            });
         })();
     </script>
 {% endblock %}

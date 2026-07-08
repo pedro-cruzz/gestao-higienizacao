@@ -355,6 +355,7 @@
                                     class="approval-option-card approval-option-card-featured"
                                 >
                                     {% csrf_token %}
+                                    <input type="hidden" name="criar_ordem_servico" value="1">
                                     <i class="bi bi-person-check"></i>
                                     <strong>Aprovar com cliente vinculado</strong>
                                     <span>{{ orcamento.cliente.name }} ja esta ligado a este orcamento.</span>
@@ -371,6 +372,7 @@
                                 class="approval-option-card"
                             >
                                 {% csrf_token %}
+                                <input type="hidden" name="criar_ordem_servico" value="1">
                                 <input type="hidden" name="voltar_para_aprovacao" value="1">
                                 <i class="bi bi-link-45deg"></i>
                                 <strong>Vincular cliente existente</strong>
@@ -398,6 +400,7 @@
                                 class="approval-option-card"
                             >
                                 {% csrf_token %}
+                                <input type="hidden" name="criar_ordem_servico" value="1">
                                 <input type="hidden" name="voltar_para_aprovacao" value="1">
                                 <i class="bi bi-person-plus"></i>
                                 <strong>Criar cliente deste orcamento</strong>
@@ -446,6 +449,7 @@
             <form
                 method="post"
                 action="{% url 'gerar_orcamento_pdf' orcamento.pk %}"
+                enctype="multipart/form-data"
                 class="modal-content hf-pdf-modal-content"
             >
                 {% csrf_token %}
@@ -475,6 +479,14 @@
                             <input id="pdf_accent_color" name="pdf_accent_color" type="color" value="#2577B5">
                         </label>
 
+                        <label class="pdf-customization-field pdf-customization-field-wide" for="pdf_logo">
+                            <span>Logo da empresa</span>
+                            <input id="pdf_logo" name="pdf_logo" type="file" accept="image/png,image/jpeg,image/webp">
+                            {% if orcamento.pdf_logo %}
+                                <small>Uma logo ja esta salva para este orcamento. Envie outra imagem para substituir.</small>
+                            {% endif %}
+                        </label>
+
                         <label class="pdf-customization-field pdf-customization-field-wide" for="pdf_phrase">
                             <span>Frase para o cliente</span>
                             <textarea
@@ -483,7 +495,7 @@
                                 rows="3"
                                 maxlength="180"
                                 placeholder="Ex.: Obrigado pela preferencia. Sera um prazer cuidar do seu ambiente."
-                            >{{ orcamento.descricao|default:"" }}</textarea>
+                            >{{ orcamento.pdf_frase_cliente|default:"" }}</textarea>
                         </label>
 
                     </div>

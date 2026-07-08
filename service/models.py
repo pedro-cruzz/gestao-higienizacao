@@ -2,21 +2,52 @@ from django.conf import settings
 from django.db import models
 
 
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="hf_profile",
+    )
+    foto = models.ImageField(upload_to="perfis/", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Perfil de {self.user.get_username()}"
+
+
 class CategoriaCatalogo(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="categorias_catalogo",
+    )
+    name = models.CharField(max_length=100)
     descricao = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(fields=["owner", "name"], name="unique_categoria_por_owner"),
+        ]
 
     def __str__(self):
         return self.name
 
 
 class Service_catalog(models.Model):
-    name = models.CharField(max_length=100, unique=True, null=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="produtos_catalogo",
+    )
+    name = models.CharField(max_length=100, null=False)
     tempo = models.CharField(max_length=100, null=True)
     tipo = models.CharField(max_length=100, null=True)
     categoria = models.ForeignKey(
@@ -37,6 +68,11 @@ class Service_catalog(models.Model):
     tecido = models.CharField(max_length=100, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["owner", "name"], name="unique_catalogo_por_owner"),
+        ]
 
     def __str__(self):
         return self.name
@@ -62,6 +98,13 @@ class Lead(models.Model):
         OUTRO = "outro", "Outro"
 
     id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="leads",
+    )
     name = models.CharField(max_length=100, null=False)
     email = models.EmailField(null=True, blank=True)
     telefone = models.CharField(max_length=20, null=True, blank=True)
@@ -83,7 +126,7 @@ class Lead(models.Model):
         choices=Origem.choices,
         default=Origem.MANUAL,
     )
-    cliente = models.OneToOneField(
+    cliente = models.ForeignKey(
         "Cliente",
         on_delete=models.SET_NULL,
         null=True,
@@ -102,6 +145,13 @@ class Lead(models.Model):
 
 class Orcamento(models.Model):
     id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orcamentos",
+    )
     name = models.CharField(max_length=100, null=False)
     email = models.EmailField(null=True, blank=True)
     telefone = models.CharField(max_length=20, null=True, blank=True)
@@ -115,8 +165,12 @@ class Orcamento(models.Model):
     uf = models.CharField(max_length=2, null=True, blank=True)
     valor = models.FloatField(null=False)
     descricao = models.TextField(null=True)
+    pdf_frase_cliente = models.TextField(null=True, blank=True)
+    pdf_logo = models.ImageField(upload_to="orcamentos/logos/", null=True, blank=True)
     quantidade = models.IntegerField(null=False)
     itens = models.ManyToManyField(Service_catalog, related_name="orcamento_items")
+    adicionais = models.ManyToManyField("AdicionalOrcamento", blank=True, related_name="orcamentos")
+    multiplicadores = models.ManyToManyField("MultiplicadorOrcamento", blank=True, related_name="orcamentos")
     aprovado = models.BooleanField(default=False)
     cliente = models.ForeignKey(
         "Cliente",
@@ -142,6 +196,54 @@ class Orcamento(models.Model):
         return self.name
 
 
+class AdicionalOrcamento(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="adicionais_orcamento",
+    )
+    name = models.CharField(max_length=100)
+    valor = models.FloatField(default=0)
+    ativo = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(fields=["owner", "name"], name="unique_adicional_orcamento_por_owner"),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class MultiplicadorOrcamento(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="multiplicadores_orcamento",
+    )
+    name = models.CharField(max_length=100)
+    fator = models.FloatField(default=1)
+    ativo = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(fields=["owner", "name"], name="unique_multiplicador_orcamento_por_owner"),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class Cliente(models.Model):
     class Status(models.TextChoices):
         NOVO = "novo", "Novo"
@@ -150,6 +252,13 @@ class Cliente(models.Model):
         CONVERTIDO = "convertido", "Convertido"
 
     id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="clientes",
+    )
     name = models.CharField(max_length=100, null=False)
     email = models.EmailField(null=False)
     telefone = models.CharField(max_length=20, null=True, blank=True)
@@ -174,6 +283,13 @@ class Cliente(models.Model):
 
 
 class Tecnico(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tecnicos",
+    )
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -205,6 +321,13 @@ class OrdemServico(models.Model):
         CANCELADA = "cancelada", "Cancelada"
 
     id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ordens_servico",
+    )
     orcamento = models.OneToOneField(
         Orcamento,
         on_delete=models.SET_NULL,

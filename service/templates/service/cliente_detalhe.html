@@ -1,0 +1,188 @@
+{% extends "service/base.html" %}
+
+{% block title %}{{ cliente.name }} | Clientes | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>{{ cliente.name }}</h1>
+            <p>Perfil do cliente cadastrado desde {{ cliente.created_at|date:"d/m/Y" }}</p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{% url 'clientes' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-arrow-left"></i>
+                <span>Voltar</span>
+            </a>
+            <a href="{% url 'editar_cliente' cliente.pk %}" class="hf-btn hf-btn-primary">
+                <i class="bi bi-pencil-square"></i>
+                <span>Editar</span>
+            </a>
+            <form
+                method="post"
+                action="{% url 'deletar_cliente' cliente.pk %}"
+                class="m-0"
+                data-hf-confirm
+                data-hf-confirm-icon="warning"
+                data-hf-confirm-title="Excluir cliente?"
+                data-hf-confirm-text="Esta acao removera o cliente permanentemente. Orcamentos vinculados serao mantidos sem cliente."
+                data-hf-confirm-button="Excluir"
+            >
+                {% csrf_token %}
+                <button type="submit" class="hf-btn hf-btn-light">
+                    <i class="bi bi-trash"></i>
+                    <span>Excluir</span>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <section class="metric-grid orcamento-metrics" aria-label="Resumo do cliente">
+        <article class="metric-card">
+            <div>
+                <p>Status</p>
+                <strong>{{ cliente.get_status_display }}</strong>
+                <span><i class="bi bi-person-check"></i>Cadastro ativo</span>
+            </div>
+            <span class="metric-icon"><i class="bi bi-person"></i></span>
+        </article>
+
+        <article class="metric-card">
+            <div>
+                <p>Servicos</p>
+                <strong>{{ total_servicos }}</strong>
+                <span><i class="bi bi-list-check"></i>Orcamentos vinculados</span>
+            </div>
+            <span class="metric-icon"><i class="bi bi-clipboard-check"></i></span>
+        </article>
+
+        <article class="metric-card">
+            <div>
+                <p>Total gasto</p>
+                <strong>R$ {{ total_gasto|floatformat:2 }}</strong>
+                <span><i class="bi bi-wallet2"></i>Historico comercial</span>
+            </div>
+            <span class="metric-icon"><i class="bi bi-currency-dollar"></i></span>
+        </article>
+
+        <article class="metric-card">
+            <div>
+                <p>Ticket medio</p>
+                <strong>R$ {{ ticket_medio|floatformat:2 }}</strong>
+                <span><i class="bi bi-graph-up"></i>Media por orcamento</span>
+            </div>
+            <span class="metric-icon"><i class="bi bi-receipt"></i></span>
+        </article>
+    </section>
+
+    <section class="orcamento-detail-grid">
+        <div class="orcamento-main-stack">
+            <article class="dashboard-card orcamento-panel">
+                <header>
+                    <h2>Orcamentos recentes</h2>
+                    <span class="status-pill status-soft-blue">{{ total_servicos }} item(ns)</span>
+                </header>
+                {% if orcamentos %}
+                    <div class="recent-list">
+                        {% for orcamento in orcamentos %}
+                            <a href="{% url 'orcamento_detalhe' orcamento.pk %}" class="recent-row orcamento-item-row text-decoration-none">
+                                <div>
+                                    <strong>{{ orcamento.name }}</strong>
+                                    <span>{{ orcamento.descricao|default:"Sem descricao" }}</span>
+                                </div>
+                                <div class="recent-meta">
+                                    <span>{% if orcamento.aprovado %}Aprovado{% else %}Pendente{% endif %}</span>
+                                    <strong>R$ {{ orcamento.valor|floatformat:2 }}</strong>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-dashboard-state">Nenhum orcamento vinculado a este cliente.</div>
+                {% endif %}
+            </article>
+
+            <article class="dashboard-card orcamento-panel">
+                <header>
+                    <h2>Ordens de servico</h2>
+                    <i class="bi bi-calendar-check metric-icon"></i>
+                </header>
+                {% if ordens %}
+                    <div class="recent-list">
+                        {% for ordem in ordens %}
+                            <a href="{% url 'os_detalhe' ordem.pk %}" class="recent-row orcamento-item-row text-decoration-none">
+                                <div>
+                                    <strong>{{ ordem.titulo }}</strong>
+                                    <span>{{ ordem.tecnico.name|default:"Sem tecnico" }}</span>
+                                </div>
+                                <div class="recent-meta">
+                                    <span>{{ ordem.get_status_display }}</span>
+                                    <strong>{{ ordem.data_agendada|date:"d/m/Y"|default:"Sem data" }}</strong>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-dashboard-state">Nenhuma OS vinculada a este cliente.</div>
+                {% endif %}
+            </article>
+        </div>
+
+        <aside class="orcamento-side-stack">
+            <article class="dashboard-card orcamento-panel">
+                <header>
+                    <h2>Contato</h2>
+                    <i class="bi bi-telephone metric-icon"></i>
+                </header>
+                <div class="orcamento-detail-list">
+                    <div>
+                        <span>Email</span>
+                        <strong>{{ cliente.email|default:"Sem email" }}</strong>
+                    </div>
+                    <div>
+                        <span>Telefone</span>
+                        <strong>{{ cliente.telefone|default:"Sem telefone" }}</strong>
+                    </div>
+                    <div>
+                        <span>Atualizado em</span>
+                        <strong>{{ cliente.updated_at|date:"d/m/Y" }}</strong>
+                    </div>
+                </div>
+            </article>
+
+            <article class="dashboard-card orcamento-panel">
+                <header>
+                    <h2>Endereco</h2>
+                    <i class="bi bi-geo-alt metric-icon"></i>
+                </header>
+                <div class="orcamento-detail-list">
+                    <div>
+                        <span>Logradouro</span>
+                        <strong>{{ cliente.logradouro|default:cliente.endereco|default:"Nao informado" }}</strong>
+                    </div>
+                    <div>
+                        <span>Numero</span>
+                        <strong>{{ cliente.numero|default:"Nao informado" }}</strong>
+                    </div>
+                    <div>
+                        <span>Bairro</span>
+                        <strong>{{ cliente.bairro|default:"Nao informado" }}</strong>
+                    </div>
+                    <div>
+                        <span>Cidade/UF</span>
+                        <strong>
+                            {% if cliente.cidade and cliente.uf %}
+                                {{ cliente.cidade }} - {{ cliente.uf }}
+                            {% else %}
+                                Nao informado
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div>
+                        <span>CEP</span>
+                        <strong>{{ cliente.cep|default:"Nao informado" }}</strong>
+                    </div>
+                </div>
+            </article>
+        </aside>
+    </section>
+{% endblock %}

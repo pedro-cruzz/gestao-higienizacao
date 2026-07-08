@@ -103,46 +103,51 @@
             </section>
 
             <section class="quote-create-card">
-                <h2>Adicionais</h2>
+                <h2>Adicionais e multiplicadores</h2>
                 <div class="quote-addons-list">
-                    <label class="quote-addon-row">
-                        <span>
-                            {{ form.adicional_manchas }}
-                            Manchas dif&iacute;ceis
-                        </span>
-                        <strong>+ R$ 80,00</strong>
-                    </label>
-                    <label class="quote-addon-row">
-                        <span>
-                            {{ form.adicional_urina }}
-                            Urina de animais
-                        </span>
-                        <strong>+ R$ 120,00</strong>
-                    </label>
-                    <label class="quote-addon-row">
-                        <span>
-                            {{ form.adicional_mofo }}
-                            Mofo ou bolor
-                        </span>
-                        <strong>+ R$ 100,00</strong>
-                    </label>
+                    {% for adicional in adicionais_disponiveis %}
+                        <label class="quote-addon-row">
+                            <span>
+                                <input
+                                    type="checkbox"
+                                    name="adicionais"
+                                    value="{{ adicional.pk }}"
+                                    data-addon-value="{{ adicional.valor|stringformat:'f' }}"
+                                    {% if adicional.pk|stringformat:'s' in adicionais_selecionados %}checked{% endif %}
+                                >
+                                {{ adicional.name }}
+                            </span>
+                            <strong>+ R$ {{ adicional.valor|floatformat:2 }}</strong>
+                        </label>
+                    {% empty %}
+                        <div class="empty-dashboard-state">Nenhum adicional cadastrado.</div>
+                    {% endfor %}
                 </div>
-            </section>
-
-            <section class="quote-create-card">
-                <h2>Multiplicadores</h2>
-                <div class="quote-create-grid">
-                    <div class="quote-create-field">
-                        <label for="{{ form.tipo_tecido_visual.id_for_label }}">Tipo de tecido</label>
-                        {{ form.tipo_tecido_visual }}
-                        {{ form.tipo_tecido_visual.errors }}
-                    </div>
-                    <div class="quote-create-field">
-                        <label for="{{ form.tamanho_visual.id_for_label }}">Tamanho</label>
-                        {{ form.tamanho_visual }}
-                        {{ form.tamanho_visual.errors }}
-                    </div>
+                {{ form.adicionais.errors }}
+                <div class="quote-addons-list mt-3">
+                    {% for multiplicador in multiplicadores_disponiveis %}
+                        <label class="quote-addon-row">
+                            <span>
+                                <input
+                                    type="checkbox"
+                                    name="multiplicadores"
+                                    value="{{ multiplicador.pk }}"
+                                    data-multiplier-value="{{ multiplicador.fator|stringformat:'f' }}"
+                                    {% if multiplicador.pk|stringformat:'s' in multiplicadores_selecionados %}checked{% endif %}
+                                >
+                                {{ multiplicador.name }}
+                            </span>
+                            <strong>x{{ multiplicador.fator|floatformat:2 }}</strong>
+                        </label>
+                    {% empty %}
+                        <div class="empty-dashboard-state">Nenhum multiplicador cadastrado.</div>
+                    {% endfor %}
                 </div>
+                {{ form.multiplicadores.errors }}
+                <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light mt-3">
+                    <i class="bi bi-gear"></i>
+                    <span>Gerenciar ajustes</span>
+                </a>
             </section>
 
             <section class="quote-create-card">
@@ -220,6 +225,10 @@
                     <span>Quantidade</span>
                     <strong data-quote-quantity>1x</strong>
                 </div>
+                <div class="quote-summary-row" data-quote-multiplier-row hidden>
+                    <span>Multiplicadores</span>
+                    <strong data-quote-multiplier-total>x1,00</strong>
+                </div>
                 <div class="quote-summary-total">
                     <span>Valor Total</span>
                     <strong data-quote-total>R$ 0,00</strong>
@@ -245,25 +254,19 @@
             const clienteSelect = form.querySelector("[name='cliente']");
             const itensSelect = form.querySelector("[name='itens']");
             const quantidadeInput = form.querySelector("[name='quantidade']");
-            const tecidoSelect = form.querySelector("[name='tipo_tecido_visual']");
-            const tamanhoSelect = form.querySelector("[name='tamanho_visual']");
             const basePreview = form.querySelector("[data-quote-base-value]");
             const baseTotal = form.querySelector("[data-quote-base-total]");
             const addonRow = form.querySelector("[data-quote-addon-row]");
             const addonTotal = form.querySelector("[data-quote-addon-total]");
             const quantityRow = form.querySelector("[data-quote-quantity-row]");
             const quantityValue = form.querySelector("[data-quote-quantity]");
+            const multiplierRow = form.querySelector("[data-quote-multiplier-row]");
+            const multiplierTotal = form.querySelector("[data-quote-multiplier-total]");
             const totalValue = form.querySelector("[data-quote-total]");
             const uploadInput = form.querySelector(".quote-upload-zone input[type='file']");
             const uploadLabel = form.querySelector(".quote-upload-zone strong");
-            const addonValues = {
-                adicional_manchas: 80,
-                adicional_urina: 120,
-                adicional_mofo: 100,
-            };
-            const addonInputs = Object.keys(addonValues)
-                .map((name) => form.querySelector(`[name='${name}']`))
-                .filter(Boolean);
+            const addonInputs = Array.from(form.querySelectorAll("[name='adicionais'][data-addon-value]"));
+            const multiplierInputs = Array.from(form.querySelectorAll("[name='multiplicadores'][data-multiplier-value]"));
 
             const fields = {
                 name: form.querySelector("[name='name']"),
@@ -307,27 +310,34 @@
             }
 
             function selectedAddonValue() {
-                return addonInputs.reduce((total, input) => total + (input.checked ? addonValues[input.name] : 0), 0);
+                return addonInputs.reduce((total, input) => {
+                    const value = Number(input.dataset.addonValue || 0);
+                    return total + (input.checked && Number.isFinite(value) ? value : 0);
+                }, 0);
             }
 
-            function multiplierValue(select) {
-                const value = Number(select?.value || 1);
-                return Number.isFinite(value) && value > 0 ? value : 1;
+            function selectedMultiplierValue() {
+                return multiplierInputs.reduce((total, input) => {
+                    const value = Number(input.dataset.multiplierValue || 1);
+                    return total * (input.checked && Number.isFinite(value) && value > 0 ? value : 1);
+                }, 1);
             }
 
             function updateQuoteSummary() {
                 const quantity = Math.max(1, Number(quantidadeInput?.value || 1));
                 const base = selectedBaseValue();
                 const addons = selectedAddonValue();
-                const multiplier = multiplierValue(tecidoSelect) * multiplierValue(tamanhoSelect);
+                const multiplier = selectedMultiplierValue();
                 const total = (base + addons) * quantity * multiplier;
 
                 if (basePreview) basePreview.textContent = formatCurrency(base).replace("R$", "").trim();
                 if (baseTotal) baseTotal.textContent = formatCurrency(base);
                 if (addonTotal) addonTotal.textContent = formatCurrency(addons);
+                if (multiplierTotal) multiplierTotal.textContent = `x${multiplier.toFixed(2).replace(".", ",")}`;
                 if (totalValue) totalValue.textContent = formatCurrency(total);
                 if (quantityValue) quantityValue.textContent = `${quantity}x`;
                 if (addonRow) addonRow.hidden = addons <= 0;
+                if (multiplierRow) multiplierRow.hidden = multiplier === 1;
                 if (quantityRow) quantityRow.hidden = quantity <= 1;
             }
 
@@ -372,9 +382,8 @@
             leadSelect?.addEventListener("change", preencherLead);
             itensSelect?.addEventListener("change", updateQuoteSummary);
             quantidadeInput?.addEventListener("input", updateQuoteSummary);
-            tecidoSelect?.addEventListener("change", updateQuoteSummary);
-            tamanhoSelect?.addEventListener("change", updateQuoteSummary);
             addonInputs.forEach((input) => input.addEventListener("change", updateQuoteSummary));
+            multiplierInputs.forEach((input) => input.addEventListener("change", updateQuoteSummary));
             uploadInput?.addEventListener("change", () => {
                 if (uploadLabel && uploadInput.files.length) {
                     uploadLabel.textContent = `${uploadInput.files.length} arquivo(s) selecionado(s)`;

@@ -2,6 +2,11 @@
 
 {% block title %}OS #{{ ordem.pk }} | HigiFlow{% endblock %}
 
+{% block extra_head %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
+{% endblock %}
+
 {% block content %}
     <section class="page-heading">
         <div>
@@ -17,10 +22,19 @@
                 <i class="bi bi-calendar3"></i>
                 <span>Agenda</span>
             </a>
-            <a href="{% url 'editar_os' ordem.pk %}" class="hf-btn hf-btn-primary">
-                <i class="bi bi-pencil-square"></i>
-                <span>Editar</span>
-            </a>
+            {% if hf_is_admin %}
+                <a href="{% url 'editar_os' ordem.pk %}" class="hf-btn hf-btn-primary">
+                    <i class="bi bi-pencil-square"></i>
+                    <span>Editar</span>
+                </a>
+                <form method="post" action="{% url 'deletar_os' ordem.pk %}" class="d-inline ms-2" data-hf-confirm data-hf-confirm-icon="warning" data-hf-confirm-title="Excluir OS?" data-hf-confirm-text="Esta acao removera a ordem de servico permanentemente." data-hf-confirm-button="Excluir">
+                    {% csrf_token %}
+                    <button type="submit" class="hf-btn hf-btn-outline-danger">
+                        <i class="bi bi-trash"></i>
+                        <span>Excluir</span>
+                    </button>
+                </form>
+            {% endif %}
         </div>
     </section>
 
@@ -92,6 +106,48 @@
                 </div>
             </article>
 
+            <article
+                class="dashboard-card service-map-card orcamento-panel"
+                data-service-map
+                data-location-url="{% url 'buscar_mapa_os' ordem.pk %}"
+                data-maps-url="{{ mapa.maps_url }}"
+                data-route-url="{{ mapa.rota_url }}"
+            >
+                <div class="service-map-header">
+                    <div>
+                        <h2>Mapa e rota</h2>
+                        <p class="muted-copy mb-0">{{ mapa.endereco|default:"Endereco do servico nao informado." }}</p>
+                    </div>
+                    {% if mapa %}
+                        <div class="service-map-actions">
+                            <button type="button" class="btn btn-success" data-use-location disabled>
+                                <i class="bi bi-crosshair"></i>
+                                Usar minha localizacao
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-map-fullscreen>
+                                <i class="bi bi-arrows-fullscreen"></i>
+                                Tela cheia
+                            </button>
+                            <a class="btn btn-outline-primary" href="{{ mapa.maps_url }}" target="_blank" rel="noopener">
+                                <i class="bi bi-map"></i>
+                                Ver no Maps
+                            </a>
+                            <a class="btn btn-outline-secondary" href="{{ mapa.rota_url }}" target="_blank" rel="noopener">
+                                <i class="bi bi-sign-turn-right"></i>
+                                Rota no Maps
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if mapa %}
+                    <div class="service-map-canvas" data-map-canvas></div>
+                    <div class="service-map-status muted-copy" data-map-status>Localizando endereco do servico...</div>
+                {% else %}
+                    <div class="empty-state text-center p-4 mt-3">Cadastre o endereco do servico para visualizar o mapa.</div>
+                {% endif %}
+            </article>
+
             <article class="dashboard-card orcamento-panel">
                 <header>
                     <h2>Concluir ou atualizar</h2>
@@ -133,11 +189,27 @@
                 <div class="orcamento-detail-list">
                     <div>
                         <span>Nome</span>
-                        <strong>{{ ordem.cliente.name|default:ordem.orcamento.name|default:"Sem cliente" }}</strong>
+                        <strong>
+                            {% if ordem.cliente %}
+                                {{ ordem.cliente.name }}
+                            {% elif ordem.orcamento %}
+                                {{ ordem.orcamento.name }}
+                            {% else %}
+                                Sem cliente
+                            {% endif %}
+                        </strong>
                     </div>
                     <div>
                         <span>Contato</span>
-                        <strong>{{ ordem.cliente.telefone|default:ordem.cliente.email|default:ordem.orcamento.telefone|default:ordem.orcamento.email|default:"-" }}</strong>
+                        <strong>
+                            {% if ordem.cliente %}
+                                {{ ordem.cliente.telefone|default:ordem.cliente.email|default:"-" }}
+                            {% elif ordem.orcamento %}
+                                {{ ordem.orcamento.telefone|default:ordem.orcamento.email|default:"-" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </strong>
                     </div>
                 </div>
             </article>
@@ -152,16 +224,215 @@
                         <strong>Orcamento #{{ ordem.orcamento.pk }}</strong>
                         <span>{{ ordem.orcamento.name }} - R$ {{ ordem.orcamento.valor|floatformat:2 }}</span>
                     </div>
-                    <div class="orcamento-action-list mt-3">
-                        <a class="hf-btn hf-btn-light" href="{% url 'orcamento_detalhe' ordem.orcamento.pk %}">
-                            <i class="bi bi-file-earmark-text"></i>
-                            <span>Abrir orcamento</span>
-                        </a>
-                    </div>
+                    {% if hf_is_admin %}
+                        <div class="orcamento-action-list mt-3">
+                            <a class="hf-btn hf-btn-light" href="{% url 'orcamento_detalhe' ordem.orcamento.pk %}">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <span>Abrir orcamento</span>
+                            </a>
+                        </div>
+                    {% endif %}
                 {% else %}
                     <div class="empty-dashboard-state orcamento-compact-empty">OS criada manualmente.</div>
                 {% endif %}
             </article>
         </aside>
     </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script>
+        (() => {
+            const wrapper = document.querySelector("[data-service-map]");
+            if (!wrapper || !window.L) {
+                return;
+            }
+
+            const canvas = wrapper.querySelector("[data-map-canvas]");
+            const status = wrapper.querySelector("[data-map-status]");
+            const locationButton = wrapper.querySelector("[data-use-location]");
+            const fullscreenButton = wrapper.querySelector("[data-map-fullscreen]");
+            if (!canvas) {
+                return;
+            }
+
+            let destination = null;
+            let routeControl = null;
+            let userMarker = null;
+
+            const map = L.map(canvas, {scrollWheelZoom: false}).setView([-14.235, -51.9253], 4);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 19,
+            }).addTo(map);
+
+            function setStatus(message, tone = "muted") {
+                if (!status) {
+                    return;
+                }
+                status.textContent = message;
+                status.dataset.tone = tone;
+            }
+
+            function setButtonLoading(isLoading) {
+                if (!locationButton) {
+                    return;
+                }
+                locationButton.disabled = isLoading || !destination;
+                locationButton.innerHTML = isLoading
+                    ? '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Tracando rota'
+                    : '<i class="bi bi-crosshair"></i> Usar minha localizacao';
+            }
+
+            function syncMapSize() {
+                window.setTimeout(() => map.invalidateSize(), 120);
+            }
+
+            function setFullscreen(isFullscreen) {
+                wrapper.classList.toggle("is-fullscreen", isFullscreen);
+                document.body.classList.toggle("service-map-open", isFullscreen);
+                if (fullscreenButton) {
+                    fullscreenButton.innerHTML = isFullscreen
+                        ? '<i class="bi bi-fullscreen-exit"></i> Fechar tela cheia'
+                        : '<i class="bi bi-arrows-fullscreen"></i> Tela cheia';
+                }
+                syncMapSize();
+            }
+
+            function formatDistance(meters) {
+                if (!Number.isFinite(meters)) {
+                    return "-";
+                }
+                return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
+            }
+
+            function formatDuration(seconds) {
+                if (!Number.isFinite(seconds)) {
+                    return "-";
+                }
+                const minutes = Math.max(1, Math.round(seconds / 60));
+                if (minutes < 60) {
+                    return `${minutes} min`;
+                }
+                const hours = Math.floor(minutes / 60);
+                const rest = minutes % 60;
+                return rest ? `${hours} h ${rest} min` : `${hours} h`;
+            }
+
+            async function loadDestination() {
+                try {
+                    const response = await fetch(wrapper.dataset.locationUrl, {
+                        headers: {"Accept": "application/json"},
+                    });
+                    const payload = await response.json();
+                    if (!response.ok || !payload.ok) {
+                        throw new Error(payload.error || "Nao foi possivel localizar o endereco.");
+                    }
+
+                    destination = L.latLng(
+                        payload.localizacao.latitude,
+                        payload.localizacao.longitude,
+                    );
+
+                    L.marker(destination)
+                        .addTo(map)
+                        .bindPopup("Local do servico");
+                    map.setView(destination, 16);
+
+                    if (locationButton) {
+                        locationButton.disabled = false;
+                    }
+                    setStatus("Endereco localizado. A rota pode ser tracada pela localizacao atual.", "success");
+                } catch (error) {
+                    setStatus(error.message, "error");
+                }
+            }
+
+            function traceRoute(origin) {
+                if (routeControl) {
+                    map.removeControl(routeControl);
+                }
+                if (userMarker) {
+                    map.removeLayer(userMarker);
+                }
+
+                userMarker = L.marker(origin)
+                    .addTo(map)
+                    .bindPopup("Sua localizacao");
+
+                routeControl = L.Routing.control({
+                    waypoints: [origin, destination],
+                    addWaypoints: false,
+                    draggableWaypoints: false,
+                    fitSelectedRoutes: true,
+                    routeWhileDragging: false,
+                    show: false,
+                    showAlternatives: false,
+                    lineOptions: {
+                        styles: [{color: "#2664eb", opacity: 0.85, weight: 6}],
+                    },
+                    createMarker: () => null,
+                    router: L.Routing.osrmv1({
+                        serviceUrl: "https://router.project-osrm.org/route/v1",
+                        profile: "driving",
+                    }),
+                }).addTo(map);
+
+                routeControl.on("routesfound", (event) => {
+                    const summary = event.routes[0]?.summary || {};
+                    setStatus(
+                        `Rota tracada: ${formatDistance(summary.totalDistance)} - ${formatDuration(summary.totalTime)}.`,
+                        "success",
+                    );
+                    setButtonLoading(false);
+                });
+
+                routeControl.on("routingerror", () => {
+                    setStatus("Nao foi possivel tracar a rota dentro do app. Use o Maps como alternativa.", "error");
+                    setButtonLoading(false);
+                });
+            }
+
+            locationButton?.addEventListener("click", () => {
+                if (!destination) {
+                    return;
+                }
+                if (!navigator.geolocation) {
+                    setStatus("Este navegador nao permite usar a localizacao atual.", "error");
+                    return;
+                }
+
+                setButtonLoading(true);
+                setStatus("Aguardando permissao de localizacao...", "muted");
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        traceRoute(L.latLng(position.coords.latitude, position.coords.longitude));
+                    },
+                    () => {
+                        setStatus("Nao foi possivel acessar sua localizacao.", "error");
+                        setButtonLoading(false);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 12000,
+                        maximumAge: 60000,
+                    },
+                );
+            });
+
+            fullscreenButton?.addEventListener("click", () => {
+                setFullscreen(!wrapper.classList.contains("is-fullscreen"));
+            });
+
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape" && wrapper.classList.contains("is-fullscreen")) {
+                    setFullscreen(false);
+                }
+            });
+
+            loadDestination();
+        })();
+    </script>
 {% endblock %}

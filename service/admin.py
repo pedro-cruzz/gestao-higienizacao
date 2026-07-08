@@ -1,12 +1,18 @@
 from django.contrib import admin
 
-from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
+from service.models import CategoriaCatalogo, Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico, UserProfile
 
 
 @admin.register(CategoriaCatalogo)
 class CategoriaCatalogoAdmin(admin.ModelAdmin):
     list_display = ("name", "created_at")
     search_fields = ("name", "descricao")
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "foto", "updated_at")
+    search_fields = ("user__username", "user__first_name", "user__last_name", "user__email")
 
 
 @admin.register(Service_catalog)

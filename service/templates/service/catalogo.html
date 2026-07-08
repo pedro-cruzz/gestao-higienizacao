@@ -79,6 +79,95 @@
         </div>
     </section>
 
+    <section class="orcamentos-panel" aria-label="Categorias do catalogo">
+        <div class="leads-toolbar">
+            <div>
+                <h2 class="mb-1">Categorias</h2>
+                <span>{{ total_categorias }} categoria(s) cadastrada(s)</span>
+            </div>
+            <a href="{% url 'nova_categoria' %}" class="filter-button text-decoration-none">
+                <i class="bi bi-tags"></i>
+                <span>Nova categoria</span>
+            </a>
+        </div>
+
+        <div class="leads-table-wrap">
+            <table class="os-table">
+                <thead>
+                    <tr>
+                        <th>Categoria</th>
+                        <th>Descricao</th>
+                        <th>Itens</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for categoria in categorias %}
+                        <tr>
+                            <td class="quote-number">{{ categoria.name }}</td>
+                            <td>{{ categoria.descricao|default:"Sem descricao" }}</td>
+                            <td>
+                                <span class="status-pill {% if categoria.total %}status-soft-blue{% else %}status-gray{% endif %}">
+                                    {{ categoria.total }} item(ns)
+                                </span>
+                            </td>
+                            <td>
+                                <div class="quote-actions dropdown">
+                                    <button
+                                        type="button"
+                                        class="quote-icon-button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-boundary="viewport"
+                                        aria-expanded="false"
+                                        aria-label="Abrir menu de acoes de {{ categoria.name }}"
+                                    >
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
+                                        <a href="{% url 'editar_categoria' categoria.pk %}" class="dropdown-item hf-actions-menu-item">
+                                            <i class="bi bi-pencil-square"></i>
+                                            <span>Editar categoria</span>
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        {% if categoria.total %}
+                                            <button type="button" class="dropdown-item hf-actions-menu-item hf-actions-menu-danger" disabled>
+                                                <i class="bi bi-lock"></i>
+                                                <span>Categoria em uso</span>
+                                            </button>
+                                        {% else %}
+                                            <form
+                                                method="post"
+                                                action="{% url 'deletar_categoria' categoria.pk %}"
+                                                class="m-0"
+                                                data-hf-confirm
+                                                data-hf-confirm-icon="warning"
+                                                data-hf-confirm-title="Excluir categoria?"
+                                                data-hf-confirm-text="Esta acao removera a categoria permanentemente."
+                                                data-hf-confirm-button="Excluir"
+                                            >
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-item hf-actions-menu-item hf-actions-menu-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                    <span>Excluir categoria</span>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="table-empty">Nenhuma categoria cadastrada ainda.</div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     {% if itens %}
         <section class="catalog-grid" aria-label="Itens do catalogo">
             {% for item in itens %}

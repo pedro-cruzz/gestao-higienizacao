@@ -1,0 +1,56 @@
+{% extends "service/base.html" %}
+
+{% block title %}{% if is_edit %}Editar Adicional{% else %}Novo Adicional{% endif %} | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>{% if is_edit %}Editar adicional{% else %}Novo adicional{% endif %}</h1>
+            <p>Defina um adicional e o valor usado nos orcamentos desta conta.</p>
+        </div>
+        <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">
+            <i class="bi bi-arrow-left"></i>
+            <span>Adicionais</span>
+        </a>
+    </section>
+
+    <section class="catalog-form-layout">
+        <article class="catalog-form-panel">
+            <header>
+                <span class="status-pill status-soft-blue">Preco extra</span>
+                <h2>Dados do adicional</h2>
+            </header>
+
+            <form method="post" class="catalog-form">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <div class="form-field span-2">
+                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                    {{ form.name }}
+                    {{ form.name.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.valor.id_for_label }}">{{ form.valor.label }}</label>
+                    {{ form.valor }}
+                    {{ form.valor.errors }}
+                </div>
+                <div class="form-field os-check-field">
+                    <label for="{{ form.ativo.id_for_label }}">
+                        {{ form.ativo }}
+                        <span>{{ form.ativo.label }}</span>
+                    </label>
+                    {{ form.ativo.errors }}
+                </div>
+
+                <div class="form-actions span-2">
+                    <button type="submit" class="hf-btn hf-btn-primary">
+                        <i class="bi bi-check-lg"></i>
+                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar adicional{% endif %}</span>
+                    </button>
+                    <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">Cancelar</a>
+                </div>
+            </form>
+        </article>
+    </section>
+{% endblock %}

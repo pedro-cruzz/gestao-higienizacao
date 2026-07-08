@@ -1,0 +1,102 @@
+{% extends "service/base.html" %}
+
+{% block title %}Perfil | HigiFlow{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <div>
+            <h1>Meu perfil</h1>
+            <p>Atualize seus dados de acesso e informacoes da conta.</p>
+        </div>
+    </section>
+
+    <section class="catalog-form-layout">
+        <article class="catalog-form-panel">
+            <header>
+                <span class="status-pill status-soft-blue">{% if hf_is_dev %}Dev{% else %}Admin{% endif %}</span>
+                <h2>Dados pessoais</h2>
+            </header>
+
+            <form method="post" class="catalog-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <div class="form-field span-2">
+                    <label for="{{ form.foto.id_for_label }}">{{ form.foto.label }}</label>
+                    <div class="profile-photo-upload">
+                        {% if request.user.hf_profile.foto %}
+                            <img
+                                src="{{ request.user.hf_profile.foto.url }}"
+                                alt="Foto de {{ request.user.get_full_name|default:request.user.username }}"
+                                class="profile-photo-preview"
+                            >
+                        {% else %}
+                            <div class="profile-photo-placeholder">
+                                {{ request.user.get_full_name|default:request.user.username|slice:":2"|upper }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            {{ form.foto }}
+                            {{ form.foto.errors }}
+                            <p class="field-helper">Envie uma imagem valida com ate 3 MB.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {{ form.first_name.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                    {{ form.last_name.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                    {{ form.username }}
+                    {{ form.username.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {{ form.email.errors }}
+                </div>
+
+                <div class="form-field span-2">
+                    <label for="{{ form.senha_atual.id_for_label }}">{{ form.senha_atual.label }}</label>
+                    {{ form.senha_atual }}
+                    {{ form.senha_atual.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.nova_senha.id_for_label }}">{{ form.nova_senha.label }}</label>
+                    {{ form.nova_senha }}
+                    {{ form.nova_senha.errors }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.confirmar_senha.id_for_label }}">{{ form.confirmar_senha.label }}</label>
+                    {{ form.confirmar_senha }}
+                    {{ form.confirmar_senha.errors }}
+                </div>
+
+                <div class="form-field">
+                    <label>Ultimo acesso</label>
+                    <input class="form-control" value="{{ request.user.last_login|date:'d/m/Y H:i'|default:'Sem registro' }}" disabled>
+                </div>
+                <div class="form-field">
+                    <label>Cadastro criado em</label>
+                    <input class="form-control" value="{{ request.user.date_joined|date:'d/m/Y H:i' }}" disabled>
+                </div>
+
+                <div class="form-actions span-2">
+                    <button type="submit" class="hf-btn hf-btn-primary">
+                        <i class="bi bi-check-lg"></i>
+                        <span>Salvar perfil</span>
+                    </button>
+                    <a href="{% url 'inicio' %}" class="hf-btn hf-btn-light">Cancelar</a>
+                </div>
+            </form>
+        </article>
+    </section>
+{% endblock %}

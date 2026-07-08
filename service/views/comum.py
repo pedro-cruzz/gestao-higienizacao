@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from service.access import ADMIN_GROUP, DEV_GROUP, TEAM_GROUP, is_dev_user
 from service.models import Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
+from service.ownership import owned_queryset
 
 
 def _month_boundaries() -> tuple[datetime, datetime]:
@@ -69,8 +70,8 @@ def _lead_status_class(status: str) -> str:
     }.get(status, "status-gray")
 
 
-def _dashboard_leads():
-    leads = Lead.objects.order_by("-created_at", "-id")[:3]
+def _dashboard_leads(user):
+    leads = owned_queryset(Lead.objects, user).order_by("-created_at", "-id")[:3]
     return [
         {
             "name": lead.name,
@@ -83,8 +84,8 @@ def _dashboard_leads():
     ]
 
 
-def _dashboard_ordens():
-    ordens = OrdemServico.objects.select_related("tecnico").order_by("-created_at", "-id")[:3]
+def _dashboard_ordens(user):
+    ordens = owned_queryset(OrdemServico.objects.select_related("tecnico"), user).order_by("-created_at", "-id")[:3]
     dashboard_ordens = []
 
     for ordem in ordens:
@@ -104,7 +105,7 @@ def _dashboard_ordens():
         )
 
     if not dashboard_ordens:
-        orcamentos = Orcamento.objects.prefetch_related("itens").order_by("-created_at", "-id")[:3]
+        orcamentos = owned_queryset(Orcamento.objects.prefetch_related("itens"), user).order_by("-created_at", "-id")[:3]
         for orcamento in orcamentos:
             primeiro_item = next(iter(orcamento.itens.all()), None)
             dashboard_ordens.append(
@@ -123,10 +124,10 @@ def _dashboard_ordens():
 def inicio(request: HttpRequest) -> HttpResponse:
     previous_start, current_start = _month_boundaries()
 
-    leads = Lead.objects.all()
-    orcamentos = Orcamento.objects.all()
+    leads = owned_queryset(Lead.objects.all(), request.user)
+    orcamentos = owned_queryset(Orcamento.objects.all(), request.user)
     orcamentos_aprovados = orcamentos.filter(aprovado=True)
-    servicos_catalogo = Service_catalog.objects.all()
+    servicos_catalogo = owned_queryset(Service_catalog.objects.all(), request.user)
 
     leads_mes_atual = leads.filter(created_at__gte=current_start).count()
     leads_mes_anterior = leads.filter(
@@ -164,8 +165,8 @@ def inicio(request: HttpRequest) -> HttpResponse:
         "servicos_catalogo": servicos_catalogo.count(),
         "faturamento": _sum_orcamentos(orcamentos_aprovados),
         "faturamento_delta": _signed_percent(faturamento_mes_atual, faturamento_mes_anterior),
-        "leads_recentes": _dashboard_leads(),
-        "ordens_recentes": _dashboard_ordens(),
+        "leads_recentes": _dashboard_leads(request.user),
+        "ordens_recentes": _dashboard_ordens(request.user),
     }
     return render(request, "service/inicio.html", context)
 

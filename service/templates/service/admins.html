@@ -55,9 +55,43 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="{% url 'editar_admin' admin.pk %}" class="quote-icon-button" aria-label="Editar {{ admin.username }}">
-                                    <i class="bi bi-pencil-square"></i>
-                                </a>
+                                <div class="quote-actions dropdown">
+                                    <button
+                                        type="button"
+                                        class="quote-icon-button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-boundary="viewport"
+                                        aria-expanded="false"
+                                        aria-label="Abrir menu de acoes de {{ admin.username }}"
+                                    >
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
+                                        <a href="{% url 'editar_admin' admin.pk %}" class="dropdown-item hf-actions-menu-item">
+                                            <i class="bi bi-pencil-square"></i>
+                                            <span>Editar acesso</span>
+                                        </a>
+                                        {% if admin.pk != request.user.pk %}
+                                            <div class="dropdown-divider"></div>
+                                            <form
+                                                method="post"
+                                                action="{% url 'deletar_admin' admin.pk %}"
+                                                class="m-0"
+                                                data-hf-confirm
+                                                data-hf-confirm-icon="warning"
+                                                data-hf-confirm-title="Excluir acesso?"
+                                                data-hf-confirm-text="Esta acao removera o usuario de acesso permanentemente."
+                                                data-hf-confirm-button="Excluir"
+                                            >
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-item hf-actions-menu-item hf-actions-menu-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                    <span>Excluir acesso</span>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     {% empty %}

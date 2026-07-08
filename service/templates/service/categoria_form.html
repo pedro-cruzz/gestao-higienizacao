@@ -1,11 +1,11 @@
 {% extends "service/base.html" %}
 
-{% block title %}Nova Categoria | HigiFlow{% endblock %}
+{% block title %}{% if is_edit %}Editar Categoria{% else %}Nova Categoria{% endif %} | HigiFlow{% endblock %}
 
 {% block content %}
     <section class="page-heading">
         <div>
-            <h1>Nova categoria</h1>
+            <h1>{% if is_edit %}Editar categoria{% else %}Nova categoria{% endif %}</h1>
             <p>Organize o catalogo por tipos de servico, como sofas, tapetes e colchoes.</p>
         </div>
         <div class="dashboard-actions">
@@ -41,7 +41,7 @@
                 <div class="form-actions span-2">
                     <button type="submit" class="hf-btn hf-btn-primary">
                         <i class="bi bi-check-lg"></i>
-                        <span>Salvar categoria</span>
+                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar categoria{% endif %}</span>
                     </button>
                     <a href="{% url 'catalogo' %}" class="hf-btn hf-btn-light">Cancelar</a>
                 </div>
