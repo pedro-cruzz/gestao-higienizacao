@@ -42,12 +42,6 @@
             </div>
 
             <nav class="hf-nav" aria-label="Menu principal">
-                {% if hf_is_dev %}
-                    <a href="{% url 'admins' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'admins' or request.resolver_match.url_name == 'novo_admin' or request.resolver_match.url_name == 'editar_admin' %} active{% endif %}">
-                        <i class="bi bi-person-badge"></i>
-                        <span>Acessos</span>
-                    </a>
-                {% endif %}
                 {% if hf_is_admin %}
                     <a href="{% url 'inicio' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'inicio' %} active{% endif %}">
                         <i class="bi bi-house-door"></i>
