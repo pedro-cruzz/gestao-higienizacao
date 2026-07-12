@@ -197,6 +197,10 @@ class Orcamento(models.Model):
 
 
 class AdicionalOrcamento(models.Model):
+    class TipoValor(models.TextChoices):
+        FIXO = "fixo", "Valor fixo"
+        PERCENTUAL = "percentual", "Percentual"
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -205,6 +209,9 @@ class AdicionalOrcamento(models.Model):
         related_name="adicionais_orcamento",
     )
     name = models.CharField(max_length=100)
+    descricao = models.CharField(max_length=160, blank=True, default="")
+    categoria = models.CharField(max_length=80, blank=True, default="")
+    tipo_valor = models.CharField(max_length=20, choices=TipoValor.choices, default=TipoValor.FIXO, blank=True)
     valor = models.FloatField(default=0)
     ativo = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

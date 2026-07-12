@@ -79,9 +79,15 @@
                             </span>
                             <div class="budget-rule-copy">
                                 <strong>{{ adicional.name }}</strong>
-                                <span>{% if adicional.ativo %}Adicional ativo{% else %}Adicional inativo{% endif %}</span>
+                                <span>{{ adicional.descricao|default:adicional.categoria|default:"Adicional cadastrado" }}</span>
                             </div>
-                            <strong class="budget-rule-value">+ R$ {{ adicional.valor|floatformat:2 }}</strong>
+                            <strong class="budget-rule-value">
+                                {% if adicional.tipo_valor == "percentual" %}
+                                    + {{ adicional.valor|floatformat:2 }}%
+                                {% else %}
+                                    + R$ {{ adicional.valor|floatformat:2 }}
+                                {% endif %}
+                            </strong>
                             <span class="status-pill {% if adicional.ativo %}status-soft-blue{% else %}status-gray{% endif %}">
                                 {% if adicional.ativo %}Ativo{% else %}Inativo{% endif %}
                             </span>

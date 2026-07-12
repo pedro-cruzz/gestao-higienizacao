@@ -188,9 +188,20 @@ def novo_adicional_orcamento(request: HttpRequest) -> HttpResponse:
             messages.success(request, f"Adicional '{adicional.name}' cadastrado com sucesso.")
             return redirect("adicionais_orcamento")
     else:
-        form = AdicionalOrcamentoForm(initial={"ativo": True})
+        form = AdicionalOrcamentoForm(
+            initial={
+                "ativo": True,
+                "tipo_valor": AdicionalOrcamento.TipoValor.FIXO,
+                "valor": 0,
+            }
+        )
 
-    return render(request, "service/adicional_orcamento_form.html", {"form": form, "is_edit": False})
+    context = {
+        **_ajustes_orcamento_context(request),
+        "form": form,
+        "is_edit": False,
+    }
+    return render(request, "service/adicional_orcamento_form.html", context)
 
 
 def editar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
@@ -204,7 +215,13 @@ def editar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     else:
         form = AdicionalOrcamentoForm(instance=adicional)
 
-    return render(request, "service/adicional_orcamento_form.html", {"form": form, "adicional": adicional, "is_edit": True})
+    context = {
+        **_ajustes_orcamento_context(request),
+        "form": form,
+        "adicional": adicional,
+        "is_edit": True,
+    }
+    return render(request, "service/adicional_orcamento_form.html", context)
 
 
 def deletar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
@@ -586,8 +603,18 @@ def _salvar_dados_orcamento(orcamento: Orcamento, form: OrcamentoForm) -> Orcame
     adicionais = list(form.cleaned_data.get("adicionais") or [])
     multiplicadores = list(form.cleaned_data.get("multiplicadores") or [])
     quantidade = form.cleaned_data["quantidade"]
-    valor_adicionais = sum(adicional.valor for adicional in adicionais)
     valor_servicos = sum(item.valor for item in itens)
+    valor_adicionais_fixos = sum(
+        adicional.valor
+        for adicional in adicionais
+        if adicional.tipo_valor != AdicionalOrcamento.TipoValor.PERCENTUAL
+    )
+    percentual_adicionais = sum(
+        adicional.valor
+        for adicional in adicionais
+        if adicional.tipo_valor == AdicionalOrcamento.TipoValor.PERCENTUAL
+    )
+    valor_adicionais = valor_adicionais_fixos + (valor_servicos * percentual_adicionais / 100)
     fator_servicos = 1
     fator_total = 1
     for multiplicador in multiplicadores:
