@@ -221,6 +221,10 @@ class AdicionalOrcamento(models.Model):
 
 
 class MultiplicadorOrcamento(models.Model):
+    class Aplicacao(models.TextChoices):
+        TOTAL = "total", "Total"
+        SERVICOS = "servicos", "Serviços"
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -229,6 +233,8 @@ class MultiplicadorOrcamento(models.Model):
         related_name="multiplicadores_orcamento",
     )
     name = models.CharField(max_length=100)
+    descricao = models.CharField(max_length=160, blank=True, default="")
+    aplica_em = models.CharField(max_length=20, choices=Aplicacao.choices, default=Aplicacao.TOTAL, blank=True)
     fator = models.FloatField(default=1)
     ativo = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

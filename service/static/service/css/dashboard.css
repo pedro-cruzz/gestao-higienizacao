@@ -4587,6 +4587,192 @@ body.service-map-open {
     text-align: center;
 }
 
+.budget-overlay-page {
+    position: relative;
+    min-height: calc(100vh - 128px);
+}
+
+.budget-overlay-background {
+    pointer-events: none;
+}
+
+.budget-modal-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    display: grid;
+    place-items: center;
+    overflow: auto;
+    padding: 24px 16px;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.budget-modal-card {
+    width: min(448px, 100%);
+    border-radius: 14px;
+    padding: 24px;
+    background: var(--hf-card);
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1), 0 8px 10px rgba(0, 0, 0, 0.1);
+}
+
+.budget-modal-header {
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.budget-modal-header h1 {
+    margin: 0;
+    color: var(--hf-text);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 27px;
+}
+
+.budget-modal-close {
+    width: 34px;
+    height: 34px;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 10px;
+    color: var(--hf-muted);
+    text-decoration: none;
+}
+
+.budget-modal-close:hover {
+    color: var(--hf-blue);
+    background: var(--hf-input);
+}
+
+.budget-modal-form {
+    display: grid;
+    gap: 16px;
+}
+
+.budget-modal-field {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+}
+
+.budget-modal-field > span,
+.budget-modal-fieldset legend {
+    margin: 0;
+    color: var(--hf-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.budget-modal-field small {
+    color: var(--hf-muted);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.budget-modal-field .form-control {
+    min-height: 40px;
+    border: 0;
+    border-radius: 10px;
+    padding: 8px 16px;
+    color: var(--hf-text);
+    background: var(--hf-input);
+    box-shadow: none;
+}
+
+.budget-modal-field .form-control:focus {
+    outline: 2px solid rgba(38, 100, 235, 0.24);
+    background: var(--hf-card);
+}
+
+.budget-modal-fieldset {
+    border: 0;
+    padding: 0;
+}
+
+.budget-segmented-control {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.budget-segmented-control label {
+    position: relative;
+    min-width: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.budget-segmented-control input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.budget-segmented-control span {
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--hf-border);
+    border-radius: 10px;
+    padding: 0 12px;
+    color: var(--hf-muted);
+    background: var(--hf-input);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.budget-segmented-control input:checked + span {
+    border-color: var(--hf-blue);
+    color: var(--hf-blue);
+    background: rgba(38, 100, 235, 0.05);
+}
+
+.budget-factor-example {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: -10px 0 0;
+    color: var(--hf-muted);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.budget-factor-example i {
+    color: #2b7fff;
+    font-size: 16px;
+}
+
+.budget-modal-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--hf-text);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.budget-modal-check .form-check-input {
+    margin: 0;
+}
+
+.budget-modal-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding-top: 8px;
+}
+
+.budget-modal-actions .hf-btn {
+    width: 100%;
+}
+
 .settings-user-row {
     min-height: 64px;
     display: grid;
@@ -5410,6 +5596,19 @@ body.service-map-open {
         font-size: 14px;
     }
 
+    .budget-modal-layer {
+        align-items: flex-start;
+        padding: 20px 12px;
+    }
+
+    .budget-modal-card {
+        padding: 20px;
+    }
+
+    .budget-modal-actions {
+        grid-template-columns: 1fr;
+    }
+
     .hf-shell {
         display: block;
         min-height: 100vh;
@@ -6037,6 +6236,22 @@ html[data-theme="dark"] .budget-rule-item {
 html[data-theme="dark"] .budget-rule-icon-factor {
     color: #ddd6fe;
     background: rgba(124, 58, 237, 0.2);
+}
+
+html[data-theme="dark"] .budget-modal-card {
+    border: 1px solid var(--hf-border);
+    background: var(--hf-surface);
+}
+
+html[data-theme="dark"] .budget-modal-close:hover,
+html[data-theme="dark"] .budget-modal-field .form-control:focus {
+    background: var(--hf-soft-blue);
+}
+
+html[data-theme="dark"] .budget-segmented-control input:checked + span {
+    border-color: var(--hf-blue);
+    color: #bfdbfe;
+    background: var(--hf-soft-blue);
 }
 
 html[data-theme="dark"] .agenda-month-day.is-today {

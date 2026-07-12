@@ -380,22 +380,30 @@ class AdicionalOrcamentoForm(forms.ModelForm):
 class MultiplicadorOrcamentoForm(forms.ModelForm):
     class Meta:
         model = MultiplicadorOrcamento
-        fields = ["name", "fator", "ativo"]
+        fields = ["name", "descricao", "aplica_em", "fator", "ativo"]
         labels = {
             "name": "Nome do multiplicador",
+            "descricao": "Descrição",
+            "aplica_em": "Aplica em",
             "fator": "Fator",
             "ativo": "Ativo",
         }
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "Ex.: Tecido delicado"}),
-            "fator": forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "placeholder": "1.15"}),
+            "descricao": forms.TextInput(attrs={"placeholder": "Breve explicação do multiplicador"}),
+            "fator": forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "placeholder": "1.5"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["ativo"].initial = True if not self.instance.pk else self.instance.ativo
+        self.fields["aplica_em"].required = False
+        self.fields["aplica_em"].initial = self.instance.aplica_em or MultiplicadorOrcamento.Aplicacao.TOTAL
         for name, field in self.fields.items():
             field.widget.attrs["class"] = "form-check-input" if name == "ativo" else "form-control"
+
+    def clean_aplica_em(self):
+        return self.cleaned_data.get("aplica_em") or MultiplicadorOrcamento.Aplicacao.TOTAL
 
     def clean_fator(self):
         fator = self.cleaned_data.get("fator")
