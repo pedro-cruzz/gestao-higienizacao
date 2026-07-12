@@ -104,8 +104,10 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
         )
 
     total_orcamentos = todos_orcamentos.count()
-    total_pendentes = todos_orcamentos.filter(aprovado=False).count()
+    total_rascunhos = todos_orcamentos.filter(aprovado=False).count()
+    total_enviados = 0
     total_aprovados = todos_orcamentos.filter(aprovado=True).count()
+    total_recusados = 0
 
     linhas_orcamentos = []
     for orcamento in orcamentos:
@@ -118,8 +120,8 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
             status_label = "Aprovado"
             status_class = "status-soft-blue"
         else:
-            status_label = "Pendente"
-            status_class = "status-yellow"
+            status_label = "Rascunho"
+            status_class = "status-gray"
 
         linhas_orcamentos.append(
             {
@@ -142,9 +144,10 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
         "orcamentos": linhas_orcamentos,
         "total_orcamentos": total_orcamentos,
         "total_filtrado": len(linhas_orcamentos),
-        "total_pendentes": total_pendentes,
+        "total_rascunhos": total_rascunhos,
+        "total_enviados": total_enviados,
         "total_aprovados": total_aprovados,
-        "total_recusados": 0,
+        "total_recusados": total_recusados,
     }
     return render(request, "service/orcamentos.html", context)
 
@@ -163,6 +166,8 @@ def listar_adicionais_orcamento(request: HttpRequest) -> HttpResponse:
         "multiplicadores": multiplicadores,
         "total_adicionais": adicionais.count(),
         "total_multiplicadores": multiplicadores.count(),
+        "total_regras": adicionais.count() + multiplicadores.count(),
+        "total_ativos": adicionais.filter(ativo=True).count() + multiplicadores.filter(ativo=True).count(),
     }
     return render(request, "service/adicionais_orcamento.html", context)
 

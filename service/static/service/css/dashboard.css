@@ -2286,7 +2286,7 @@ body.login-page {
 
 .orcamentos-table {
     width: 100%;
-    min-width: 1060px;
+    min-width: 1120px;
     border-collapse: collapse;
     table-layout: fixed;
 }
@@ -2504,7 +2504,7 @@ body.login-page {
 
 .orcamentos-table th:nth-child(8),
 .orcamentos-table td:nth-child(8) {
-    width: 88px;
+    width: 160px;
 }
 
 .orcamentos-table thead tr {
@@ -4424,6 +4424,169 @@ body.service-map-open {
     line-height: 28px;
 }
 
+.budget-settings-page {
+    width: min(1504px, 100%);
+    margin: 0 auto;
+}
+
+.budget-settings-heading {
+    align-items: center;
+}
+
+.budget-heading-main {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.budget-heading-main .quote-create-back {
+    color: var(--hf-muted);
+}
+
+.budget-settings-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.budget-adjustments-panel {
+    border: 1px solid var(--hf-border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--hf-card);
+}
+
+.budget-adjustments-toolbar {
+    min-height: 73px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--hf-border);
+}
+
+.budget-adjustments-search {
+    width: 448px;
+    max-width: 100%;
+    flex: 0 1 448px;
+}
+
+.budget-adjustments-count {
+    flex: 0 0 auto;
+}
+
+.budget-adjustments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+    gap: 24px;
+    padding: 24px;
+}
+
+.budget-adjustments-section {
+    min-width: 0;
+}
+
+.budget-adjustments-header {
+    min-height: 42px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.budget-adjustments-header h2 {
+    margin: 0;
+    color: var(--hf-text);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+}
+
+.budget-adjustments-header p {
+    margin: 2px 0 0;
+    color: var(--hf-muted);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.budget-rule-list {
+    display: grid;
+    gap: 8px;
+}
+
+.budget-rule-item {
+    min-height: 64px;
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    gap: 12px;
+    border-radius: 10px;
+    padding: 12px;
+    background: rgba(236, 236, 240, 0.3);
+}
+
+.budget-rule-icon {
+    width: 36px;
+    height: 36px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 999px;
+    color: var(--hf-blue);
+    background: rgba(38, 100, 235, 0.1);
+}
+
+.budget-rule-icon-factor {
+    color: #8200db;
+    background: #f3e8ff;
+}
+
+.budget-rule-copy {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.budget-rule-copy strong,
+.budget-rule-copy span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.budget-rule-copy strong {
+    color: var(--hf-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.budget-rule-copy span {
+    color: var(--hf-muted);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.budget-rule-value {
+    color: #155dfc;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    white-space: nowrap;
+}
+
+.budget-rule-empty {
+    min-height: 88px;
+    display: grid;
+    place-items: center;
+    border: 1px dashed var(--hf-border);
+    border-radius: 10px;
+    padding: 18px;
+    color: var(--hf-muted);
+    background: rgba(236, 236, 240, 0.2);
+    text-align: center;
+}
+
 .settings-user-row {
     min-height: 64px;
     display: grid;
@@ -4954,6 +5117,10 @@ body.service-map-open {
         flex-direction: column;
     }
 
+    .budget-heading-main {
+        align-items: flex-start;
+    }
+
     .settings-tabs {
         grid-template-columns: 1fr;
     }
@@ -4968,7 +5135,8 @@ body.service-map-open {
 
     .settings-section-header,
     .settings-config-block > header,
-    .settings-users-header {
+    .settings-users-header,
+    .budget-adjustments-header {
         align-items: stretch;
         flex-direction: column;
     }
@@ -5026,12 +5194,15 @@ body.service-map-open {
     .dashboard-actions,
     .hf-btn,
     .leads-search,
-    .filter-button {
+    .budget-adjustments-search,
+    .filter-button,
+    .budget-adjustments-count {
         width: 100%;
     }
 
     .dashboard-actions,
-    .leads-toolbar {
+    .leads-toolbar,
+    .budget-adjustments-toolbar {
         align-items: stretch;
         flex-direction: column;
     }
@@ -5403,7 +5574,22 @@ body.service-map-open {
         grid-template-columns: minmax(0, 1fr) auto;
     }
 
-    .settings-list-item strong {
+    .budget-rule-item {
+        grid-template-columns: 36px minmax(0, 1fr);
+    }
+
+    .settings-list-item strong,
+    .budget-rule-value {
+        justify-self: start;
+    }
+
+    .budget-rule-icon {
+        grid-row: span 2;
+    }
+
+    .budget-rule-item .status-pill,
+    .budget-rule-item .settings-row-actions {
+        grid-column: 2 / -1;
         justify-self: start;
     }
 
@@ -5435,6 +5621,7 @@ body.service-map-open {
 
     .catalog-toolbar,
     .leads-toolbar,
+    .budget-adjustments-toolbar,
     .leads-filter-form,
     .lead-filter-actions {
         flex-direction: column;
@@ -5443,9 +5630,11 @@ body.service-map-open {
 
     .catalog-search,
     .leads-search,
+    .budget-adjustments-search,
     .orcamentos-search,
     .lead-filter-field,
     .filter-button,
+    .budget-adjustments-count,
     .filter-clear-button {
         width: 100%;
         flex: auto;
@@ -5560,6 +5749,7 @@ html[data-theme="dark"] .section-card,
 html[data-theme="dark"] .product-card,
 html[data-theme="dark"] .lead-form-card,
 html[data-theme="dark"] .orcamentos-panel,
+html[data-theme="dark"] .budget-adjustments-panel,
 html[data-theme="dark"] .clientes-panel,
 html[data-theme="dark"] .clientes-summary-card,
 html[data-theme="dark"] .orcamento-summary-card,
@@ -5576,6 +5766,7 @@ html[data-theme="dark"] .service-map-card,
 html[data-theme="dark"] .check-grid li label,
 html[data-theme="dark"] .table-empty,
 html[data-theme="dark"] .empty-dashboard-state,
+html[data-theme="dark"] .budget-rule-empty,
 html[data-theme="dark"] .modal-content,
 html[data-theme="dark"] .hf-swal-popup {
     color: var(--hf-text);
@@ -5601,6 +5792,7 @@ html[data-theme="dark"] .catalog-form-panel,
 html[data-theme="dark"] .quote-create-card,
 html[data-theme="dark"] .quote-summary-card,
 html[data-theme="dark"] .orcamentos-panel,
+html[data-theme="dark"] .budget-adjustments-panel,
 html[data-theme="dark"] .clientes-panel,
 html[data-theme="dark"] .service-order-card,
 html[data-theme="dark"] .agenda-day,
@@ -5608,6 +5800,7 @@ html[data-theme="dark"] .hf-pdf-modal .modal-header,
 html[data-theme="dark"] .hf-pdf-modal .modal-footer,
 html[data-theme="dark"] .agenda-os-modal .modal-header,
 html[data-theme="dark"] .agenda-os-modal .modal-footer,
+html[data-theme="dark"] .budget-adjustments-toolbar,
 html[data-theme="dark"] .modal-header,
 html[data-theme="dark"] .modal-footer {
     border-color: var(--hf-border);
@@ -5660,6 +5853,8 @@ html[data-theme="dark"] .catalog-card-body p,
 html[data-theme="dark"] .quote-create-card > p,
 html[data-theme="dark"] .lead-form-card-head p,
 html[data-theme="dark"] .agenda-section-header p,
+html[data-theme="dark"] .budget-adjustments-header p,
+html[data-theme="dark"] .budget-rule-copy span,
 html[data-theme="dark"] .agenda-os-modal-list dt,
 html[data-theme="dark"] .hf-swal-text {
     color: var(--hf-muted) !important;
@@ -5674,6 +5869,8 @@ html[data-theme="dark"] .catalog-card-body h2,
 html[data-theme="dark"] .quote-create-card h2,
 html[data-theme="dark"] .quote-summary-card h2,
 html[data-theme="dark"] .lead-form-card-head h2,
+html[data-theme="dark"] .budget-adjustments-header h2,
+html[data-theme="dark"] .budget-rule-copy strong,
 html[data-theme="dark"] .agenda-section-header h2,
 html[data-theme="dark"] .agenda-day-title strong,
 html[data-theme="dark"] .agenda-os-modal .modal-title,
@@ -5686,7 +5883,8 @@ html[data-theme="dark"] .lead-name {
 
 html[data-theme="dark"] .hf-avatar,
 html[data-theme="dark"] .profile-photo-placeholder,
-html[data-theme="dark"] .metric-icon {
+html[data-theme="dark"] .metric-icon,
+html[data-theme="dark"] .budget-rule-icon {
     color: var(--hf-blue);
     background: var(--hf-soft-blue);
 }
@@ -5831,8 +6029,14 @@ html[data-theme="dark"] .catalog-card-media-empty,
 html[data-theme="dark"] .catalog-image-placeholder,
 html[data-theme="dark"] .service-map-canvas,
 html[data-theme="dark"] .agenda-month-day.is-muted,
-html[data-theme="dark"] .service-order-card.is-saving {
+html[data-theme="dark"] .service-order-card.is-saving,
+html[data-theme="dark"] .budget-rule-item {
     background: var(--hf-input);
+}
+
+html[data-theme="dark"] .budget-rule-icon-factor {
+    color: #ddd6fe;
+    background: rgba(124, 58, 237, 0.2);
 }
 
 html[data-theme="dark"] .agenda-month-day.is-today {
