@@ -1,0 +1,174 @@
+<div class="budget-settings-page">
+    <section class="page-heading budget-settings-heading">
+        <div class="budget-heading-main">
+            <a href="{% url 'orcamentos' %}" class="quote-create-back" aria-label="Voltar para orçamentos">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h1>Ajustes do orçamento</h1>
+                <p>Cadastre adicionais e multiplicadores usados nos orçamentos desta conta.</p>
+            </div>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{% url 'novo_multiplicador_orcamento' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-percent"></i>
+                <span>Novo multiplicador</span>
+            </a>
+            <a href="{% url 'novo_adicional_orcamento' %}" class="hf-btn hf-btn-primary">
+                <i class="bi bi-plus-lg"></i>
+                <span>Novo adicional</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="orcamento-summary-grid budget-settings-summary" aria-label="Resumo dos ajustes">
+        <article class="orcamento-summary-card">
+            <span>Total</span>
+            <strong>{{ total_regras }}</strong>
+        </article>
+        <article class="orcamento-summary-card">
+            <span>Adicionais</span>
+            <strong class="summary-blue">{{ total_adicionais }}</strong>
+        </article>
+        <article class="orcamento-summary-card">
+            <span>Multiplicadores</span>
+            <strong class="summary-blue">{{ total_multiplicadores }}</strong>
+        </article>
+        <article class="orcamento-summary-card">
+            <span>Ativos</span>
+            <strong class="summary-neutral">{{ total_ativos }}</strong>
+        </article>
+    </section>
+
+    <section class="budget-adjustments-panel" aria-label="Ajustes de orçamento">
+        <div class="budget-adjustments-toolbar">
+            <form method="get" class="leads-search budget-adjustments-search">
+                <i class="bi bi-search"></i>
+                <input
+                    type="search"
+                    name="q"
+                    value="{{ busca }}"
+                    placeholder="Buscar ajuste..."
+                    aria-label="Buscar ajuste"
+                >
+            </form>
+            <span class="filter-button budget-adjustments-count">
+                <i class="bi bi-receipt"></i>
+                <span>{{ total_adicionais }} adicional(is) / {{ total_multiplicadores }} multiplicador(es)</span>
+            </span>
+        </div>
+
+        <div class="budget-adjustments-grid">
+            <section class="budget-adjustments-section" aria-label="Adicionais">
+                <header class="budget-adjustments-header">
+                    <div>
+                        <h2>Adicionais</h2>
+                        <p>Valores fixos somados ao preço base do serviço.</p>
+                    </div>
+                    <a href="{% url 'novo_adicional_orcamento' %}" class="settings-small-button">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Adicionar</span>
+                    </a>
+                </header>
+
+                <div class="budget-rule-list">
+                    {% for adicional in adicionais %}
+                        <article class="budget-rule-item">
+                            <span class="budget-rule-icon budget-rule-icon-plus">
+                                <i class="bi bi-plus-circle"></i>
+                            </span>
+                            <div class="budget-rule-copy">
+                                <strong>{{ adicional.name }}</strong>
+                                <span>{{ adicional.descricao|default:adicional.categoria|default:"Adicional cadastrado" }}</span>
+                            </div>
+                            <strong class="budget-rule-value">
+                                {% if adicional.tipo_valor == "percentual" %}
+                                    + {{ adicional.valor|floatformat:2 }}%
+                                {% else %}
+                                    + R$ {{ adicional.valor|floatformat:2 }}
+                                {% endif %}
+                            </strong>
+                            <span class="status-pill {% if adicional.ativo %}status-soft-blue{% else %}status-gray{% endif %}">
+                                {% if adicional.ativo %}Ativo{% else %}Inativo{% endif %}
+                            </span>
+                            <div class="settings-row-actions">
+                                <a href="{% url 'editar_adicional_orcamento' adicional.pk %}" class="settings-icon-button" aria-label="Editar {{ adicional.name }}">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <form
+                                    method="post"
+                                    action="{% url 'deletar_adicional_orcamento' adicional.pk %}"
+                                    data-hf-confirm
+                                    data-hf-confirm-icon="warning"
+                                    data-hf-confirm-title="Excluir adicional?"
+                                    data-hf-confirm-text="Esta ação removerá o adicional permanentemente."
+                                    data-hf-confirm-button="Excluir"
+                                >
+                                    {% csrf_token %}
+                                    <button type="submit" class="settings-icon-button danger" aria-label="Excluir {{ adicional.name }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </article>
+                    {% empty %}
+                        <div class="budget-rule-empty">Nenhum adicional cadastrado ainda.</div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="budget-adjustments-section" aria-label="Multiplicadores">
+                <header class="budget-adjustments-header">
+                    <div>
+                        <h2>Multiplicadores</h2>
+                        <p>Fatores aplicados sobre o total do orçamento.</p>
+                    </div>
+                    <a href="{% url 'novo_multiplicador_orcamento' %}" class="settings-small-button">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Adicionar</span>
+                    </a>
+                </header>
+
+                <div class="budget-rule-list">
+                    {% for multiplicador in multiplicadores %}
+                        <article class="budget-rule-item">
+                            <span class="budget-rule-icon budget-rule-icon-factor">
+                                <i class="bi bi-percent"></i>
+                            </span>
+                            <div class="budget-rule-copy">
+                                <strong>{{ multiplicador.name }}</strong>
+                                <span>{{ multiplicador.descricao|default:multiplicador.get_aplica_em_display }}</span>
+                            </div>
+                            <strong class="budget-rule-value">x {{ multiplicador.fator|floatformat:2 }}</strong>
+                            <span class="status-pill status-gray">{{ multiplicador.get_aplica_em_display }}</span>
+                            <span class="status-pill {% if multiplicador.ativo %}status-soft-blue{% else %}status-gray{% endif %}">
+                                {% if multiplicador.ativo %}Ativo{% else %}Inativo{% endif %}
+                            </span>
+                            <div class="settings-row-actions">
+                                <a href="{% url 'editar_multiplicador_orcamento' multiplicador.pk %}" class="settings-icon-button" aria-label="Editar {{ multiplicador.name }}">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <form
+                                    method="post"
+                                    action="{% url 'deletar_multiplicador_orcamento' multiplicador.pk %}"
+                                    data-hf-confirm
+                                    data-hf-confirm-icon="warning"
+                                    data-hf-confirm-title="Excluir multiplicador?"
+                                    data-hf-confirm-text="Esta ação removerá o multiplicador permanentemente."
+                                    data-hf-confirm-button="Excluir"
+                                >
+                                    {% csrf_token %}
+                                    <button type="submit" class="settings-icon-button danger" aria-label="Excluir {{ multiplicador.name }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </article>
+                    {% empty %}
+                        <div class="budget-rule-empty">Nenhum multiplicador cadastrado ainda.</div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </section>
+</div>

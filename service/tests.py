@@ -1449,6 +1449,32 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(orcamento.valor, 400.0)
         self.assertEqual(list(orcamento.adicionais.all()), [adicional])
 
+    def test_cria_orcamento_com_adicional_percentual(self):
+        adicional = AdicionalOrcamento.objects.create(
+            owner=self.user,
+            name="Taxa operacional",
+            tipo_valor=AdicionalOrcamento.TipoValor.PERCENTUAL,
+            valor=10.0,
+            ativo=True,
+        )
+
+        response = self.client.post(
+            reverse("novo_orcamento"),
+            {
+                "name": "Cliente Percentual",
+                "email": "percentual@teste.com",
+                "telefone": "11988887777",
+                "quantidade": 2,
+                "itens": [str(self.item_a.pk)],
+                "adicionais": [str(adicional.pk)],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        orcamento = Orcamento.objects.get(name="Cliente Percentual")
+        self.assertEqual(orcamento.valor, 264.0)
+        self.assertEqual(list(orcamento.adicionais.all()), [adicional])
+
     def test_cria_orcamento_com_multiplicador_cadastrado(self):
         multiplicador = MultiplicadorOrcamento.objects.create(
             owner=self.user,
@@ -1480,6 +1506,9 @@ class ServiceViewsTests(TestCase):
             reverse("novo_adicional_orcamento"),
             {
                 "name": "Deslocamento",
+                "descricao": "Custo de deslocamento",
+                "categoria": "Logistica",
+                "tipo_valor": "fixo",
                 "valor": "35.50",
                 "ativo": "on",
             },
@@ -1488,6 +1517,9 @@ class ServiceViewsTests(TestCase):
         self.assertRedirects(response, reverse("adicionais_orcamento"), fetch_redirect_response=False)
         adicional = AdicionalOrcamento.objects.get(name="Deslocamento")
         self.assertEqual(adicional.owner, self.user)
+        self.assertEqual(adicional.descricao, "Custo de deslocamento")
+        self.assertEqual(adicional.categoria, "Logistica")
+        self.assertEqual(adicional.tipo_valor, AdicionalOrcamento.TipoValor.FIXO)
         self.assertEqual(adicional.valor, 35.5)
 
     def test_cadastra_multiplicador_orcamento(self):

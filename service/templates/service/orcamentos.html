@@ -8,14 +8,16 @@
             <h1>Orçamentos</h1>
             <p>Gerencie todos os orçamentos criados</p>
         </div>
-        <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">
-            <i class="bi bi-sliders"></i>
-            <span>Ajustes</span>
-        </a>
-        <a href="{% url 'novo_orcamento' %}" class="hf-btn hf-btn-primary">
-            <i class="bi bi-plus-lg"></i>
-            <span>Novo Orçamento</span>
-        </a>
+        <div class="dashboard-actions">
+            <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">
+                <i class="bi bi-sliders"></i>
+                <span>Ajustes</span>
+            </a>
+            <a href="{% url 'novo_orcamento' %}" class="hf-btn hf-btn-primary">
+                <i class="bi bi-plus-lg"></i>
+                <span>Novo Orçamento</span>
+            </a>
+        </div>
     </section>
 
     <section class="orcamento-summary-grid" aria-label="Resumo dos orçamentos">
@@ -24,8 +26,12 @@
             <strong>{{ total_orcamentos }}</strong>
         </article>
         <article class="orcamento-summary-card">
-            <span>Pendentes</span>
-            <strong class="summary-blue">{{ total_pendentes }}</strong>
+            <span>Rascunhos</span>
+            <strong class="summary-neutral">{{ total_rascunhos }}</strong>
+        </article>
+        <article class="orcamento-summary-card">
+            <span>Enviados</span>
+            <strong class="summary-blue">{{ total_enviados }}</strong>
         </article>
         <article class="orcamento-summary-card">
             <span>Aprovados</span>
@@ -96,6 +102,29 @@
                             <td>{{ linha.validade|date:"d/m/Y" }}</td>
                             <td>
                                 <div class="quote-actions dropdown">
+                                    <a
+                                        href="{% url 'orcamento_detalhe' linha.obj.pk %}"
+                                        class="quote-icon-button"
+                                        aria-label="Abrir orcamento {{ linha.numero }}"
+                                    >
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if linha.pode_aprovar %}
+                                        <a
+                                            href="{% url 'orcamento_detalhe' linha.obj.pk %}?aprovar=1"
+                                            class="quote-icon-button"
+                                            aria-label="Aprovar orcamento {{ linha.numero }}"
+                                        >
+                                            <i class="bi bi-send"></i>
+                                        </a>
+                                    {% endif %}
+                                    <a
+                                        href="{% url 'gerar_orcamento_pdf' linha.obj.pk %}"
+                                        class="quote-icon-button"
+                                        aria-label="Baixar PDF do orcamento {{ linha.numero }}"
+                                    >
+                                        <i class="bi bi-download"></i>
+                                    </a>
                                     <button
                                         type="button"
                                         class="quote-icon-button"
@@ -107,20 +136,6 @@
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
-                                        <a href="{% url 'orcamento_detalhe' linha.obj.pk %}" class="dropdown-item hf-actions-menu-item">
-                                            <i class="bi bi-eye"></i>
-                                            <span>Abrir orcamento</span>
-                                        </a>
-                                        {% if linha.pode_aprovar %}
-                                            <a href="{% url 'orcamento_detalhe' linha.obj.pk %}?aprovar=1" class="dropdown-item hf-actions-menu-item">
-                                                <i class="bi bi-check2-circle"></i>
-                                                <span>Aprovar orcamento</span>
-                                            </a>
-                                        {% endif %}
-                                        <a href="{% url 'gerar_orcamento_pdf' linha.obj.pk %}" class="dropdown-item hf-actions-menu-item">
-                                            <i class="bi bi-download"></i>
-                                            <span>Baixar PDF</span>
-                                        </a>
                                         <a href="{% url 'editar_orcamento' linha.obj.pk %}" class="dropdown-item hf-actions-menu-item">
                                             <i class="bi bi-pencil-square"></i>
                                             <span>Editar orcamento</span>

@@ -362,43 +362,67 @@ class LeadForm(forms.ModelForm):
 class AdicionalOrcamentoForm(forms.ModelForm):
     class Meta:
         model = AdicionalOrcamento
-        fields = ["name", "valor", "ativo"]
+        fields = ["name", "descricao", "categoria", "tipo_valor", "valor", "ativo"]
         labels = {
             "name": "Nome do adicional",
-            "valor": "Valor",
+            "descricao": "Descrição",
+            "categoria": "Categoria",
+            "tipo_valor": "Tipo de valor",
+            "valor": "Valor (R$)",
             "ativo": "Ativo",
         }
         widgets = {
-            "name": forms.TextInput(attrs={"placeholder": "Ex.: Remocao de manchas dificeis"}),
-            "valor": forms.NumberInput(attrs={"step": "0.01", "placeholder": "0.00"}),
+            "name": forms.TextInput(attrs={"placeholder": "Ex.: Manchas difíceis"}),
+            "descricao": forms.TextInput(attrs={"placeholder": "Breve explicação do adicional"}),
+            "categoria": forms.TextInput(),
+            "valor": forms.NumberInput(attrs={"step": "0.01", "min": "0", "placeholder": "0"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["ativo"].initial = True if not self.instance.pk else self.instance.ativo
+        self.fields["tipo_valor"].required = False
+        self.fields["tipo_valor"].initial = self.instance.tipo_valor or AdicionalOrcamento.TipoValor.FIXO
         for name, field in self.fields.items():
             field.widget.attrs["class"] = "form-check-input" if name == "ativo" else "form-control"
+
+    def clean_tipo_valor(self):
+        return self.cleaned_data.get("tipo_valor") or AdicionalOrcamento.TipoValor.FIXO
+
+    def clean_valor(self):
+        valor = self.cleaned_data.get("valor")
+        if valor is None or valor < 0:
+            raise forms.ValidationError("Informe um valor maior ou igual a zero.")
+        return valor
 
 
 class MultiplicadorOrcamentoForm(forms.ModelForm):
     class Meta:
         model = MultiplicadorOrcamento
-        fields = ["name", "fator", "ativo"]
+        fields = ["name", "descricao", "aplica_em", "fator", "ativo"]
         labels = {
             "name": "Nome do multiplicador",
+            "descricao": "Descrição",
+            "aplica_em": "Aplica em",
             "fator": "Fator",
             "ativo": "Ativo",
         }
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "Ex.: Tecido delicado"}),
-            "fator": forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "placeholder": "1.15"}),
+            "descricao": forms.TextInput(attrs={"placeholder": "Breve explicação do multiplicador"}),
+            "fator": forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "placeholder": "1.5"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["ativo"].initial = True if not self.instance.pk else self.instance.ativo
+        self.fields["aplica_em"].required = False
+        self.fields["aplica_em"].initial = self.instance.aplica_em or MultiplicadorOrcamento.Aplicacao.TOTAL
         for name, field in self.fields.items():
             field.widget.attrs["class"] = "form-check-input" if name == "ativo" else "form-control"
+
+    def clean_aplica_em(self):
+        return self.cleaned_data.get("aplica_em") or MultiplicadorOrcamento.Aplicacao.TOTAL
 
     def clean_fator(self):
         fator = self.cleaned_data.get("fator")
@@ -570,6 +594,8 @@ class OrcamentoForm(forms.Form):
 
     @staticmethod
     def _adicional_label(adicional: AdicionalOrcamento) -> str:
+        if adicional.tipo_valor == AdicionalOrcamento.TipoValor.PERCENTUAL:
+            return f"{adicional.name} | {adicional.valor:.2f}%"
         return f"{adicional.name} | R$ {adicional.valor:.2f}"
 
     @staticmethod

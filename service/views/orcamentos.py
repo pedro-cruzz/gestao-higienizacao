@@ -104,8 +104,10 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
         )
 
     total_orcamentos = todos_orcamentos.count()
-    total_pendentes = todos_orcamentos.filter(aprovado=False).count()
+    total_rascunhos = todos_orcamentos.filter(aprovado=False).count()
+    total_enviados = 0
     total_aprovados = todos_orcamentos.filter(aprovado=True).count()
+    total_recusados = 0
 
     linhas_orcamentos = []
     for orcamento in orcamentos:
@@ -118,8 +120,8 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
             status_label = "Aprovado"
             status_class = "status-soft-blue"
         else:
-            status_label = "Pendente"
-            status_class = "status-yellow"
+            status_label = "Rascunho"
+            status_class = "status-gray"
 
         linhas_orcamentos.append(
             {
@@ -142,28 +144,37 @@ def listar_orcamentos(request: HttpRequest) -> HttpResponse:
         "orcamentos": linhas_orcamentos,
         "total_orcamentos": total_orcamentos,
         "total_filtrado": len(linhas_orcamentos),
-        "total_pendentes": total_pendentes,
+        "total_rascunhos": total_rascunhos,
+        "total_enviados": total_enviados,
         "total_aprovados": total_aprovados,
-        "total_recusados": 0,
+        "total_recusados": total_recusados,
     }
     return render(request, "service/orcamentos.html", context)
 
 
-def listar_adicionais_orcamento(request: HttpRequest) -> HttpResponse:
-    busca = request.GET.get("q", "").strip()
+def _ajustes_orcamento_context(request: HttpRequest, busca: str = "") -> dict:
     adicionais = owned_queryset(AdicionalOrcamento.objects, request.user).order_by("name", "id")
     multiplicadores = owned_queryset(MultiplicadorOrcamento.objects, request.user).order_by("name", "id")
     if busca:
         adicionais = adicionais.filter(name__icontains=busca)
         multiplicadores = multiplicadores.filter(name__icontains=busca)
 
-    context = {
+    return {
         "busca": busca,
         "adicionais": adicionais,
         "multiplicadores": multiplicadores,
         "total_adicionais": adicionais.count(),
         "total_multiplicadores": multiplicadores.count(),
+        "total_adicionais_ativos": adicionais.filter(ativo=True).count(),
+        "total_multiplicadores_ativos": multiplicadores.filter(ativo=True).count(),
+        "total_regras": adicionais.count() + multiplicadores.count(),
+        "total_ativos": adicionais.filter(ativo=True).count() + multiplicadores.filter(ativo=True).count(),
     }
+
+
+def listar_adicionais_orcamento(request: HttpRequest) -> HttpResponse:
+    busca = request.GET.get("q", "").strip()
+    context = _ajustes_orcamento_context(request, busca)
     return render(request, "service/adicionais_orcamento.html", context)
 
 
@@ -177,9 +188,20 @@ def novo_adicional_orcamento(request: HttpRequest) -> HttpResponse:
             messages.success(request, f"Adicional '{adicional.name}' cadastrado com sucesso.")
             return redirect("adicionais_orcamento")
     else:
-        form = AdicionalOrcamentoForm(initial={"ativo": True})
+        form = AdicionalOrcamentoForm(
+            initial={
+                "ativo": True,
+                "tipo_valor": AdicionalOrcamento.TipoValor.FIXO,
+                "valor": 0,
+            }
+        )
 
-    return render(request, "service/adicional_orcamento_form.html", {"form": form, "is_edit": False})
+    context = {
+        **_ajustes_orcamento_context(request),
+        "form": form,
+        "is_edit": False,
+    }
+    return render(request, "service/adicional_orcamento_form.html", context)
 
 
 def editar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
@@ -193,7 +215,13 @@ def editar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     else:
         form = AdicionalOrcamentoForm(instance=adicional)
 
-    return render(request, "service/adicional_orcamento_form.html", {"form": form, "adicional": adicional, "is_edit": True})
+    context = {
+        **_ajustes_orcamento_context(request),
+        "form": form,
+        "adicional": adicional,
+        "is_edit": True,
+    }
+    return render(request, "service/adicional_orcamento_form.html", context)
 
 
 def deletar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
@@ -217,9 +245,14 @@ def novo_multiplicador_orcamento(request: HttpRequest) -> HttpResponse:
             messages.success(request, f"Multiplicador '{multiplicador.name}' cadastrado com sucesso.")
             return redirect("adicionais_orcamento")
     else:
-        form = MultiplicadorOrcamentoForm(initial={"ativo": True, "fator": 1})
+        form = MultiplicadorOrcamentoForm(initial={"ativo": True, "fator": 1.5})
 
-    return render(request, "service/multiplicador_orcamento_form.html", {"form": form, "is_edit": False})
+    context = {
+        **_ajustes_orcamento_context(request),
+        "form": form,
+        "is_edit": False,
+    }
+    return render(request, "service/multiplicador_orcamento_form.html", context)
 
 
 def editar_multiplicador_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
@@ -233,11 +266,13 @@ def editar_multiplicador_orcamento(request: HttpRequest, pk: int) -> HttpRespons
     else:
         form = MultiplicadorOrcamentoForm(instance=multiplicador)
 
-    return render(
-        request,
-        "service/multiplicador_orcamento_form.html",
-        {"form": form, "multiplicador": multiplicador, "is_edit": True},
-    )
+    context = {
+        **_ajustes_orcamento_context(request),
+        "form": form,
+        "multiplicador": multiplicador,
+        "is_edit": True,
+    }
+    return render(request, "service/multiplicador_orcamento_form.html", context)
 
 
 def deletar_multiplicador_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
@@ -568,10 +603,26 @@ def _salvar_dados_orcamento(orcamento: Orcamento, form: OrcamentoForm) -> Orcame
     adicionais = list(form.cleaned_data.get("adicionais") or [])
     multiplicadores = list(form.cleaned_data.get("multiplicadores") or [])
     quantidade = form.cleaned_data["quantidade"]
-    valor_adicionais = sum(adicional.valor for adicional in adicionais)
-    fator_multiplicadores = 1
+    valor_servicos = sum(item.valor for item in itens)
+    valor_adicionais_fixos = sum(
+        adicional.valor
+        for adicional in adicionais
+        if adicional.tipo_valor != AdicionalOrcamento.TipoValor.PERCENTUAL
+    )
+    percentual_adicionais = sum(
+        adicional.valor
+        for adicional in adicionais
+        if adicional.tipo_valor == AdicionalOrcamento.TipoValor.PERCENTUAL
+    )
+    valor_adicionais = valor_adicionais_fixos + (valor_servicos * percentual_adicionais / 100)
+    fator_servicos = 1
+    fator_total = 1
     for multiplicador in multiplicadores:
-        fator_multiplicadores *= float(multiplicador.fator or 1)
+        fator = float(multiplicador.fator or 1)
+        if multiplicador.aplica_em == MultiplicadorOrcamento.Aplicacao.SERVICOS:
+            fator_servicos *= fator
+        else:
+            fator_total *= fator
 
     orcamento.name = form.cleaned_data["name"]
     orcamento.email = form.cleaned_data["email"]
@@ -586,7 +637,7 @@ def _salvar_dados_orcamento(orcamento: Orcamento, form: OrcamentoForm) -> Orcame
     orcamento.uf = form.cleaned_data["uf"] or None
     orcamento.descricao = form.cleaned_data["descricao"] or None
     orcamento.quantidade = quantidade
-    orcamento.valor = (sum(item.valor for item in itens) + valor_adicionais) * quantidade * fator_multiplicadores
+    orcamento.valor = ((valor_servicos * fator_servicos) + valor_adicionais) * quantidade * fator_total
     orcamento.cliente = form.cleaned_data.get("cliente") or orcamento.cliente
     orcamento.lead = form.cleaned_data.get("lead") or orcamento.lead
     orcamento.save()

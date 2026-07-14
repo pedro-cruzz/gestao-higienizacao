@@ -3,54 +3,80 @@
 {% block title %}{% if is_edit %}Editar Multiplicador{% else %}Novo Multiplicador{% endif %} | HigiFlow{% endblock %}
 
 {% block content %}
-    <section class="page-heading">
-        <div>
-            <h1>{% if is_edit %}Editar multiplicador{% else %}Novo multiplicador{% endif %}</h1>
-            <p>Defina um fator que ajusta o valor final dos orcamentos desta conta.</p>
+    <div class="budget-overlay-page">
+        <div class="budget-overlay-background" aria-hidden="true" inert>
+            {% include "service/partials/budget_adjustments_content.html" %}
         </div>
-        <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">
-            <i class="bi bi-arrow-left"></i>
-            <span>Ajustes</span>
-        </a>
-    </section>
 
-    <section class="catalog-form-layout">
-        <article class="catalog-form-panel">
-            <header>
-                <span class="status-pill status-soft-blue">Fator de preco</span>
-                <h2>Dados do multiplicador</h2>
-            </header>
+        <div class="budget-modal-layer" role="presentation">
+            <article class="budget-modal-card" role="dialog" aria-modal="true" aria-labelledby="budget-multiplier-title">
+                <header class="budget-modal-header">
+                    <h1 id="budget-multiplier-title">{% if is_edit %}Editar Multiplicador{% else %}Novo Multiplicador{% endif %}</h1>
+                    <a href="{% url 'adicionais_orcamento' %}" class="budget-modal-close" aria-label="Fechar">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </header>
 
-            <form method="post" class="catalog-form">
-                {% csrf_token %}
-                {{ form.non_field_errors }}
+                <form method="post" class="budget-modal-form">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
 
-                <div class="form-field span-2">
-                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
-                    {{ form.name }}
-                    {{ form.name.errors }}
-                </div>
-                <div class="form-field">
-                    <label for="{{ form.fator.id_for_label }}">{{ form.fator.label }}</label>
-                    {{ form.fator }}
-                    {{ form.fator.errors }}
-                </div>
-                <div class="form-field os-check-field">
-                    <label for="{{ form.ativo.id_for_label }}">
-                        {{ form.ativo }}
-                        <span>{{ form.ativo.label }}</span>
+                    <label class="budget-modal-field" for="{{ form.name.id_for_label }}">
+                        <span>{{ form.name.label }}</span>
+                        {{ form.name }}
+                        {{ form.name.errors }}
                     </label>
-                    {{ form.ativo.errors }}
-                </div>
 
-                <div class="form-actions span-2">
-                    <button type="submit" class="hf-btn hf-btn-primary">
-                        <i class="bi bi-check-lg"></i>
-                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar multiplicador{% endif %}</span>
-                    </button>
-                    <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">Cancelar</a>
-                </div>
-            </form>
-        </article>
-    </section>
+                    <label class="budget-modal-field" for="{{ form.descricao.id_for_label }}">
+                        <span>Descrição <small>(opcional)</small></span>
+                        {{ form.descricao }}
+                        {{ form.descricao.errors }}
+                    </label>
+
+                    <fieldset class="budget-modal-field budget-modal-fieldset">
+                        <legend>{{ form.aplica_em.label }}</legend>
+                        {% with aplica_em=form.aplica_em.value|default:"total" %}
+                            <div class="budget-segmented-control">
+                                <label>
+                                    <input type="radio" name="{{ form.aplica_em.html_name }}" value="total" {% if aplica_em == "total" %}checked{% endif %}>
+                                    <span>Total</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="{{ form.aplica_em.html_name }}" value="servicos" {% if aplica_em == "servicos" %}checked{% endif %}>
+                                    <span>Serviços</span>
+                                </label>
+                            </div>
+                        {% endwith %}
+                        {{ form.aplica_em.errors }}
+                    </fieldset>
+
+                    <label class="budget-modal-field" for="{{ form.fator.id_for_label }}">
+                        <span>{{ form.fator.label }}</span>
+                        {{ form.fator }}
+                        {{ form.fator.errors }}
+                    </label>
+
+                    <p class="budget-factor-example">
+                        <i class="bi bi-arrow-right-short"></i>
+                        <span>Exemplo: R$ 500 → R$ 750</span>
+                    </p>
+
+                    {% if is_edit %}
+                        <label class="budget-modal-check" for="{{ form.ativo.id_for_label }}">
+                            {{ form.ativo }}
+                            <span>{{ form.ativo.label }}</span>
+                        </label>
+                    {% else %}
+                        <input type="hidden" name="{{ form.ativo.html_name }}" value="on">
+                    {% endif %}
+                    {{ form.ativo.errors }}
+
+                    <footer class="budget-modal-actions">
+                        <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">Cancelar</a>
+                        <button type="submit" class="hf-btn hf-btn-primary">Salvar</button>
+                    </footer>
+                </form>
+            </article>
+        </div>
+    </div>
 {% endblock %}
