@@ -282,29 +282,61 @@
                 </div>
 
                 <div class="settings-pane{% if active_settings_tab == 'empresa' %} active{% endif %}" data-settings-pane="empresa" {% if active_settings_tab != 'empresa' %}hidden{% endif %}>
-                    <div class="settings-company-grid">
-                        <article class="settings-company-card">
-                            <i class="bi bi-building"></i>
-                            <div>
-                                <h2>HigiFlow</h2>
-                                <p>Gestao simplificada para empresas de higienizacao.</p>
-                            </div>
-                        </article>
-                        <article class="settings-company-card">
-                            <i class="bi bi-telephone"></i>
-                            <div>
-                                <h2>Contato</h2>
-                                <p>Configure telefone, e-mail e canais de atendimento futuramente.</p>
-                            </div>
-                        </article>
-                        <article class="settings-company-card">
-                            <i class="bi bi-geo-alt"></i>
-                            <div>
-                                <h2>Endereco</h2>
-                                <p>Dados fiscais e endereco comercial serao centralizados aqui.</p>
-                            </div>
-                        </article>
-                    </div>
+                    <form method="post" class="settings-company-form" aria-label="Dados da empresa">
+                        {% csrf_token %}
+                        <input type="hidden" name="settings_section" value="empresa">
+
+                        <h2>Dados da Empresa</h2>
+
+                        <div class="settings-company-fields">
+                            <label class="settings-company-field settings-company-wide">
+                                <span>Razao Social</span>
+                                <input type="text" name="razao_social" value="{{ empresa_config.razao_social }}">
+                            </label>
+
+                            <label class="settings-company-field">
+                                <span>CNPJ</span>
+                                <input type="text" name="cnpj" value="{{ empresa_config.cnpj }}">
+                            </label>
+
+                            <label class="settings-company-field">
+                                <span>Telefone</span>
+                                <input type="text" name="telefone" value="{{ empresa_config.telefone }}">
+                            </label>
+
+                            <label class="settings-company-field settings-company-wide">
+                                <span>E-mail</span>
+                                <input type="email" name="email" value="{{ empresa_config.email }}">
+                            </label>
+
+                            <label class="settings-company-field">
+                                <span>CEP</span>
+                                <input type="text" name="cep" value="{{ empresa_config.cep }}">
+                            </label>
+
+                            <label class="settings-company-field">
+                                <span>Endereco</span>
+                                <input type="text" name="endereco" value="{{ empresa_config.endereco }}">
+                            </label>
+
+                            <label class="settings-company-field">
+                                <span>Bairro</span>
+                                <input type="text" name="bairro" value="{{ empresa_config.bairro }}">
+                            </label>
+
+                            <label class="settings-company-field">
+                                <span>Cidade</span>
+                                <input type="text" name="cidade" value="{{ empresa_config.cidade }}">
+                            </label>
+                        </div>
+
+                        <footer class="settings-company-actions">
+                            <button type="submit" class="hf-btn hf-btn-primary">
+                                <i class="bi bi-floppy"></i>
+                                <span>Salvar Alteracoes</span>
+                            </button>
+                        </footer>
+                    </form>
                 </div>
             </div>
         </section>

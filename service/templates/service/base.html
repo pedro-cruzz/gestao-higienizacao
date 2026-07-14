@@ -31,7 +31,7 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     >
     {% block extra_head %}{% endblock %}
-    <link rel="stylesheet" href="{% static 'service/css/dashboard.css' %}?v=20260609-darkmode-settings-users-1">
+    <link rel="stylesheet" href="{% static 'service/css/dashboard.css' %}?v=20260707-darkmode-settings-users-company-1">
 </head>
 <body class="higiflow-app">
     <div class="hf-shell">
@@ -42,12 +42,6 @@
             </div>
 
             <nav class="hf-nav" aria-label="Menu principal">
-                {% if hf_is_dev %}
-                    <a href="{% url 'admins' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'admins' or request.resolver_match.url_name == 'novo_admin' or request.resolver_match.url_name == 'editar_admin' %} active{% endif %}">
-                        <i class="bi bi-person-badge"></i>
-                        <span>Acessos</span>
-                    </a>
-                {% endif %}
                 {% if hf_is_admin %}
                     <a href="{% url 'inicio' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'inicio' %} active{% endif %}">
                         <i class="bi bi-house-door"></i>
