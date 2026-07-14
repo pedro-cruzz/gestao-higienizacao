@@ -527,6 +527,7 @@ class ServiceViewsTests(TestCase):
                 "email": " NOVO@TESTE.COM ",
                 "telefone": "+55 (11) 93333-4444",
                 "endereco": "Rua Lead, 10",
+                "observacoes": "Preferencia por atendimento pela manha.",
                 "status": Lead.Status.CONTATADO,
                 "origem": Lead.Origem.WHATSAPP,
             },
@@ -535,6 +536,7 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(response.status_code, 302)
         lead = Lead.objects.get(email="novo@teste.com")
         self.assertEqual(lead.telefone, "(11) 93333-4444")
+        self.assertEqual(lead.observacoes, "Preferencia por atendimento pela manha.")
 
     def test_nao_cria_lead_com_telefone_invalido(self):
         response = self.client.post(
@@ -554,6 +556,7 @@ class ServiceViewsTests(TestCase):
 
     def test_lista_leads_exibe_status_e_origem_visuais(self):
         Lead.objects.create(
+            owner=self.user,
             name="Lead Visual",
             email="visual@teste.com",
             telefone="11933334444",

@@ -193,6 +193,7 @@ class ClienteForm(forms.ModelForm):
             "bairro": forms.TextInput(attrs={"placeholder": "Bairro"}),
             "cidade": forms.TextInput(attrs={"placeholder": "Cidade"}),
             "uf": forms.TextInput(attrs={"placeholder": "SP"}),
+            "observacoes": forms.Textarea(attrs={"rows": 4, "placeholder": "Adicione observacoes sobre o lead..."}),
             "endereco": forms.HiddenInput(),
             "status": forms.Select(),
         }
@@ -219,6 +220,7 @@ class ClienteForm(forms.ModelForm):
             "bairro",
             "cidade",
             "uf",
+            "observacoes",
             "endereco",
         ]:
             self.fields[field_name].required = False
@@ -292,12 +294,12 @@ class LeadForm(forms.ModelForm):
             "bairro",
             "cidade",
             "uf",
-            "endereco",
             "observacoes",
+            "endereco",
         ]
         labels = {
             "name": "Nome Completo",
-            "email": "Email",
+            "email": "E-mail",
             "telefone": "Telefone/WhatsApp",
             "status": "Status",
             "origem": "Origem do Lead",
@@ -323,8 +325,8 @@ class LeadForm(forms.ModelForm):
             "bairro": forms.TextInput(attrs={"placeholder": "Bairro"}),
             "cidade": forms.TextInput(attrs={"placeholder": "Cidade"}),
             "uf": forms.TextInput(attrs={"placeholder": "SP"}),
-            "endereco": forms.HiddenInput(),
             "observacoes": forms.Textarea(attrs={"rows": 4, "placeholder": "Adicione observacoes sobre o lead..."}),
+            "endereco": forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -339,8 +341,8 @@ class LeadForm(forms.ModelForm):
             "bairro",
             "cidade",
             "uf",
-            "endereco",
             "observacoes",
+            "endereco",
         ]:
             self.fields[field_name].required = False
 
@@ -511,7 +513,6 @@ class OrcamentoForm(forms.Form):
     )
     endereco = forms.CharField(required=False, widget=forms.HiddenInput())
     descricao = forms.CharField(
-        label="Observacoes",
         required=False,
         widget=forms.Textarea(
             attrs={
