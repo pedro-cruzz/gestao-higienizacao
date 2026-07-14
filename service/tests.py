@@ -439,7 +439,12 @@ class ServiceViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Configura")
-        self.assertContains(response, "Esta pagina sera implementada futuramente")
+        self.assertContains(response, "Tabela de Precos")
+        self.assertContains(response, "Usuarios e Permissoes")
+        self.assertContains(response, "Dados da Empresa")
+        self.assertContains(response, "Usuarios do Sistema")
+        self.assertContains(response, "Perfis de Acesso")
+        self.assertContains(response, "Equipe tecnica")
 
     def test_login_placeholder_e_link_de_saida(self):
         inicio_response = self.client.get(reverse("inicio"))
