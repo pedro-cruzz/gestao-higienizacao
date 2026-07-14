@@ -2217,6 +2217,185 @@ body.login-page {
     background: #eff6ff;
 }
 
+.new-lead-heading {
+    width: min(1163px, 100%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 0 auto 24px;
+}
+
+.new-lead-heading h1 {
+    margin: 0;
+    color: var(--hf-text);
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 36px;
+}
+
+.new-lead-heading p {
+    margin: 4px 0 0;
+    color: var(--hf-muted);
+    line-height: 24px;
+}
+
+.new-lead-back {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 10px;
+    color: var(--hf-text);
+    text-decoration: none;
+}
+
+.new-lead-back:hover {
+    color: var(--hf-blue);
+    background: var(--hf-input);
+}
+
+.new-lead-shell {
+    width: min(1065px, 100%);
+    margin: 0 auto;
+}
+
+.new-lead-card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    border: 1px solid var(--hf-border);
+    border-radius: 14px;
+    padding: 25px;
+    background: #fff;
+}
+
+.new-lead-card h2 {
+    margin: 0;
+    color: var(--hf-text);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 27px;
+}
+
+.new-lead-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.new-lead-field {
+    min-width: 0;
+}
+
+.new-lead-field-wide {
+    grid-column: 1 / -1;
+}
+
+.new-lead-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--hf-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.new-lead-field label span {
+    color: #d4183d;
+}
+
+.new-lead-field .form-control,
+.new-lead-field .form-select {
+    width: 100%;
+    min-height: 40px;
+    border: 0;
+    border-radius: 10px;
+    background-color: var(--hf-input);
+    color: var(--hf-text);
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.new-lead-field textarea.form-control {
+    min-height: 112px;
+    resize: vertical;
+}
+
+.new-lead-address {
+    border-top: 1px solid var(--hf-border);
+    padding-top: 16px;
+}
+
+.new-lead-address summary {
+    cursor: pointer;
+    color: var(--hf-text);
+    font-weight: 500;
+    line-height: 24px;
+}
+
+.new-lead-address > p {
+    margin: 6px 0 16px;
+    color: var(--hf-muted);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.new-lead-cep-row {
+    position: relative;
+}
+
+.new-lead-cep-row .form-control {
+    padding-right: 46px;
+}
+
+.new-lead-cep-row button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 8px;
+    color: var(--hf-blue);
+    background: #fff;
+}
+
+.new-lead-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid var(--hf-border);
+    padding-top: 17px;
+}
+
+.new-lead-cancel,
+.new-lead-submit {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-weight: 500;
+    line-height: 24px;
+    text-decoration: none;
+}
+
+.new-lead-cancel {
+    color: var(--hf-text);
+    background: var(--hf-input);
+}
+
+.new-lead-submit {
+    border: 1px solid var(--hf-blue);
+    color: #fff;
+    background: var(--hf-blue);
+}
+
 .orcamento-metrics {
     margin-bottom: 24px;
 }
@@ -5059,9 +5238,15 @@ body.service-map-open {
     }
 
     .lead-form-actions .btn,
-    .lead-form-actions a {
+    .lead-form-actions a,
+    .new-lead-actions a,
+    .new-lead-actions button {
         width: 100%;
         justify-content: center;
+    }
+
+    .new-lead-grid {
+        grid-template-columns: 1fr;
     }
 
     .metric-grid {
@@ -5345,7 +5530,8 @@ body.service-map-open {
     .dashboard-actions,
     .agenda-actions,
     .form-actions,
-    .lead-form-actions {
+    .lead-form-actions,
+    .new-lead-actions {
         flex-direction: column;
         width: 100%;
     }
@@ -5355,6 +5541,8 @@ body.service-map-open {
     .form-actions .hf-btn,
     .lead-form-actions .btn,
     .lead-form-actions a,
+    .new-lead-actions a,
+    .new-lead-actions button,
     .quote-create-layout .hf-btn {
         width: 100%;
         justify-content: center;
@@ -5365,6 +5553,7 @@ body.service-map-open {
     .catalog-grid,
     .catalog-form-layout,
     .catalog-form,
+    .new-lead-grid,
     .quote-create-layout,
     .quote-create-grid,
     .settings-grid,
@@ -5388,6 +5577,7 @@ body.service-map-open {
     .dashboard-card,
     .catalog-card,
     .catalog-form-panel,
+    .new-lead-card,
     .quote-create-card,
     .quote-summary-card {
         padding: 18px;

@@ -293,13 +293,14 @@ class LeadForm(forms.ModelForm):
             "cidade",
             "uf",
             "endereco",
+            "observacoes",
         ]
         labels = {
-            "name": "Nome do lead",
+            "name": "Nome Completo",
             "email": "Email",
-            "telefone": "Telefone",
+            "telefone": "Telefone/WhatsApp",
             "status": "Status",
-            "origem": "Origem",
+            "origem": "Origem do Lead",
             "cep": "CEP",
             "logradouro": "Logradouro",
             "numero": "Numero",
@@ -307,11 +308,12 @@ class LeadForm(forms.ModelForm):
             "bairro": "Bairro",
             "cidade": "Cidade",
             "uf": "UF",
+            "observacoes": "Observacoes",
         }
         widgets = {
-            "name": forms.TextInput(attrs={"placeholder": "Ex.: Maria Souza"}),
-            "email": forms.EmailInput(attrs={"placeholder": "lead@empresa.com"}),
-            "telefone": forms.TextInput(attrs={"placeholder": "(11) 99999-9999"}),
+            "name": forms.TextInput(attrs={"placeholder": "Digite o nome completo"}),
+            "email": forms.EmailInput(attrs={"placeholder": "email@exemplo.com"}),
+            "telefone": forms.TextInput(attrs={"placeholder": "(00) 00000-0000"}),
             "status": forms.Select(),
             "origem": forms.Select(),
             "cep": forms.TextInput(attrs={"placeholder": "00000-000", "autocomplete": "postal-code"}),
@@ -322,6 +324,7 @@ class LeadForm(forms.ModelForm):
             "cidade": forms.TextInput(attrs={"placeholder": "Cidade"}),
             "uf": forms.TextInput(attrs={"placeholder": "SP"}),
             "endereco": forms.HiddenInput(),
+            "observacoes": forms.Textarea(attrs={"rows": 4, "placeholder": "Adicione observacoes sobre o lead..."}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -329,7 +332,6 @@ class LeadForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name in [
             "email",
-            "telefone",
             "cep",
             "logradouro",
             "numero",
@@ -338,6 +340,7 @@ class LeadForm(forms.ModelForm):
             "cidade",
             "uf",
             "endereco",
+            "observacoes",
         ]:
             self.fields[field_name].required = False
 
