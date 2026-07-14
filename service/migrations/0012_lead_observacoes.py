@@ -3,6 +3,32 @@
 from django.db import migrations, models
 
 
+def _column_exists(schema_editor, table_name, column_name):
+    with schema_editor.connection.cursor() as cursor:
+        columns = schema_editor.connection.introspection.get_table_description(cursor, table_name)
+    return any(column.name == column_name for column in columns)
+
+
+def add_observacoes_if_missing(apps, schema_editor):
+    if _column_exists(schema_editor, "service_lead", "observacoes"):
+        return
+
+    lead_model = apps.get_model("service", "Lead")
+    field = models.TextField(blank=True, null=True)
+    field.set_attributes_from_name("observacoes")
+    schema_editor.add_field(lead_model, field)
+
+
+def remove_observacoes_if_present(apps, schema_editor):
+    if not _column_exists(schema_editor, "service_lead", "observacoes"):
+        return
+
+    lead_model = apps.get_model("service", "Lead")
+    field = models.TextField(blank=True, null=True)
+    field.set_attributes_from_name("observacoes")
+    schema_editor.remove_field(lead_model, field)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,9 +36,16 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name="lead",
-            name="observacoes",
-            field=models.TextField(blank=True, null=True),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(add_observacoes_if_missing, remove_observacoes_if_present),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name="lead",
+                    name="observacoes",
+                    field=models.TextField(blank=True, null=True),
+                ),
+            ],
         ),
     ]
