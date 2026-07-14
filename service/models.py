@@ -116,6 +116,7 @@ class Lead(models.Model):
     bairro = models.CharField(max_length=120, null=True, blank=True)
     cidade = models.CharField(max_length=120, null=True, blank=True)
     uf = models.CharField(max_length=2, null=True, blank=True)
+    observacoes = models.TextField(null=True, blank=True)
     status = models.CharField(
         max_length=20,
         choices=Status.choices,

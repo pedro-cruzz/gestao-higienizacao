@@ -292,14 +292,15 @@ class LeadForm(forms.ModelForm):
             "bairro",
             "cidade",
             "uf",
+            "observacoes",
             "endereco",
         ]
         labels = {
-            "name": "Nome do lead",
-            "email": "Email",
-            "telefone": "Telefone",
+            "name": "Nome Completo",
+            "email": "E-mail",
+            "telefone": "Telefone/WhatsApp",
             "status": "Status",
-            "origem": "Origem",
+            "origem": "Origem do Lead",
             "cep": "CEP",
             "logradouro": "Logradouro",
             "numero": "Numero",
@@ -307,11 +308,12 @@ class LeadForm(forms.ModelForm):
             "bairro": "Bairro",
             "cidade": "Cidade",
             "uf": "UF",
+            "observacoes": "Observações",
         }
         widgets = {
-            "name": forms.TextInput(attrs={"placeholder": "Ex.: Maria Souza"}),
-            "email": forms.EmailInput(attrs={"placeholder": "lead@empresa.com"}),
-            "telefone": forms.TextInput(attrs={"placeholder": "(11) 99999-9999"}),
+            "name": forms.TextInput(attrs={"placeholder": "Digite o nome completo"}),
+            "email": forms.EmailInput(attrs={"placeholder": "email@exemplo.com"}),
+            "telefone": forms.TextInput(attrs={"placeholder": "(00) 00000-0000"}),
             "status": forms.Select(),
             "origem": forms.Select(),
             "cep": forms.TextInput(attrs={"placeholder": "00000-000", "autocomplete": "postal-code"}),
@@ -321,6 +323,7 @@ class LeadForm(forms.ModelForm):
             "bairro": forms.TextInput(attrs={"placeholder": "Bairro"}),
             "cidade": forms.TextInput(attrs={"placeholder": "Cidade"}),
             "uf": forms.TextInput(attrs={"placeholder": "SP"}),
+            "observacoes": forms.Textarea(attrs={"rows": 4, "placeholder": "Adicione observações sobre o lead..."}),
             "endereco": forms.HiddenInput(),
         }
 
@@ -337,6 +340,7 @@ class LeadForm(forms.ModelForm):
             "bairro",
             "cidade",
             "uf",
+            "observacoes",
             "endereco",
         ]:
             self.fields[field_name].required = False

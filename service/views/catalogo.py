@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.db.models import Avg, Count, Q, Sum
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 
 from service.forms import CategoriaCatalogoForm, ClienteForm, LeadForm
@@ -47,6 +48,41 @@ def _lead_origin_icon(origem: str) -> str:
         Lead.Origem.MANUAL: "bi-pencil-square",
         Lead.Origem.OUTRO: "bi-three-dots",
     }.get(origem, "bi-three-dots")
+
+
+def _tempo_relativo_curto(data) -> str:
+    if not data:
+        return ""
+
+    delta = timezone.now() - data
+    segundos = max(int(delta.total_seconds()), 0)
+    minutos = segundos // 60
+    if minutos < 1:
+        return "agora"
+    if minutos < 60:
+        return f"{minutos} min atrás"
+
+    horas = minutos // 60
+    if horas < 24:
+        return f"{horas}h atrás"
+    if horas < 48:
+        return "Ontem"
+
+    dias = horas // 24
+    return f"{dias} dias atrás"
+
+
+def _lead_recente_card(lead: Lead) -> dict:
+    return {
+        "obj": lead,
+        "name": lead.name,
+        "telefone": lead.telefone or lead.email or "Sem contato",
+        "status": lead.get_status_display(),
+        "status_class": _lead_status_class(lead.status),
+        "origem": lead.get_origem_display(),
+        "origem_icon": _lead_origin_icon(lead.origem),
+        "tempo": _tempo_relativo_curto(lead.created_at),
+    }
 
 
 def catalogo(request: HttpRequest) -> HttpResponse:
@@ -446,9 +482,15 @@ def novo_lead(request: HttpRequest) -> HttpResponse:
     else:
         form = LeadForm()
 
+    leads_recentes = [
+        _lead_recente_card(lead)
+        for lead in owned_queryset(Lead.objects, request.user).order_by("-created_at", "-id")[:5]
+    ]
+
     context = {
         "form": form,
-        "leads_recentes": owned_queryset(Lead.objects, request.user).order_by("-created_at", "-id")[:5],
+        "leads_recentes": leads_recentes,
+        "total_leads_recentes": len(leads_recentes),
     }
     return render(request, "service/lead_form.html", context)
 
