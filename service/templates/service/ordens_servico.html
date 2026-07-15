@@ -1,6 +1,6 @@
 {% extends "service/base.html" %}
 
-{% block title %}Ordens de Servico | HigiFlow{% endblock %}
+{% block title %}Ordens de Serviço | HigiFlow{% endblock %}
 
 {% block extra_head %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -10,8 +10,8 @@
 {% block content %}
     <section class="page-heading service-orders-heading">
         <div>
-            <h1>Ordens de Servico</h1>
-            <p>Agende, acompanhe e conclua os servicos aprovados.</p>
+            <h1>Ordens de Serviço</h1>
+            <p>Agende, acompanhe e conclua os serviços aprovados.</p>
         </div>
         <div class="dashboard-actions">
             <a href="{% url 'agenda' %}" class="hf-btn hf-btn-light">
@@ -27,7 +27,7 @@
         </div>
     </section>
 
-    <section class="orcamento-summary-grid" aria-label="Resumo das ordens de servico">
+    <section class="orcamento-summary-grid" aria-label="Resumo das ordens de serviço">
         <article class="orcamento-summary-card">
             <span>Total</span>
             <strong>{{ total_ordens }}</strong>
@@ -41,7 +41,7 @@
             <strong class="summary-neutral" data-kanban-summary="em_andamento">{{ total_em_andamento }}</strong>
         </article>
         <article class="orcamento-summary-card">
-            <span>Concluidas</span>
+            <span>Concluídas</span>
             <strong class="summary-blue" data-kanban-summary="concluida">{{ total_concluidas }}</strong>
         </article>
         <article class="orcamento-summary-card">
@@ -50,7 +50,7 @@
         </article>
     </section>
 
-    <section class="service-orders-board" aria-label="Ordens de servico por status" data-kanban-board data-csrf-token="{{ csrf_token }}">
+    <section class="service-orders-board" aria-label="Ordens de serviço por status" data-kanban-board data-csrf-token="{{ csrf_token }}">
         {% for coluna in colunas_ordens %}
             <article class="service-orders-column" aria-label="{{ coluna.title }}" data-kanban-column data-status="{{ coluna.key }}">
                 <header class="service-orders-column-header">
@@ -104,7 +104,7 @@
         {% endfor %}
     </section>
 
-    <section class="orcamentos-panel" aria-label="Lista de ordens de servico" data-os-inline-panel>
+    <section class="orcamentos-panel" aria-label="Lista de ordens de serviço" data-os-inline-panel>
         <div class="leads-toolbar">
             <form method="get" class="leads-search orcamentos-search">
                 <i class="bi bi-search"></i>
@@ -112,14 +112,14 @@
                     type="search"
                     name="q"
                     value="{{ busca }}"
-                    placeholder="Buscar por cliente, tecnico ou endereco..."
+                    placeholder="Buscar por cliente, técnico ou endereço..."
                     aria-label="Buscar OS"
                 >
             </form>
             {% if hf_is_admin %}
                 <a href="{% url 'tecnicos' %}" class="filter-button text-decoration-none">
                     <i class="bi bi-person-gear"></i>
-                    <span>Equipe tecnica</span>
+                    <span>Equipe técnica</span>
                 </a>
             {% endif %}
         </div>
@@ -131,11 +131,11 @@
                         <th>OS</th>
                         <th>Cliente</th>
                         <th>Agenda</th>
-                        <th>Responsavel</th>
+                        <th>Responsável</th>
                         <th>Status</th>
                         <th>Valor</th>
                         <th>Mapa</th>
-                        <th>Acoes</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -144,7 +144,7 @@
                             <td data-label="OS">
                                 <div class="quote-client">
                                     <strong>#{{ ordem.pk }} - {{ ordem.titulo }}</strong>
-                                    <span>{{ ordem.endereco|default:"Sem endereco" }}</span>
+                                    <span>{{ ordem.endereco|default:"Sem endereço" }}</span>
                                 </div>
                             </td>
                             <td data-label="Cliente">
@@ -156,7 +156,7 @@
                                         data-update-url="{% url 'atualizar_vinculos_os' ordem.pk %}"
                                         aria-label="Vincular cliente da OS #{{ ordem.pk }}"
                                     >
-                                        <option value="">Cliente nao vinculado</option>
+                                        <option value="">Cliente não vinculado</option>
                                         {% for cliente in clientes %}
                                             <option value="{{ cliente.pk }}"{% if ordem.cliente_id == cliente.pk %} selected{% endif %}>
                                                 {{ cliente.name }}
@@ -173,14 +173,14 @@
                                     {{ ordem.data_agendada|date:"d/m/Y" }} {{ ordem.hora_inicio|time:"H:i" }}
                                 </span>
                             </td>
-                            <td data-label="Responsavel">
+                            <td data-label="Responsável">
                                 {% if can_manage_os_links %}
                                     <select
                                         class="os-inline-select"
                                         data-os-link-select
                                         data-field="responsavel"
                                         data-update-url="{% url 'atualizar_vinculos_os' ordem.pk %}"
-                                        aria-label="Vincular equipe responsavel da OS #{{ ordem.pk }}"
+                                        aria-label="Vincular equipe responsável da OS #{{ ordem.pk }}"
                                     >
                                         <option value="admin"{% if ordem.administrador_executa or not ordem.tecnico_id %} selected{% endif %}>
                                             Administrador / dono
@@ -219,14 +219,14 @@
                                             <span>Mapa</span>
                                         </button>
                                     {% else %}
-                                        <span class="os-map-button is-disabled" aria-label="OS sem endereco para mapa">
+                                        <span class="os-map-button is-disabled" aria-label="OS sem endereço para mapa">
                                             <i class="bi bi-map"></i>
                                             <span>Mapa</span>
                                         </span>
                                     {% endif %}
                                 </div>
                             </td>
-                            <td data-label="Acoes">
+                            <td data-label="Ações">
                                 <div class="quote-actions dropdown">
                                     <button
                                         type="button"
@@ -234,7 +234,7 @@
                                         data-bs-toggle="dropdown"
                                         data-bs-boundary="viewport"
                                         aria-expanded="false"
-                                        aria-label="Abrir menu de acoes da OS #{{ ordem.pk }}"
+                                        aria-label="Abrir menu de ações da OS #{{ ordem.pk }}"
                                     >
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
@@ -256,7 +256,7 @@
                                                 data-hf-confirm
                                                 data-hf-confirm-icon="warning"
                                                 data-hf-confirm-title="Excluir OS?"
-                                                data-hf-confirm-text="Esta acao removera a ordem de servico permanentemente."
+                                                data-hf-confirm-text="Esta ação removerá a ordem de serviço permanentemente."
                                                 data-hf-confirm-button="Excluir"
                                             >
                                                 {% csrf_token %}
@@ -299,14 +299,14 @@
                 <div class="modal-header">
                     <div>
                         <span class="agenda-os-modal-kicker">Mapa da OS</span>
-                        <h2 class="modal-title" id="osMapModalTitle">Local do servico</h2>
+                        <h2 class="modal-title" id="osMapModalTitle">Local do serviço</h2>
                         <p class="muted-copy mb-0" data-os-map-address></p>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body">
                     <div class="service-map-canvas os-map-modal-canvas" data-os-map-canvas></div>
-                    <div class="service-map-status muted-copy" data-os-map-status>Localizando endereco do servico...</div>
+                    <div class="service-map-status muted-copy" data-os-map-status>Localizando endereço do serviço...</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="hf-btn hf-btn-light" data-bs-dismiss="modal">Fechar</button>
@@ -449,7 +449,7 @@
                     });
                     const payload = await response.json();
                     if (!response.ok || !payload.ok) {
-                        throw new Error(payload.error || "Nao foi possivel atualizar a OS.");
+                        throw new Error(payload.error || "Não foi possível atualizar a OS.");
                     }
 
                     updateCardStatus(card, payload.status, payload.status_label);
@@ -458,7 +458,7 @@
                     rollbackCard(card, previousList, previousNext, previousStatus);
                     window.hfAlert?.({
                         icon: "error",
-                        title: "Status nao atualizado",
+                        title: "Status não atualizado",
                         text: error.message,
                     });
                 } finally {
@@ -564,7 +564,7 @@
                         });
                         const payload = await response.json();
                         if (!response.ok || !payload.ok) {
-                            throw new Error(payload.error || "Nao foi possivel atualizar a OS.");
+                            throw new Error(payload.error || "Não foi possível atualizar a OS.");
                         }
                         select.dataset.previousValue = select.value;
                         select.classList.add("is-saved");
@@ -573,7 +573,7 @@
                         select.value = previousValue;
                         window.hfAlert?.({
                             icon: "error",
-                            title: "Vinculo nao atualizado",
+                            title: "Vínculo não atualizado",
                             text: error.message,
                         });
                     } finally {
@@ -616,7 +616,7 @@
 
             function ensureMap() {
                 if (!canvas || !window.L) {
-                    setStatus("Nao foi possivel carregar o mapa nesta tela.", "error");
+                    setStatus("Não foi possível carregar o mapa nesta tela.", "error");
                     return null;
                 }
 
@@ -638,7 +638,7 @@
                 }
                 routeButton.disabled = isLoading || !destination;
                 routeButton.innerHTML = isLoading
-                    ? '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Tracando rota'
+                    ? '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Traçando rota'
                     : '<i class="bi bi-sign-turn-right"></i><span>Calcular rota</span>';
             }
 
@@ -676,7 +676,7 @@
             function traceRoute(origin) {
                 const currentMap = ensureMap();
                 if (!currentMap || !destination || !window.L?.Routing) {
-                    setStatus("Nao foi possivel carregar o calculo de rota nesta tela.", "error");
+                    setStatus("Não foi possível carregar o cálculo de rota nesta tela.", "error");
                     setRouteButtonLoading(false);
                     return;
                 }
@@ -684,7 +684,7 @@
                 clearRoute();
                 userMarker = L.marker(origin)
                     .addTo(currentMap)
-                    .bindPopup("Sua localizacao");
+                    .bindPopup("Sua localização");
 
                 routeControl = L.Routing.control({
                     waypoints: [origin, destination],
@@ -707,14 +707,14 @@
                 routeControl.on("routesfound", (event) => {
                     const summary = event.routes[0]?.summary || {};
                     setStatus(
-                        `Rota tracada: ${formatDistance(summary.totalDistance)} - ${formatDuration(summary.totalTime)}.`,
+                        `Rota traçada: ${formatDistance(summary.totalDistance)} - ${formatDuration(summary.totalTime)}.`,
                         "success",
                     );
                     setRouteButtonLoading(false);
                 });
 
                 routeControl.on("routingerror", () => {
-                    setStatus("Nao foi possivel tracar a rota dentro do app. Use o Maps como alternativa.", "error");
+                    setStatus("Não foi possível traçar a rota dentro do app. Use o Maps como alternativa.", "error");
                     setRouteButtonLoading(false);
                 });
             }
@@ -726,7 +726,7 @@
                 }
 
                 currentMap.invalidateSize();
-                setStatus("Localizando endereco do servico...", "muted");
+                setStatus("Localizando endereço do serviço...", "muted");
                 destination = null;
                 setRouteButtonLoading(false);
                 clearRoute();
@@ -742,7 +742,7 @@
                     });
                     const payload = await response.json();
                     if (!response.ok || !payload.ok) {
-                        throw new Error(payload.error || "Nao foi possivel localizar o endereco.");
+                        throw new Error(payload.error || "Não foi possível localizar o endereço.");
                     }
 
                     destination = L.latLng(
@@ -752,10 +752,10 @@
 
                     marker = L.marker(destination)
                         .addTo(currentMap)
-                        .bindPopup("Local do servico");
+                        .bindPopup("Local do serviço");
                     currentMap.setView(destination, 16);
                     setRouteButtonLoading(false);
-                    setStatus("Endereco localizado. Use Calcular rota para tracar no mapa do sistema.", "success");
+                    setStatus("Endereço localizado. Use Calcular rota para traçar no mapa do sistema.", "success");
                 } catch (error) {
                     setStatus(error.message, "error");
                 }
@@ -766,18 +766,18 @@
                     return;
                 }
                 if (!navigator.geolocation) {
-                    setStatus("Este navegador nao permite usar a localizacao atual.", "error");
+                    setStatus("Este navegador não permite usar a localização atual.", "error");
                     return;
                 }
 
                 setRouteButtonLoading(true);
-                setStatus("Aguardando permissao de localizacao...", "muted");
+                setStatus("Aguardando permissão de localização...", "muted");
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         traceRoute(L.latLng(position.coords.latitude, position.coords.longitude));
                     },
                     () => {
-                        setStatus("Nao foi possivel acessar sua localizacao.", "error");
+                        setStatus("Não foi possível acessar sua localização.", "error");
                         setRouteButtonLoading(false);
                     },
                     {
@@ -795,13 +795,13 @@
                 }
 
                 activeTrigger = trigger;
-                title.textContent = trigger.dataset.title || "Local do servico";
-                address.textContent = trigger.dataset.address || "Endereco nao informado";
+                title.textContent = trigger.dataset.title || "Local do serviço";
+                address.textContent = trigger.dataset.address || "Endereço não informado";
                 viewMaps.href = trigger.dataset.mapsUrl || "#";
                 routeMaps.href = trigger.dataset.routeUrl || "#";
                 destination = null;
                 setRouteButtonLoading(false);
-                setStatus("Localizando endereco do servico...", "muted");
+                setStatus("Localizando endereço do serviço...", "muted");
                 modal.show();
             });
 

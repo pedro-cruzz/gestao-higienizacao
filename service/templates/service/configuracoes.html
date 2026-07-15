@@ -1,25 +1,25 @@
 {% extends "service/base.html" %}
 
-{% block title %}Configuracoes | HigiFlow{% endblock %}
+{% block title %}Configurações | HigiFlow{% endblock %}
 
 {% block content %}
     <div class="settings-page">
         <section class="page-heading settings-heading">
             <div>
-                <h1>Configuracoes</h1>
-                <p>Gerencie precos, usuarios e dados da empresa</p>
+                <h1>Configurações</h1>
+                <p>Gerencie preços, usuários e dados da empresa</p>
             </div>
         </section>
 
-        <section class="settings-panel" aria-label="Configuracoes do sistema">
-            <div class="settings-tabs" role="tablist" aria-label="Secoes de configuracao">
+        <section class="settings-panel" aria-label="Configurações do sistema">
+            <div class="settings-tabs" role="tablist" aria-label="Seções de configuração">
                 <button type="button" class="settings-tab{% if active_settings_tab == 'precos' %} active{% endif %}" data-settings-tab="precos" data-settings-url="?tab=precos" role="tab" aria-selected="{% if active_settings_tab == 'precos' %}true{% else %}false{% endif %}">
                     <i class="bi bi-currency-dollar"></i>
-                    <span>Tabela de Precos</span>
+                    <span>Tabela de Preços</span>
                 </button>
                 <button type="button" class="settings-tab{% if active_settings_tab == 'usuarios' %} active{% endif %}" data-settings-tab="usuarios" data-settings-url="?tab=usuarios" role="tab" aria-selected="{% if active_settings_tab == 'usuarios' %}true{% else %}false{% endif %}">
                     <i class="bi bi-people"></i>
-                    <span>Usuarios e Permissoes</span>
+                    <span>Usuários e Permissões</span>
                 </button>
                 <button type="button" class="settings-tab{% if active_settings_tab == 'empresa' %} active{% endif %}" data-settings-tab="empresa" data-settings-url="?tab=empresa" role="tab" aria-selected="{% if active_settings_tab == 'empresa' %}true{% else %}false{% endif %}">
                     <i class="bi bi-building"></i>
@@ -30,10 +30,10 @@
             <div class="settings-content">
                 <div class="settings-pane{% if active_settings_tab == 'precos' %} active{% endif %}" data-settings-pane="precos" {% if active_settings_tab != 'precos' %}hidden{% endif %}>
                     <header class="settings-section-header">
-                        <h2>Servicos Disponiveis</h2>
+                        <h2>Serviços Disponíveis</h2>
                         <a href="{% url 'novo_produto' %}" class="hf-btn hf-btn-primary">
                             <i class="bi bi-plus-lg"></i>
-                            <span>Novo Servico</span>
+                            <span>Novo Serviço</span>
                         </a>
                     </header>
 
@@ -41,17 +41,17 @@
                         <table class="settings-table">
                             <thead>
                                 <tr>
-                                    <th>Servico</th>
+                                    <th>Serviço</th>
                                     <th>Categoria</th>
-                                    <th>Preco Base</th>
-                                    <th>Acoes</th>
+                                    <th>Preço Base</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for servico in servicos_config %}
                                     <tr>
                                         <td>{{ servico.name }}</td>
-                                        <td>{{ servico.categoria_nome|default:"Servico" }}</td>
+                                        <td>{{ servico.categoria_nome|default:"Serviço" }}</td>
                                         <td class="settings-price">R$ {{ servico.valor|floatformat:2 }}</td>
                                         <td>
                                             <div class="settings-row-actions">
@@ -63,8 +63,8 @@
                                                     action="{% url 'deletar_produto' servico.pk %}"
                                                     data-hf-confirm
                                                     data-hf-confirm-icon="warning"
-                                                    data-hf-confirm-title="Excluir servico?"
-                                                    data-hf-confirm-text="Este item sera removido do catalogo e deixara de aparecer em novos orcamentos."
+                                                    data-hf-confirm-title="Excluir serviço?"
+                                                    data-hf-confirm-text="Este item será removido do catálogo e deixará de aparecer em novos orçamentos."
                                                     data-hf-confirm-button="Excluir"
                                                 >
                                                     {% csrf_token %}
@@ -78,7 +78,7 @@
                                 {% empty %}
                                     <tr>
                                         <td colspan="4">
-                                            <div class="table-empty">Nenhum servico cadastrado ainda.</div>
+                                            <div class="table-empty">Nenhum serviço cadastrado ainda.</div>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -170,15 +170,15 @@
 
                 <div class="settings-pane{% if active_settings_tab == 'usuarios' %} active{% endif %}" data-settings-pane="usuarios" {% if active_settings_tab != 'usuarios' %}hidden{% endif %}>
                     <div class="settings-users-shell">
-                        <section class="settings-users-card" aria-label="Usuarios do sistema">
+                        <section class="settings-users-card" aria-label="Usuários do sistema">
                             <header class="settings-users-header">
                                 <div>
-                                    <h2>Usuarios do Sistema</h2>
-                                    <p>Gerencie os usuarios e suas permissoes de acesso</p>
+                                    <h2>Usuários do Sistema</h2>
+                                    <p>Gerencie os usuários e suas permissões de acesso</p>
                                 </div>
                                 <a href="{% if hf_is_dev %}{% url 'novo_admin' %}{% else %}{% url 'novo_tecnico' %}{% endif %}" class="hf-btn hf-btn-primary">
                                     <i class="bi bi-plus-lg"></i>
-                                    <span>Novo Usuario</span>
+                                    <span>Novo Usuário</span>
                                 </a>
                             </header>
 
@@ -190,7 +190,7 @@
                                             <th>E-mail</th>
                                             <th>Perfil</th>
                                             <th>Status</th>
-                                            <th>Acoes</th>
+                                            <th>Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -211,11 +211,11 @@
                                                                 <i class="bi bi-pencil"></i>
                                                             </a>
                                                         {% else %}
-                                                            <button type="button" class="settings-icon-button" disabled aria-label="Edicao indisponivel">
+                                                            <button type="button" class="settings-icon-button" disabled aria-label="Edição indisponível">
                                                                 <i class="bi bi-pencil"></i>
                                                             </button>
                                                         {% endif %}
-                                                        <button type="button" class="settings-icon-button danger" disabled aria-label="Exclusao indisponivel">
+                                                        <button type="button" class="settings-icon-button danger" disabled aria-label="Exclusão indisponível">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                     </div>
@@ -224,7 +224,7 @@
                                         {% empty %}
                                             <tr>
                                                 <td colspan="5">
-                                                    <div class="table-empty">Nenhum usuario encontrado.</div>
+                                                    <div class="table-empty">Nenhum usuário encontrado.</div>
                                                 </td>
                                             </tr>
                                         {% endfor %}
@@ -245,10 +245,10 @@
                             </div>
                         </section>
 
-                        <section class="settings-team-panel" aria-label="Equipe tecnica">
+                        <section class="settings-team-panel" aria-label="Equipe técnica">
                             <header class="settings-users-header">
                                 <div>
-                                    <h2>Equipe tecnica</h2>
+                                    <h2>Equipe técnica</h2>
                                 </div>
                                 <a href="{% url 'novo_tecnico' %}" class="hf-btn hf-btn-primary">
                                     <i class="bi bi-plus-lg"></i>
@@ -290,7 +290,7 @@
 
                         <div class="settings-company-fields">
                             <label class="settings-company-field settings-company-wide">
-                                <span>Razao Social</span>
+                                <span>Razão Social</span>
                                 <input type="text" name="razao_social" value="{{ empresa_config.razao_social }}">
                             </label>
 
@@ -315,7 +315,7 @@
                             </label>
 
                             <label class="settings-company-field">
-                                <span>Endereco</span>
+                                <span>Endereço</span>
                                 <input type="text" name="endereco" value="{{ empresa_config.endereco }}">
                             </label>
 
@@ -333,7 +333,7 @@
                         <footer class="settings-company-actions">
                             <button type="submit" class="hf-btn hf-btn-primary">
                                 <i class="bi bi-floppy"></i>
-                                <span>Salvar Alteracoes</span>
+                                <span>Salvar Alterações</span>
                             </button>
                         </footer>
                     </form>

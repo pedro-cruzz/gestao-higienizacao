@@ -1,10 +1,10 @@
 {% extends "service/base.html" %}
 
-{% block title %}{{ form_title|default:"Criar Orcamento" }} | HigiFlow{% endblock %}
+{% block title %}{{ form_title|default:"Criar Orçamento" }} | HigiFlow{% endblock %}
 
 {% block content %}
     <section class="quote-create-heading">
-        <a href="{% url 'orcamentos' %}" class="quote-create-back" aria-label="Voltar para orcamentos">
+        <a href="{% url 'orcamentos' %}" class="quote-create-back" aria-label="Voltar para orçamentos">
             <i class="bi bi-arrow-left"></i>
         </a>
         <div>
@@ -234,7 +234,7 @@
                     <strong data-quote-total>R$ 0,00</strong>
                 </div>
                 <button type="submit" class="hf-btn hf-btn-primary quote-submit-button">
-                    {{ form_submit_label|default:"Gerar Orcamento" }}
+                    {{ form_submit_label|default:"Gerar Orçamento" }}
                 </button>
                 <small>Validade: 15 dias</small>
             </section>
@@ -362,7 +362,7 @@
                     const response = await fetch(url, {headers: {"Accept": "application/json"}});
                     const data = await response.json();
                     if (!response.ok || !data.ok) {
-                        throw new Error(data.error || "Nao foi possivel carregar os dados do lead.");
+                        throw new Error(data.error || "Não foi possível carregar os dados do lead.");
                     }
 
                     Object.entries(data.lead).forEach(([fieldName, value]) => {
@@ -373,7 +373,7 @@
                 } catch (error) {
                     window.hfAlert?.({
                         icon: "error",
-                        title: "Lead nao encontrado",
+                        title: "Lead não encontrado",
                         text: error.message,
                     });
                 }

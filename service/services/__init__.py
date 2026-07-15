@@ -1,1 +1,1 @@
-"""Servicos e integracoes da aplicacao."""
+"""Serviços e integrações da aplicação."""

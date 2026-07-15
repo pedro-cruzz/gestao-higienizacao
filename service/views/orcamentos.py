@@ -231,7 +231,7 @@ def deletar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     adicional = get_object_or_404(owned_queryset(AdicionalOrcamento.objects, request.user), pk=pk)
     nome = adicional.name
     adicional.delete()
-    messages.success(request, f"Adicional '{nome}' excluido com sucesso.")
+    messages.success(request, f"Adicional '{nome}' excluído com sucesso.")
     return redirect("adicionais_orcamento")
 
 
@@ -282,7 +282,7 @@ def deletar_multiplicador_orcamento(request: HttpRequest, pk: int) -> HttpRespon
     multiplicador = get_object_or_404(owned_queryset(MultiplicadorOrcamento.objects, request.user), pk=pk)
     nome = multiplicador.name
     multiplicador.delete()
-    messages.success(request, f"Multiplicador '{nome}' excluido com sucesso.")
+    messages.success(request, f"Multiplicador '{nome}' excluído com sucesso.")
     return redirect("adicionais_orcamento")
 
 
@@ -290,7 +290,7 @@ def _nome_servico_ordem(orcamento: Orcamento) -> str:
     itens = list(orcamento.itens.all())
     if itens:
         return " + ".join(item.name for item in itens[:2])
-    return orcamento.descricao or "Servico cadastrado"
+    return orcamento.descricao or "Serviço cadastrado"
 
 
 def _criar_ordem_servico_automaticamente(orcamento: Orcamento) -> None:
@@ -507,7 +507,7 @@ def novo_orcamento(request: HttpRequest) -> HttpResponse:
             elif orcamento.lead_id:
                 _marcar_lead_contatado_por_orcamento(orcamento)
 
-            messages.success(request, "Orcamento criado com sucesso.")
+            messages.success(request, "Orçamento criado com sucesso.")
             return redirect("orcamento_detalhe", pk=orcamento.pk)
     else:
         item_inicial = request.GET.get("item")
@@ -524,7 +524,7 @@ def novo_orcamento(request: HttpRequest) -> HttpResponse:
 
 def buscar_cliente_dados(request: HttpRequest, pk: int) -> JsonResponse:
     if request.method != "GET":
-        return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
+        return JsonResponse({"ok": False, "error": "Método não permitido."}, status=405)
 
     cliente = get_object_or_404(owned_queryset(Cliente.objects, request.user), pk=pk)
     return JsonResponse(
@@ -550,7 +550,7 @@ def buscar_cliente_dados(request: HttpRequest, pk: int) -> JsonResponse:
 
 def buscar_lead_dados(request: HttpRequest, pk: int) -> JsonResponse:
     if request.method != "GET":
-        return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
+        return JsonResponse({"ok": False, "error": "Método não permitido."}, status=405)
 
     lead = get_object_or_404(owned_queryset(Lead.objects, request.user), pk=pk)
     return JsonResponse(
@@ -698,7 +698,7 @@ def editar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         if form.is_valid():
             _salvar_dados_orcamento(orcamento, form)
             _aplicar_fluxo_cliente(orcamento, form)
-            messages.success(request, "Orcamento atualizado com sucesso.")
+            messages.success(request, "Orçamento atualizado com sucesso.")
             return redirect("orcamento_detalhe", pk=orcamento.pk)
     else:
         form = OrcamentoForm(initial=_orcamento_initial(orcamento), user=request.user)
@@ -707,9 +707,9 @@ def editar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         "form": form,
         "orcamento": orcamento,
         "orcamentos_recentes": owned_queryset(Orcamento.objects.prefetch_related("itens"), request.user).exclude(pk=orcamento.pk).order_by("-id")[:5],
-        "form_title": "Editar orcamento",
-        "form_intro": "Atualize os dados do cliente, endereco, itens e quantidade deste orcamento.",
-        "form_submit_label": "Salvar alteracoes",
+        "form_title": "Editar orçamento",
+        "form_intro": "Atualize os dados do cliente, endereço, itens e quantidade deste orçamento.",
+        "form_submit_label": "Salvar alterações",
         **_adicionais_context(request, form),
     }
     return render(request, "service/orcamento_form.html", context)
@@ -717,7 +717,7 @@ def editar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
 
 def buscar_endereco_cep(request: HttpRequest, cep: str) -> JsonResponse:
     if request.method != "GET":
-        return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
+        return JsonResponse({"ok": False, "error": "Método não permitido."}, status=405)
 
     try:
         endereco = ViaCepService().buscar_por_cep(cep)
@@ -731,13 +731,13 @@ def buscar_endereco_cep(request: HttpRequest, cep: str) -> JsonResponse:
 
 def buscar_mapa_orcamento(request: HttpRequest, pk: int) -> JsonResponse:
     if request.method != "GET":
-        return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
+        return JsonResponse({"ok": False, "error": "Método não permitido."}, status=405)
 
     orcamento = get_object_or_404(owned_queryset(Orcamento.objects, request.user), pk=pk)
     endereco = _endereco_para_mapa(orcamento)
     if not endereco:
         return JsonResponse(
-            {"ok": False, "error": "Cadastre o endereco do servico para visualizar o mapa."},
+            {"ok": False, "error": "Cadastre o endereço do serviço para visualizar o mapa."},
             status=400,
         )
 
@@ -801,13 +801,13 @@ def vincular_cliente_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         _marcar_lead_convertido(orcamento, cliente)
         if orcamento.aprovado:
             _criar_ordem_servico_se_solicitado(orcamento, request)
-            messages.success(request, f"Orcamento aprovado e vinculado ao cliente '{cliente.name}'.")
+            messages.success(request, f"Orçamento aprovado e vinculado ao cliente '{cliente.name}'.")
         else:
-            messages.success(request, f"Cliente '{cliente.name}' vinculado ao orcamento.")
+            messages.success(request, f"Cliente '{cliente.name}' vinculado ao orçamento.")
             if request.POST.get("voltar_para_aprovacao") == "1":
                 return redirect(f"{reverse('orcamento_detalhe', args=[pk])}?aprovar=1")
     else:
-        messages.error(request, "Selecione um cliente valido para vincular ao orcamento.")
+        messages.error(request, "Selecione um cliente válido para vincular ao orçamento.")
 
     return redirect("orcamento_detalhe", pk=pk)
 
@@ -820,7 +820,7 @@ def deletar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     nome = orcamento.name
     orcamento.delete()
 
-    messages.success(request, f"Orcamento de '{nome}' excluido com sucesso.")
+    messages.success(request, f"Orçamento de '{nome}' excluído com sucesso.")
     return redirect("orcamentos")
 
 
@@ -833,16 +833,16 @@ def concluir_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         if not orcamento.cliente_id:
             messages.error(
                 request,
-                "Vincule ou crie um cliente antes de aprovar o orcamento.",
+                "Vincule ou crie um cliente antes de aprovar o orçamento.",
             )
             return redirect(f"{reverse('orcamento_detalhe', args=[pk])}?aprovar=1")
         orcamento.aprovado = True
         orcamento.save(update_fields=["aprovado", "updated_at"])
         _marcar_lead_convertido(orcamento, orcamento.cliente)
         _criar_ordem_servico_se_solicitado(orcamento, request)
-        messages.success(request, "Orcamento aprovado com sucesso.")
+        messages.success(request, "Orçamento aprovado com sucesso.")
     else:
-        messages.info(request, "Este orcamento ja esta aprovado.")
+        messages.info(request, "Este orçamento já está aprovado.")
 
     return redirect("orcamento_detalhe", pk=pk)
 
@@ -856,7 +856,7 @@ def cadastrar_cliente_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     if not orcamento.email:
         messages.error(
             request,
-            "Este orcamento precisa de um email para criar o cadastro do cliente.",
+            "Este orçamento precisa de um email para criar o cadastro do cliente.",
         )
         return redirect("orcamento_detalhe", pk=pk)
 
@@ -870,11 +870,11 @@ def cadastrar_cliente_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     _marcar_lead_convertido(orcamento, cliente)
     if orcamento.aprovado:
         _criar_ordem_servico_se_solicitado(orcamento, request)
-        messages.success(request, "Orcamento aprovado e cliente vinculado com sucesso.")
+        messages.success(request, "Orçamento aprovado e cliente vinculado com sucesso.")
     else:
         messages.success(
             request,
-            "Cliente cadastrado e vinculado ao orcamento com sucesso.",
+            "Cliente cadastrado e vinculado ao orçamento com sucesso.",
         )
         if request.POST.get("voltar_para_aprovacao") == "1":
             return redirect(f"{reverse('orcamento_detalhe', args=[pk])}?aprovar=1")
@@ -890,7 +890,7 @@ def aprovar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     if not orcamento.email:
         messages.error(
             request,
-            "Este orcamento precisa de um email para criar o cadastro do cliente.",
+            "Este orçamento precisa de um email para criar o cadastro do cliente.",
         )
         return redirect("orcamento_detalhe", pk=pk)
 
@@ -903,7 +903,7 @@ def aprovar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
 
     messages.success(
         request,
-        "Orcamento aprovado e cliente vinculado com sucesso.",
+        "Orçamento aprovado e cliente vinculado com sucesso.",
     )
     return redirect("orcamento_detalhe", pk=pk)
 
@@ -963,7 +963,7 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
             except Exception:
                 pass
 
-    pdf_brand = clean_text(request.POST.get("pdf_brand", ""), 42) or "ERP Higienizacao"
+    pdf_brand = clean_text(request.POST.get("pdf_brand", ""), 42) or "ERP Higienização"
     pdf_phrase = clean_text(request.POST.get("pdf_phrase", orcamento.pdf_frase_cliente or ""), 180)
     accent_color = clean_color(request.POST.get("pdf_accent_color", ""))
     uploaded_logo_bytes = load_uploaded_logo_bytes()
@@ -1184,10 +1184,10 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
         draw_fitted_text(pdf_brand, brand_x, title_y, brand_max_w, "Helvetica-Bold", 22 if first_page else 15, colors.white)
         pdf.setFillColor(colors.HexColor("#D5E0EA"))
         pdf.setFont("Helvetica", 10 if first_page else 8.5)
-        pdf.drawString(brand_x, title_y - (20 if first_page else 15), "Proposta comercial de servicos")
+        pdf.drawString(brand_x, title_y - (20 if first_page else 15), "Proposta comercial de serviços")
         if first_page:
             pdf.setFont("Helvetica-Bold", 9)
-            pdf.drawString(brand_x, header_y + 22, "Higienizacao profissional | atendimento tecnico | proposta personalizada")
+            pdf.drawString(brand_x, header_y + 22, "Higienização profissional | atendimento técnico | proposta personalizada")
 
         pdf.setFillColor(colors.white)
         pdf.roundRect(meta_x, meta_y, meta_w, meta_h, 12, stroke=0, fill=1)
@@ -1208,7 +1208,7 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
 
     def address_text() -> str:
         structured = _endereco_para_mapa(orcamento)
-        return structured or orcamento.endereco or "Endereco nao informado"
+        return structured or orcamento.endereco or "Endereço não informado"
 
     def draw_metric(label: str, value: str, x: float, y: float, width: float) -> None:
         pdf.setFillColor(soft_text)
@@ -1280,7 +1280,7 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
         draw_metric("Itens", str(len(itens)), summary_x + 92, metric_y, 48)
         pdf.setFillColor(muted)
         pdf.setFont("Helvetica", 8.5)
-        pdf.drawString(summary_x + 18, y + 22, f"Status: {'Concluido' if orcamento.aprovado else 'Pendente'}")
+        pdf.drawString(summary_x + 18, y + 22, f"Status: {'Concluído' if orcamento.aprovado else 'Pendente'}")
 
         return y - 28
 
@@ -1297,7 +1297,7 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
             pieces.append(f"Formato: {item.formato}")
         if item.descricao:
             pieces.append(item.descricao)
-        return " | ".join(pieces) or "Higienizacao profissional com acabamento tecnico."
+        return " | ".join(pieces) or "Higienização profissional com acabamento técnico."
 
     def build_rows() -> list[dict]:
         service_w = content_w - 210
@@ -1386,7 +1386,7 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
         if not page_rows:
             pdf.setFillColor(muted)
             pdf.setFont("Helvetica", 10)
-            pdf.drawString(x + 24, cursor_y - 34, "Nenhum servico vinculado a este orcamento.")
+            pdf.drawString(x + 24, cursor_y - 34, "Nenhum serviço vinculado a este orçamento.")
             return y
 
         for row in page_rows:
@@ -1436,7 +1436,7 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
         pdf.line(margin + 18, y + 20, margin + note_w - 18, y + 20)
         pdf.setFillColor(soft_text)
         pdf.setFont("Helvetica", 7.8)
-        pdf.drawString(margin + 18, y + 8, "Valores sujeitos a confirmacao de agenda e avaliacao tecnica.")
+        pdf.drawString(margin + 18, y + 8, "Valores sujeitos a confirmação de agenda e avaliação técnica.")
 
         pdf.setFillColor(accent)
         pdf.roundRect(total_x, y, total_w, h, 14, stroke=0, fill=1)
@@ -1452,7 +1452,7 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
         pdf.roundRect(margin, 72, content_w, 28, 10, stroke=0, fill=1)
         pdf.setFillColor(muted)
         pdf.setFont("Helvetica", 8.5)
-        pdf.drawString(margin + 14, 82, "Continua na proxima pagina com mais servicos e o resumo final.")
+        pdf.drawString(margin + 14, 82, "Continua na próxima página com mais serviços e o resumo final.")
 
     def draw_footer(page_number: int, total_pages: int) -> None:
         pdf.setStrokeColor(line)

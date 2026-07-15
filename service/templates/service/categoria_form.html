@@ -6,12 +6,12 @@
     <section class="page-heading">
         <div>
             <h1>{% if is_edit %}Editar categoria{% else %}Nova categoria{% endif %}</h1>
-            <p>Organize o catalogo por tipos de servico, como sofas, tapetes e colchoes.</p>
+            <p>Organize o catálogo por tipos de serviço, como sofás, tapetes e colchões.</p>
         </div>
         <div class="dashboard-actions">
             <a href="{% url 'catalogo' %}" class="hf-btn hf-btn-light">
                 <i class="bi bi-arrow-left"></i>
-                <span>Catalogo</span>
+                <span>Catálogo</span>
             </a>
         </div>
     </section>
@@ -41,7 +41,7 @@
                 <div class="form-actions span-2">
                     <button type="submit" class="hf-btn hf-btn-primary">
                         <i class="bi bi-check-lg"></i>
-                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar categoria{% endif %}</span>
+                        <span>{% if is_edit %}Salvar alterações{% else %}Salvar categoria{% endif %}</span>
                     </button>
                     <a href="{% url 'catalogo' %}" class="hf-btn hf-btn-light">Cancelar</a>
                 </div>
@@ -60,7 +60,7 @@
                         <div class="recent-row">
                             <div>
                                 <strong>{{ categoria.name }}</strong>
-                                <span>{{ categoria.descricao|default:"Sem descricao" }}</span>
+                                <span>{{ categoria.descricao|default:"Sem descrição" }}</span>
                             </div>
                             <div class="recent-meta">
                                 <span class="status-pill status-gray">{{ categoria.total }} item(ns)</span>

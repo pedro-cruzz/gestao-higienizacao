@@ -7,7 +7,7 @@
         <span class="badge rounded-pill px-3 py-2 mb-3">Clientes</span>
         <h1 class="display-6 fw-semibold">{% if is_edit %}Atualize os dados do cliente.{% else %}Cadastre um novo cliente na base.{% endif %}</h1>
         <p class="mb-0 text-white-50">
-            Guarde contato, endereco e status para agilizar orcamentos e acompanhamentos.
+            Guarde contato, endereço e status para agilizar orçamentos e acompanhamentos.
         </p>
     </section>
 
@@ -24,7 +24,7 @@
                             <label for="{{ form.orcamento_origem.id_for_label }}" class="form-label fw-semibold">{{ form.orcamento_origem.label }}</label>
                             {{ form.orcamento_origem }}
                             {{ form.orcamento_origem.errors }}
-                            <p class="muted-copy small mb-0 mt-1">Selecione um orcamento para preencher os dados do cliente automaticamente.</p>
+                            <p class="muted-copy small mb-0 mt-1">Selecione um orçamento para preencher os dados do cliente automaticamente.</p>
                         </div>
                     {% endif %}
 
@@ -56,7 +56,7 @@
 
                     <div class="col-12">
                         <div class="d-flex align-items-center justify-content-between gap-3 mb-1">
-                            <h3 class="h5 mb-0">Endereco</h3>
+                            <h3 class="h5 mb-0">Endereço</h3>
                             <span class="status-pill status-soft-blue">ViaCEP</span>
                         </div>
                         <p class="muted-copy small mb-0">Digite o CEP para preencher rua, bairro, cidade e UF automaticamente.</p>
@@ -111,7 +111,7 @@
 
                     <div class="col-12 d-flex flex-wrap gap-2">
                         <button type="submit" class="btn btn-success">
-                            {% if is_edit %}Salvar alteracoes{% else %}Salvar cliente{% endif %}
+                            {% if is_edit %}Salvar alterações{% else %}Salvar cliente{% endif %}
                         </button>
                         <a href="{% url 'clientes' %}" class="btn btn-outline-secondary">Cancelar</a>
                     </div>

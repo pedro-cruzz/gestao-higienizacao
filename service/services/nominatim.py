@@ -66,7 +66,7 @@ class NominatimService:
             uf=uf,
         )
         if not queries:
-            raise NominatimLookupError("Preencha um endereco mais completo para localizar no mapa.")
+            raise NominatimLookupError("Preencha um endereço mais completo para localizar no mapa.")
 
         payload = self._buscar_estruturado(
             cep=cep,
@@ -102,7 +102,7 @@ class NominatimService:
                     display_name=item.get("display_name", query),
                 )
 
-        raise NominatimLookupError("Nao foi possivel localizar esse endereco no mapa.")
+        raise NominatimLookupError("Não foi possível localizar esse endereço no mapa.")
 
     def _buscar_estruturado(
         self,
@@ -179,14 +179,14 @@ class NominatimService:
         except HTTPError as exc:
             logger.warning("Falha ao consultar Nominatim. status=%s url=%s", exc.code, url)
             if exc.code in {400, 422}:
-                raise NominatimLookupError("Os dados informados para localizar no mapa sao invalidos.") from exc
+                raise NominatimLookupError("Os dados informados para localizar no mapa são inválidos.") from exc
             if exc.code in {429, 500, 502, 503, 504}:
                 raise NominatimTemporaryUnavailableError(
-                    "A localizacao no mapa esta indisponivel no momento. Tente novamente em instantes."
+                    "A localização no mapa está indisponível no momento. Tente novamente em instantes."
                 ) from exc
-            raise NominatimLookupError("Falha ao consultar a localizacao do mapa.") from exc
+            raise NominatimLookupError("Falha ao consultar a localização do mapa.") from exc
         except (TimeoutError, URLError) as exc:
             logger.warning("Falha de conexao ao consultar Nominatim. url=%s erro=%s", url, exc)
             raise NominatimTemporaryUnavailableError(
-                "Nao foi possivel consultar a localizacao do mapa no momento."
+                "Não foi possível consultar a localização do mapa no momento."
             ) from exc

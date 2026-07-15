@@ -111,8 +111,8 @@ def _dashboard_ordens(user):
             dashboard_ordens.append(
                 {
                     "name": orcamento.name,
-                    "servico": primeiro_item.name if primeiro_item else "Servico cadastrado",
-                    "status_label": "Concluida" if orcamento.aprovado else "Em execucao",
+                    "servico": primeiro_item.name if primeiro_item else "Serviço cadastrado",
+                    "status_label": "Concluída" if orcamento.aprovado else "Em execução",
                     "status_class": "status-soft-blue" if orcamento.aprovado else "status-purple",
                     "valor": orcamento.valor,
                 }
@@ -256,7 +256,7 @@ def _usuario_config_item(user, actor) -> dict:
         perfil = "Administrador"
         perfil_class = "settings-role-admin"
     elif TEAM_GROUP in grupos or tecnico:
-        perfil = "Tecnico"
+        perfil = "Técnico"
         perfil_class = "settings-role-team"
     else:
         perfil = "Assistente"
@@ -288,7 +288,7 @@ def _empresa_config_default() -> dict:
         "cep": "01234-567",
         "endereco": "Rua das Flores, 123",
         "bairro": "Centro",
-        "cidade": "Sao Paulo",
+        "cidade": "São Paulo",
     }
 
 
@@ -329,14 +329,14 @@ def configuracoes(request: HttpRequest) -> HttpResponse:
         "perfis_acesso_config": [
             {
                 "nome": "Administrador",
-                "descricao": "Acesso total ao sistema, incluindo configuracoes e relatorios",
+                "descricao": "Acesso total ao sistema, incluindo configurações e relatórios",
             },
             {
                 "nome": "Assistente",
-                "descricao": "Acesso operacional completo para leads, orcamentos, OS e clientes",
+                "descricao": "Acesso operacional completo para leads, orçamentos, OS e clientes",
             },
             {
-                "nome": "Tecnico",
+                "nome": "Técnico",
                 "descricao": "Acesso restrito apenas as OS atribuidas a ele",
             },
         ],

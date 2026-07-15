@@ -24,7 +24,7 @@
                 data-hf-confirm
                 data-hf-confirm-icon="warning"
                 data-hf-confirm-title="Excluir cliente?"
-                data-hf-confirm-text="Esta acao removera o cliente permanentemente. Orcamentos vinculados serao mantidos sem cliente."
+                data-hf-confirm-text="Esta ação removerá o cliente permanentemente. Orçamentos vinculados serão mantidos sem cliente."
                 data-hf-confirm-button="Excluir"
             >
                 {% csrf_token %}
@@ -48,9 +48,9 @@
 
         <article class="metric-card">
             <div>
-                <p>Servicos</p>
+                <p>Serviços</p>
                 <strong>{{ total_servicos }}</strong>
-                <span><i class="bi bi-list-check"></i>Orcamentos vinculados</span>
+                <span><i class="bi bi-list-check"></i>Orçamentos vinculados</span>
             </div>
             <span class="metric-icon"><i class="bi bi-clipboard-check"></i></span>
         </article>
@@ -59,16 +59,16 @@
             <div>
                 <p>Total gasto</p>
                 <strong>R$ {{ total_gasto|floatformat:2 }}</strong>
-                <span><i class="bi bi-wallet2"></i>Historico comercial</span>
+                <span><i class="bi bi-wallet2"></i>Histórico comercial</span>
             </div>
             <span class="metric-icon"><i class="bi bi-currency-dollar"></i></span>
         </article>
 
         <article class="metric-card">
             <div>
-                <p>Ticket medio</p>
+                <p>Ticket médio</p>
                 <strong>R$ {{ ticket_medio|floatformat:2 }}</strong>
-                <span><i class="bi bi-graph-up"></i>Media por orcamento</span>
+                <span><i class="bi bi-graph-up"></i>Média por orçamento</span>
             </div>
             <span class="metric-icon"><i class="bi bi-receipt"></i></span>
         </article>
@@ -78,7 +78,7 @@
         <div class="orcamento-main-stack">
             <article class="dashboard-card orcamento-panel">
                 <header>
-                    <h2>Orcamentos recentes</h2>
+                    <h2>Orçamentos recentes</h2>
                     <span class="status-pill status-soft-blue">{{ total_servicos }} item(ns)</span>
                 </header>
                 {% if orcamentos %}
@@ -87,7 +87,7 @@
                             <a href="{% url 'orcamento_detalhe' orcamento.pk %}" class="recent-row orcamento-item-row text-decoration-none">
                                 <div>
                                     <strong>{{ orcamento.name }}</strong>
-                                    <span>{{ orcamento.descricao|default:"Sem descricao" }}</span>
+                                    <span>{{ orcamento.descricao|default:"Sem descrição" }}</span>
                                 </div>
                                 <div class="recent-meta">
                                     <span>{% if orcamento.aprovado %}Aprovado{% else %}Pendente{% endif %}</span>
@@ -97,13 +97,13 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="empty-dashboard-state">Nenhum orcamento vinculado a este cliente.</div>
+                    <div class="empty-dashboard-state">Nenhum orçamento vinculado a este cliente.</div>
                 {% endif %}
             </article>
 
             <article class="dashboard-card orcamento-panel">
                 <header>
-                    <h2>Ordens de servico</h2>
+                    <h2>Ordens de serviço</h2>
                     <i class="bi bi-calendar-check metric-icon"></i>
                 </header>
                 {% if ordens %}
@@ -112,7 +112,7 @@
                             <a href="{% url 'os_detalhe' ordem.pk %}" class="recent-row orcamento-item-row text-decoration-none">
                                 <div>
                                     <strong>{{ ordem.titulo }}</strong>
-                                    <span>{{ ordem.tecnico.name|default:"Sem tecnico" }}</span>
+                                    <span>{{ ordem.tecnico.name|default:"Sem técnico" }}</span>
                                 </div>
                                 <div class="recent-meta">
                                     <span>{{ ordem.get_status_display }}</span>
@@ -151,21 +151,21 @@
 
             <article class="dashboard-card orcamento-panel">
                 <header>
-                    <h2>Endereco</h2>
+                    <h2>Endereço</h2>
                     <i class="bi bi-geo-alt metric-icon"></i>
                 </header>
                 <div class="orcamento-detail-list">
                     <div>
                         <span>Logradouro</span>
-                        <strong>{{ cliente.logradouro|default:cliente.endereco|default:"Nao informado" }}</strong>
+                        <strong>{{ cliente.logradouro|default:cliente.endereco|default:"Não informado" }}</strong>
                     </div>
                     <div>
-                        <span>Numero</span>
-                        <strong>{{ cliente.numero|default:"Nao informado" }}</strong>
+                        <span>Número</span>
+                        <strong>{{ cliente.numero|default:"Não informado" }}</strong>
                     </div>
                     <div>
                         <span>Bairro</span>
-                        <strong>{{ cliente.bairro|default:"Nao informado" }}</strong>
+                        <strong>{{ cliente.bairro|default:"Não informado" }}</strong>
                     </div>
                     <div>
                         <span>Cidade/UF</span>
@@ -173,13 +173,13 @@
                             {% if cliente.cidade and cliente.uf %}
                                 {{ cliente.cidade }} - {{ cliente.uf }}
                             {% else %}
-                                Nao informado
+                                Não informado
                             {% endif %}
                         </strong>
                     </div>
                     <div>
                         <span>CEP</span>
-                        <strong>{{ cliente.cep|default:"Nao informado" }}</strong>
+                        <strong>{{ cliente.cep|default:"Não informado" }}</strong>
                     </div>
                 </div>
             </article>

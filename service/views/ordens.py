@@ -55,7 +55,7 @@ def _cliente_ordem(ordem: OrdemServico) -> str:
         return ordem.cliente.name
     if ordem.orcamento_id:
         return ordem.orcamento.name
-    return "Cliente nao informado"
+    return "Cliente não informado"
 
 
 def _agenda_label_ordem(ordem: OrdemServico) -> str:
@@ -134,7 +134,7 @@ def _colunas_ordens(ordens: list[OrdemServico]) -> list[dict]:
     colunas = [
         {"key": OrdemServico.Status.AGENDADA, "title": "Agendadas", "cards": []},
         {"key": OrdemServico.Status.EM_ANDAMENTO, "title": "Em andamento", "cards": []},
-        {"key": OrdemServico.Status.CONCLUIDA, "title": "Concluidas", "cards": []},
+        {"key": OrdemServico.Status.CONCLUIDA, "title": "Concluídas", "cards": []},
         {"key": OrdemServico.Status.CANCELADA, "title": "Canceladas", "cards": []},
     ]
     colunas_por_status = {coluna["key"]: coluna for coluna in colunas}
@@ -203,7 +203,7 @@ def _agenda_evento_ordem(ordem: OrdemServico, equipe: str = "a") -> dict:
         "equipe": equipe,
         "cliente": _cliente_ordem(ordem),
         "servico": ordem.titulo,
-        "endereco": mapa.get("endereco") or "Endereco nao informado",
+        "endereco": mapa.get("endereco") or "Endereço não informado",
         "responsavel": ordem.responsavel_nome,
         "status_label": ordem.get_status_display(),
         "status_css": _status_class(ordem.status),
@@ -220,7 +220,7 @@ def _ordem_initial_orcamento(orcamento: Orcamento) -> dict:
     return {
         "orcamento": orcamento.pk,
         "cliente": orcamento.cliente_id,
-        "titulo": f"Servico para {orcamento.name}",
+        "titulo": f"Serviço para {orcamento.name}",
         "descricao": itens or orcamento.descricao or "",
         "endereco": orcamento.endereco or "",
         "valor": orcamento.valor,
@@ -418,7 +418,7 @@ def detalhe_ordem_servico(request: HttpRequest, pk: int) -> HttpResponse:
 
 def buscar_mapa_ordem_servico(request: HttpRequest, pk: int) -> JsonResponse:
     if request.method != "GET":
-        return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
+        return JsonResponse({"ok": False, "error": "Método não permitido."}, status=405)
 
     ordem = get_object_or_404(
         _ordens_visiveis_queryset(request.user).select_related("cliente", "orcamento"),
@@ -427,7 +427,7 @@ def buscar_mapa_ordem_servico(request: HttpRequest, pk: int) -> JsonResponse:
     endereco = _endereco_para_mapa_ordem(ordem)
     if not endereco:
         return JsonResponse(
-            {"ok": False, "error": "Cadastre o endereco do servico para visualizar o mapa."},
+            {"ok": False, "error": "Cadastre o endereço do serviço para visualizar o mapa."},
             status=400,
         )
 
@@ -458,12 +458,12 @@ def buscar_mapa_ordem_servico(request: HttpRequest, pk: int) -> JsonResponse:
 
 def atualizar_status_ordem_servico(request: HttpRequest, pk: int) -> JsonResponse:
     if request.method != "POST":
-        return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
+        return JsonResponse({"ok": False, "error": "Método não permitido."}, status=405)
 
     novo_status = request.POST.get("status")
     status_validos = set(OrdemServico.Status.values)
     if novo_status not in status_validos:
-        return JsonResponse({"ok": False, "error": "Status invalido."}, status=400)
+        return JsonResponse({"ok": False, "error": "Status inválido."}, status=400)
 
     ordem = get_object_or_404(_ordens_visiveis_queryset(request.user), pk=pk)
     ordem.status = novo_status
@@ -491,7 +491,7 @@ def atualizar_status_ordem_servico(request: HttpRequest, pk: int) -> JsonRespons
 
 def atualizar_vinculos_ordem_servico(request: HttpRequest, pk: int) -> JsonResponse:
     if request.method != "POST":
-        return JsonResponse({"ok": False, "error": "Metodo nao permitido."}, status=405)
+        return JsonResponse({"ok": False, "error": "Método não permitido."}, status=405)
 
     ordem = get_object_or_404(
         owned_queryset(OrdemServico.objects.select_related("cliente", "tecnico", "orcamento"), request.user),
@@ -507,7 +507,7 @@ def atualizar_vinculos_ordem_servico(request: HttpRequest, pk: int) -> JsonRespo
         if valor and valor != "admin":
             tecnico = owned_queryset(Tecnico.objects, request.user).filter(pk=valor, ativo=True).first()
             if not tecnico:
-                return JsonResponse({"ok": False, "error": "Equipe tecnica invalida."}, status=400)
+                return JsonResponse({"ok": False, "error": "Equipe técnica inválida."}, status=400)
             ordem.tecnico = tecnico
             ordem.administrador_executa = False
         else:
@@ -515,7 +515,7 @@ def atualizar_vinculos_ordem_servico(request: HttpRequest, pk: int) -> JsonRespo
             ordem.administrador_executa = True
         ordem.save(update_fields=["tecnico", "administrador_executa", "updated_at"])
     else:
-        return JsonResponse({"ok": False, "error": "Campo invalido."}, status=400)
+        return JsonResponse({"ok": False, "error": "Campo inválido."}, status=400)
 
     return JsonResponse(
         {
@@ -554,7 +554,7 @@ def deletar_ordem_servico(request: HttpRequest, pk: int) -> HttpResponse:
     numero = ordem.pk
     ordem.delete()
 
-    messages.success(request, f"OS #{numero} excluida com sucesso.")
+    messages.success(request, f"OS #{numero} excluída com sucesso.")
     return redirect("ordens_servico")
 
 

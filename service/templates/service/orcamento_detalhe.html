@@ -1,6 +1,6 @@
 {% extends "service/base.html" %}
 
-{% block title %}Orcamento {{ orcamento.id }} | ERP Higienizacao{% endblock %}
+{% block title %}Orçamento {{ orcamento.id }} | ERP Higienização{% endblock %}
 
 {% block extra_head %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -10,7 +10,7 @@
 {% block content %}
     <section class="page-heading">
         <div>
-            <h1>Orcamento #{{ orcamento.id }}</h1>
+            <h1>Orçamento #{{ orcamento.id }}</h1>
             <p>{{ orcamento.name }}{% if orcamento.descricao %} - {{ orcamento.descricao }}{% endif %}</p>
         </div>
         <div class="dashboard-actions">
@@ -46,14 +46,14 @@
         </div>
     </section>
 
-    <section class="metric-grid orcamento-metrics" aria-label="Resumo do orcamento">
+    <section class="metric-grid orcamento-metrics" aria-label="Resumo do orçamento">
         <article class="metric-card">
             <div>
                 <p>Status</p>
                 <strong>{% if orcamento.aprovado %}Aprovado{% else %}Pendente{% endif %}</strong>
                 <span>
                     <i class="bi {% if orcamento.aprovado %}bi-check-circle{% else %}bi-clock{% endif %}"></i>
-                    {% if orcamento.aprovado %}Pronto para agenda{% else %}Aguardando aprovacao{% endif %}
+                    {% if orcamento.aprovado %}Pronto para agenda{% else %}Aguardando aprovação{% endif %}
                 </span>
             </div>
             <span class="metric-icon"><i class="bi bi-clipboard-check"></i></span>
@@ -72,7 +72,7 @@
             <div>
                 <p>Quantidade</p>
                 <strong>{{ orcamento.quantidade }}</strong>
-                <span><i class="bi bi-box-seam"></i>Unidades do servico</span>
+                <span><i class="bi bi-box-seam"></i>Unidades do serviço</span>
             </div>
             <span class="metric-icon"><i class="bi bi-layers"></i></span>
         </article>
@@ -100,7 +100,7 @@
                             <div class="recent-row orcamento-item-row">
                                 <div>
                                     <strong>{{ item.name }}</strong>
-                                    <span>{{ item.categoria_nome|default:item.tipo|default:"Servico" }}</span>
+                                    <span>{{ item.categoria_nome|default:item.tipo|default:"Serviço" }}</span>
                                 </div>
                                 <div class="recent-meta">
                                     <span>{{ orcamento.quantidade }}x</span>
@@ -110,7 +110,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="empty-dashboard-state">Este orcamento nao possui itens.</div>
+                    <div class="empty-dashboard-state">Este orçamento não possui itens.</div>
                 {% endif %}
             </article>
 
@@ -124,13 +124,13 @@
                 <div class="service-map-header">
                     <div>
                         <h2>Mapa e rota</h2>
-                        <p class="muted-copy mb-0">{{ mapa.endereco|default:"Endereco do servico nao informado." }}</p>
+                        <p class="muted-copy mb-0">{{ mapa.endereco|default:"Endereço do serviço não informado." }}</p>
                     </div>
                     {% if mapa %}
                         <div class="service-map-actions">
                             <button type="button" class="btn btn-success" data-use-location disabled>
                                 <i class="bi bi-crosshair"></i>
-                                Usar minha localizacao
+                                Usar minha localização
                             </button>
                             <button type="button" class="btn btn-outline-secondary" data-map-fullscreen>
                                 <i class="bi bi-arrows-fullscreen"></i>
@@ -150,9 +150,9 @@
 
                 {% if mapa %}
                     <div class="service-map-canvas" data-map-canvas></div>
-                    <div class="service-map-status muted-copy" data-map-status>Localizando endereco do servico...</div>
+                    <div class="service-map-status muted-copy" data-map-status>Localizando endereço do serviço...</div>
                 {% else %}
-                    <div class="empty-state text-center p-4 mt-3">Cadastre o endereco do servico para visualizar o mapa.</div>
+                    <div class="empty-state text-center p-4 mt-3">Cadastre o endereço do serviço para visualizar o mapa.</div>
                 {% endif %}
             </article>
         </div>
@@ -162,7 +162,7 @@
                 <header>
                     <h2>Cliente</h2>
                     {% if not orcamento.cliente %}
-                        <span class="status-pill status-gray">Ainda nao vinculado</span>
+                        <span class="status-pill status-gray">Ainda não vinculado</span>
                     {% elif orcamento.aprovado %}
                         <span class="status-pill status-blue">Aprovado</span>
                     {% else %}
@@ -172,31 +172,31 @@
 
                 <div class="orcamento-detail-list">
                     <div>
-                        <span>Vinculo</span>
-                        <strong>{% if orcamento.cliente %}{{ orcamento.cliente.name }}{% else %}Ainda nao vinculado{% endif %}</strong>
+                        <span>Vínculo</span>
+                        <strong>{% if orcamento.cliente %}{{ orcamento.cliente.name }}{% else %}Ainda não vinculado{% endif %}</strong>
                     </div>
                     <div>
-                        <span>Email do orcamento</span>
+                        <span>Email do orçamento</span>
                         <strong>{{ orcamento.email|default:"Sem email" }}</strong>
                     </div>
                     <div>
-                        <span>Telefone do orcamento</span>
+                        <span>Telefone do orçamento</span>
                         <strong>{{ orcamento.telefone|default:"Sem telefone" }}</strong>
                     </div>
                     <div>
-                        <span>Endereco</span>
-                        <strong>{{ mapa.endereco|default:orcamento.endereco|default:"Sem endereco" }}</strong>
+                        <span>Endereço</span>
+                        <strong>{{ mapa.endereco|default:orcamento.endereco|default:"Sem endereço" }}</strong>
                     </div>
                     <div>
                         <span>CEP</span>
-                        <strong>{{ orcamento.cep|default:"Nao informado" }}</strong>
+                        <strong>{{ orcamento.cep|default:"Não informado" }}</strong>
                     </div>
                 </div>
             </article>
 
             <article class="dashboard-card orcamento-panel">
                 <header>
-                    <h2>Vinculo</h2>
+                    <h2>Vínculo</h2>
                     <i class="bi bi-person-check metric-icon"></i>
                 </header>
                 {% if orcamento.cliente %}
@@ -234,13 +234,13 @@
                         </button>
                     </form>
                 {% else %}
-                    <p class="muted-copy orcamento-helper-copy">Cadastre um cliente para habilitar o vinculo manual.</p>
+                    <p class="muted-copy orcamento-helper-copy">Cadastre um cliente para habilitar o vínculo manual.</p>
                 {% endif %}
             </article>
 
             <article class="dashboard-card orcamento-panel">
                 <header class="orcamento-actions-header">
-                    <h2>Acoes</h2>
+                    <h2>Ações</h2>
                     <div class="dropdown">
                         <button
                             type="button"
@@ -248,7 +248,7 @@
                             data-bs-toggle="dropdown"
                             data-bs-boundary="viewport"
                             aria-expanded="false"
-                            aria-label="Abrir menu de acoes do orcamento"
+                            aria-label="Abrir menu de ações do orçamento"
                         >
                             <i class="bi bi-three-dots-vertical"></i>
                         </button>
@@ -261,7 +261,7 @@
                                     data-bs-target="#approveBudgetModal"
                                 >
                                     <i class="bi bi-check2-circle"></i>
-                                    <span>Aprovar orcamento</span>
+                                    <span>Aprovar orçamento</span>
                                 </button>
                             {% elif ordem_servico %}
                                 <a class="dropdown-item hf-actions-menu-item" href="{% url 'os_detalhe' ordem_servico.pk %}">
@@ -294,7 +294,7 @@
                             {% endif %}
                             <a class="dropdown-item hf-actions-menu-item" href="{% url 'editar_orcamento' orcamento.pk %}">
                                 <i class="bi bi-pencil-square"></i>
-                                <span>Editar orcamento</span>
+                                <span>Editar orçamento</span>
                             </a>
                             <button
                                 type="button"
@@ -312,14 +312,14 @@
                                 class="m-0"
                                 data-hf-confirm
                                 data-hf-confirm-icon="warning"
-                                data-hf-confirm-title="Excluir orcamento?"
-                                data-hf-confirm-text="Esta acao removera o orcamento permanentemente."
+                                data-hf-confirm-title="Excluir orçamento?"
+                                data-hf-confirm-text="Esta ação removerá o orçamento permanentemente."
                                 data-hf-confirm-button="Excluir"
                             >
                                 {% csrf_token %}
                                 <button type="submit" class="dropdown-item hf-actions-menu-item hf-actions-menu-danger">
                                     <i class="bi bi-trash"></i>
-                                    <span>Excluir orcamento</span>
+                                    <span>Excluir orçamento</span>
                                 </button>
                             </form>
                         </div>
@@ -341,8 +341,8 @@
                 <div class="modal-content hf-pdf-modal-content">
                     <div class="modal-header">
                         <div>
-                            <h2 class="modal-title" id="approveBudgetModalLabel">Aprovar orcamento</h2>
-                            <p>Escolha como este orcamento sera ligado ao cliente.</p>
+                            <h2 class="modal-title" id="approveBudgetModalLabel">Aprovar orçamento</h2>
+                            <p>Escolha como este orçamento será ligado ao cliente.</p>
                         </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
@@ -358,7 +358,7 @@
                                     <input type="hidden" name="criar_ordem_servico" value="1">
                                     <i class="bi bi-person-check"></i>
                                     <strong>Aprovar com cliente vinculado</strong>
-                                    <span>{{ orcamento.cliente.name }} ja esta ligado a este orcamento.</span>
+                                    <span>{{ orcamento.cliente.name }} já está ligado a este orçamento.</span>
                                     <button type="submit" class="hf-btn hf-btn-primary">
                                         <i class="bi bi-check2-circle"></i>
                                         <span>Aprovar agora</span>
@@ -376,7 +376,7 @@
                                 <input type="hidden" name="voltar_para_aprovacao" value="1">
                                 <i class="bi bi-link-45deg"></i>
                                 <strong>Vincular cliente existente</strong>
-                                <span>Use um cadastro que ja esta na base antes de aprovar.</span>
+                                <span>Use um cadastro que já está na base antes de aprovar.</span>
                                 {% if total_clientes %}
                                     <label for="{{ vinculo_form.cliente.id_for_label }}">Cliente</label>
                                     {{ vinculo_form.cliente }}
@@ -403,8 +403,8 @@
                                 <input type="hidden" name="criar_ordem_servico" value="1">
                                 <input type="hidden" name="voltar_para_aprovacao" value="1">
                                 <i class="bi bi-person-plus"></i>
-                                <strong>Criar cliente deste orcamento</strong>
-                                <span>Cria ou atualiza o cliente usando nome, contato e endereco antes da aprovacao.</span>
+                                <strong>Criar cliente deste orçamento</strong>
+                                <span>Cria ou atualiza o cliente usando nome, contato e endereço antes da aprovação.</span>
                                 <dl class="approval-client-preview">
                                     <div>
                                         <dt>Nome</dt>
@@ -468,7 +468,7 @@
                                 id="pdf_brand"
                                 name="pdf_brand"
                                 type="text"
-                                value="ERP Higienizacao"
+                                value="ERP Higienização"
                                 maxlength="42"
                                 autocomplete="organization"
                             >
@@ -483,7 +483,7 @@
                             <span>Logo da empresa</span>
                             <input id="pdf_logo" name="pdf_logo" type="file" accept="image/png,image/jpeg,image/webp">
                             {% if orcamento.pdf_logo %}
-                                <small>Uma logo ja esta salva para este orcamento. Envie outra imagem para substituir.</small>
+                                <small>Uma logo já está salva para este orçamento. Envie outra imagem para substituir.</small>
                             {% endif %}
                         </label>
 
@@ -494,7 +494,7 @@
                                 name="pdf_phrase"
                                 rows="3"
                                 maxlength="180"
-                                placeholder="Ex.: Obrigado pela preferencia. Sera um prazer cuidar do seu ambiente."
+                                placeholder="Ex.: Obrigado pela preferência. Será um prazer cuidar do seu ambiente."
                             >{{ orcamento.pdf_frase_cliente|default:"" }}</textarea>
                         </label>
 
@@ -555,7 +555,7 @@
                 locationButton.disabled = isLoading || !destination;
                 locationButton.innerHTML = isLoading
                     ? '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Tracando rota'
-                    : '<i class="bi bi-crosshair"></i> Usar minha localizacao';
+                    : '<i class="bi bi-crosshair"></i> Usar minha localização';
             }
 
             function syncMapSize() {
@@ -600,7 +600,7 @@
                     });
                     const payload = await response.json();
                     if (!response.ok || !payload.ok) {
-                        throw new Error(payload.error || "Nao foi possivel localizar o endereco.");
+                        throw new Error(payload.error || "Não foi possível localizar o endereço.");
                     }
 
                     destination = L.latLng(
@@ -610,13 +610,13 @@
 
                     L.marker(destination)
                         .addTo(map)
-                        .bindPopup("Local do servico");
+                        .bindPopup("Local do serviço");
                     map.setView(destination, 16);
 
                     if (locationButton) {
                         locationButton.disabled = false;
                     }
-                    setStatus("Endereco localizado. A rota pode ser tracada pela localizacao atual.", "success");
+                    setStatus("Endereço localizado. A rota pode ser traçada pela localização atual.", "success");
                 } catch (error) {
                     setStatus(error.message, "error");
                 }
@@ -632,7 +632,7 @@
 
                 userMarker = L.marker(origin)
                     .addTo(map)
-                    .bindPopup("Sua localizacao");
+                    .bindPopup("Sua localização");
 
                 routeControl = L.Routing.control({
                     waypoints: [origin, destination],
@@ -655,14 +655,14 @@
                 routeControl.on("routesfound", (event) => {
                     const summary = event.routes[0]?.summary || {};
                     setStatus(
-                        `Rota tracada: ${formatDistance(summary.totalDistance)} - ${formatDuration(summary.totalTime)}.`,
+                        `Rota traçada: ${formatDistance(summary.totalDistance)} - ${formatDuration(summary.totalTime)}.`,
                         "success",
                     );
                     setButtonLoading(false);
                 });
 
                 routeControl.on("routingerror", () => {
-                    setStatus("Nao foi possivel tracar a rota dentro do app. Use o Maps como alternativa.", "error");
+                    setStatus("Não foi possível traçar a rota dentro do app. Use o Maps como alternativa.", "error");
                     setButtonLoading(false);
                 });
             }
@@ -672,18 +672,18 @@
                     return;
                 }
                 if (!navigator.geolocation) {
-                    setStatus("Este navegador nao permite usar a localizacao atual.", "error");
+                    setStatus("Este navegador não permite usar a localização atual.", "error");
                     return;
                 }
 
                 setButtonLoading(true);
-                setStatus("Aguardando permissao de localizacao...", "muted");
+                setStatus("Aguardando permissão de localização...", "muted");
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         traceRoute(L.latLng(position.coords.latitude, position.coords.longitude));
                     },
                     () => {
-                        setStatus("Nao foi possivel acessar sua localizacao.", "error");
+                        setStatus("Não foi possível acessar sua localização.", "error");
                         setButtonLoading(false);
                     },
                     {

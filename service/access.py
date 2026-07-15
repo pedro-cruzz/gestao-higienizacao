@@ -40,7 +40,7 @@ def _role_required(test_func: Callable) -> Callable:
         def wrapped(request: HttpRequest, *args, **kwargs) -> HttpResponse:
             if test_func(request.user):
                 return view_func(request, *args, **kwargs)
-            raise PermissionDenied("Seu usuario nao tem permissao para acessar esta area.")
+            raise PermissionDenied("Seu usuário não tem permissão para acessar esta área.")
 
         return wrapped
 

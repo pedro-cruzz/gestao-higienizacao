@@ -45,7 +45,7 @@
                 {% if hf_is_admin %}
                     <a href="{% url 'inicio' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'inicio' %} active{% endif %}">
                         <i class="bi bi-house-door"></i>
-                        <span>Inicio</span>
+                        <span>Início</span>
                     </a>
                     <a href="{% url 'leads' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'leads' or request.resolver_match.url_name == 'novo_lead' %} active{% endif %}">
                         <i class="bi bi-people"></i>
@@ -53,16 +53,16 @@
                     </a>
                     <a href="{% url 'catalogo' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'catalogo' or request.resolver_match.url_name == 'novo_produto' or request.resolver_match.url_name == 'editar_produto' or request.resolver_match.url_name == 'nova_categoria' %} active{% endif %}">
                         <i class="bi bi-grid"></i>
-                        <span>Catalogo</span>
+                        <span>Catálogo</span>
                     </a>
                     <a href="{% url 'orcamentos' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'orcamentos' or request.resolver_match.url_name == 'novo_orcamento' or request.resolver_match.url_name == 'orcamento_detalhe' %} active{% endif %}">
                         <i class="bi bi-file-earmark-text"></i>
-                        <span>Orcamentos</span>
+                        <span>Orçamentos</span>
                     </a>
                 {% endif %}
                 <a href="{% url 'ordens_servico' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'ordens_servico' or request.resolver_match.url_name == 'nova_os' or request.resolver_match.url_name == 'os_detalhe' or request.resolver_match.url_name == 'editar_os' %} active{% endif %}">
                     <i class="bi bi-clipboard-check"></i>
-                    <span>Ordens de Servico</span>
+                    <span>Ordens de Serviço</span>
                 </a>
                 <a href="{% url 'agenda' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'agenda' %} active{% endif %}">
                     <i class="bi bi-calendar3"></i>
@@ -75,7 +75,7 @@
                     </a>
                     <a href="{% url 'configuracoes' %}" class="hf-nav-link{% if request.resolver_match.url_name == 'configuracoes' %} active{% endif %}">
                         <i class="bi bi-gear"></i>
-                        <span>Configuracoes</span>
+                        <span>Configurações</span>
                     </a>
                 {% endif %}
             </nav>
@@ -102,7 +102,7 @@
                     <button type="button" class="hf-theme-toggle" data-theme-toggle aria-label="Ativar modo escuro">
                         <i class="bi bi-moon-stars" data-theme-toggle-icon></i>
                     </button>
-                    <!-- <button type="button" class="hf-notification" aria-label="Notificacoes">
+                    <!-- <button type="button" class="hf-notification" aria-label="Notificações">
                         <i class="bi bi-bell"></i>
                     </button> -->
                     <div class="hf-user">
@@ -185,10 +185,10 @@
 
             const titleByIcon = {
                 success: "Tudo certo",
-                error: "Atencao",
-                warning: "Atencao",
+                error: "Atenção",
+                warning: "Atenção",
                 info: "Aviso",
-                question: "Confirmar acao",
+                question: "Confirmar ação",
             };
 
             function normalizeIcon(tag) {
@@ -253,7 +253,7 @@
                     Swal.fire({
                         ...alertDefaults,
                         icon: form.dataset.hfConfirmIcon || "question",
-                        title: form.dataset.hfConfirmTitle || "Confirmar acao",
+                        title: form.dataset.hfConfirmTitle || "Confirmar ação",
                         text: form.dataset.hfConfirmText || "Deseja continuar?",
                         showCancelButton: true,
                         confirmButtonText: form.dataset.hfConfirmButton || "Confirmar",
@@ -304,8 +304,8 @@
                         if (cep.length !== 8) {
                             window.hfAlert({
                                 icon: "warning",
-                                title: "CEP invalido",
-                                text: "Informe um CEP com 8 digitos.",
+                                title: "CEP inválido",
+                                text: "Informe um CEP com 8 dígitos.",
                             });
                             return;
                         }
@@ -316,7 +316,7 @@
                             const response = await fetch(url, {headers: {"Accept": "application/json"}});
                             const data = await response.json();
                             if (!response.ok || !data.ok) {
-                                throw new Error(data.error || "Nao foi possivel buscar o CEP.");
+                                throw new Error(data.error || "Não foi possível buscar o CEP.");
                             }
 
                             if (fields.logradouro) fields.logradouro.value = data.endereco.logradouro || "";
@@ -329,7 +329,7 @@
                         } catch (error) {
                             window.hfAlert({
                                 icon: "error",
-                                title: "CEP nao encontrado",
+                                title: "CEP não encontrado",
                                 text: error.message,
                             });
                         } finally {

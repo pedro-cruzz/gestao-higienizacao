@@ -18,7 +18,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for name in [DEV_GROUP, ADMIN_GROUP, TEAM_GROUP]:
             group, created = Group.objects.get_or_create(name=name)
-            status = "criado" if created else "ja existia"
+            status = "criado" if created else "já existia"
             self.stdout.write(self.style.SUCCESS(f"Grupo '{group.name}' {status}."))
 
         username = (options.get("dev_username") or "").strip()
@@ -27,7 +27,7 @@ class Command(BaseCommand):
         if not username:
             return
         if not password:
-            self.stdout.write(self.style.WARNING("Dev inicial nao criado: informe HIGIFLOW_DEV_PASSWORD."))
+            self.stdout.write(self.style.WARNING("Dev inicial não criado: informe HIGIFLOW_DEV_PASSWORD."))
             return
 
         user_model = get_user_model()
@@ -41,4 +41,4 @@ class Command(BaseCommand):
         dev_group = Group.objects.get(name=DEV_GROUP)
         user.groups.add(dev_group)
         status = "criado" if created else "atualizado"
-        self.stdout.write(self.style.SUCCESS(f"Usuario dev '{username}' {status}."))
+        self.stdout.write(self.style.SUCCESS(f"Usuário dev '{username}' {status}."))
