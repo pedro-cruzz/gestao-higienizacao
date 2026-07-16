@@ -4799,7 +4799,7 @@ body.service-map-open {
 .settings-list-item {
     min-height: 40px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto auto auto;
     align-items: center;
     gap: 8px;
     border-radius: 10px;
@@ -4824,6 +4824,15 @@ body.service-map-open {
     font-weight: 500;
     line-height: 16px;
     white-space: nowrap;
+}
+
+.settings-list-item form {
+    margin: 0;
+}
+
+.settings-list-item .status-pill {
+    font-size: 11px;
+    line-height: 16px;
 }
 
 .settings-wide-block {
@@ -6265,6 +6274,12 @@ body.service-map-open {
 
     .settings-list-item strong,
     .budget-rule-value {
+        justify-self: start;
+    }
+
+    .settings-list-item .status-pill,
+    .settings-list-item form {
+        grid-column: 2 / -1;
         justify-self: start;
     }
 

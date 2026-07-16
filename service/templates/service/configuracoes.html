@@ -90,82 +90,93 @@
                         <section class="settings-config-block" aria-label="Adicionais">
                             <header>
                                 <h2>Adicionais</h2>
-                                <button type="button" class="settings-small-button">
+                                <a href="{% url 'novo_adicional_orcamento' %}?next=configuracoes" class="settings-small-button">
                                     <i class="bi bi-plus-lg"></i>
                                     <span>Adicionar</span>
-                                </button>
+                                </a>
                             </header>
 
                             <div class="settings-list">
                                 {% for adicional in adicionais_config %}
                                     <article class="settings-list-item">
-                                        <span>{{ adicional.nome }}</span>
-                                        <strong>+ R$ {{ adicional.valor|floatformat:2 }}</strong>
-                                        <button type="button" class="settings-icon-button" aria-label="Editar {{ adicional.nome }}">
+                                        <span title="{{ adicional.descricao|default:adicional.categoria|default:adicional.name }}">{{ adicional.name }}</span>
+                                        <strong>
+                                            {% if adicional.tipo_valor == "percentual" %}
+                                                + {{ adicional.valor|floatformat:2 }}%
+                                            {% else %}
+                                                + R$ {{ adicional.valor|floatformat:2 }}
+                                            {% endif %}
+                                        </strong>
+                                        <span class="status-pill {% if adicional.ativo %}status-soft-blue{% else %}status-gray{% endif %}">
+                                            {% if adicional.ativo %}Ativo{% else %}Inativo{% endif %}
+                                        </span>
+                                        <a href="{% url 'editar_adicional_orcamento' adicional.pk %}?next=configuracoes" class="settings-icon-button" aria-label="Editar {{ adicional.name }}">
                                             <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button type="button" class="settings-icon-button danger" aria-label="Excluir {{ adicional.nome }}">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        </a>
+                                        <form
+                                            method="post"
+                                            action="{% url 'deletar_adicional_orcamento' adicional.pk %}"
+                                            data-hf-confirm
+                                            data-hf-confirm-icon="warning"
+                                            data-hf-confirm-title="Excluir adicional?"
+                                            data-hf-confirm-text="Esta ação removerá o adicional permanentemente."
+                                            data-hf-confirm-button="Excluir"
+                                        >
+                                            {% csrf_token %}
+                                            <input type="hidden" name="return_url" value="configuracoes">
+                                            <button type="submit" class="settings-icon-button danger" aria-label="Excluir {{ adicional.name }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
                                     </article>
+                                {% empty %}
+                                    <div class="table-empty">Nenhum adicional cadastrado ainda.</div>
                                 {% endfor %}
                             </div>
                         </section>
 
-                        <section class="settings-config-block" aria-label="Multiplicadores por tecido">
+                        <section class="settings-config-block" aria-label="Multiplicadores">
                             <header>
-                                <h2>Multiplicadores - Tipo de Tecido</h2>
-                                <button type="button" class="settings-small-button">
+                                <h2>Multiplicadores</h2>
+                                <a href="{% url 'novo_multiplicador_orcamento' %}?next=configuracoes" class="settings-small-button">
                                     <i class="bi bi-plus-lg"></i>
                                     <span>Adicionar</span>
-                                </button>
+                                </a>
                             </header>
 
                             <div class="settings-list">
-                                {% for tecido in tecidos_config %}
+                                {% for multiplicador in multiplicadores_config %}
                                     <article class="settings-list-item">
-                                        <span>{{ tecido.nome }}</span>
-                                        <strong>x {{ tecido.multiplicador }}</strong>
-                                        <button type="button" class="settings-icon-button" aria-label="Editar {{ tecido.nome }}">
+                                        <span title="{{ multiplicador.descricao|default:multiplicador.get_aplica_em_display }}">{{ multiplicador.name }}</span>
+                                        <strong>x {{ multiplicador.fator|floatformat:2 }}</strong>
+                                        <span class="status-pill {% if multiplicador.ativo %}status-soft-blue{% else %}status-gray{% endif %}">
+                                            {% if multiplicador.ativo %}Ativo{% else %}Inativo{% endif %}
+                                        </span>
+                                        <a href="{% url 'editar_multiplicador_orcamento' multiplicador.pk %}?next=configuracoes" class="settings-icon-button" aria-label="Editar {{ multiplicador.name }}">
                                             <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button type="button" class="settings-icon-button danger" aria-label="Excluir {{ tecido.nome }}">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        </a>
+                                        <form
+                                            method="post"
+                                            action="{% url 'deletar_multiplicador_orcamento' multiplicador.pk %}"
+                                            data-hf-confirm
+                                            data-hf-confirm-icon="warning"
+                                            data-hf-confirm-title="Excluir multiplicador?"
+                                            data-hf-confirm-text="Esta ação removerá o multiplicador permanentemente."
+                                            data-hf-confirm-button="Excluir"
+                                        >
+                                            {% csrf_token %}
+                                            <input type="hidden" name="return_url" value="configuracoes">
+                                            <button type="submit" class="settings-icon-button danger" aria-label="Excluir {{ multiplicador.name }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
                                     </article>
+                                {% empty %}
+                                    <div class="table-empty">Nenhum multiplicador cadastrado ainda.</div>
                                 {% endfor %}
                             </div>
                         </section>
                     </div>
-
-                    <section class="settings-config-block settings-wide-block" aria-label="Multiplicadores por tamanho">
-                        <header>
-                            <h2>Multiplicadores - Tamanho</h2>
-                            <button type="button" class="settings-small-button">
-                                <i class="bi bi-plus-lg"></i>
-                                <span>Adicionar</span>
-                            </button>
-                        </header>
-
-                        <div class="settings-size-grid">
-                            {% for tamanho in tamanhos_config %}
-                                <article class="settings-size-card">
-                                    <div>
-                                        <span>{{ tamanho.nome }}</span>
-                                        <div class="settings-row-actions">
-                                            <button type="button" class="settings-icon-button" aria-label="Editar {{ tamanho.nome }}">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button type="button" class="settings-icon-button danger" aria-label="Excluir {{ tamanho.nome }}">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <strong>x {{ tamanho.multiplicador }}</strong>
-                                </article>
-                            {% endfor %}
-                        </div>
-                    </section>
                 </div>
 
                 <div class="settings-pane{% if active_settings_tab == 'usuarios' %} active{% endif %}" data-settings-pane="usuarios" {% if active_settings_tab != 'usuarios' %}hidden{% endif %}>

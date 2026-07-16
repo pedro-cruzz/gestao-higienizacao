@@ -172,6 +172,17 @@ def _ajustes_orcamento_context(request: HttpRequest, busca: str = "") -> dict:
     }
 
 
+def _ajustes_orcamento_return_target(request: HttpRequest) -> str:
+    return request.POST.get("return_url") or request.GET.get("next") or ""
+
+
+def _ajustes_orcamento_return_url(request: HttpRequest) -> str:
+    destino = _ajustes_orcamento_return_target(request)
+    if destino == "configuracoes":
+        return f"{reverse('configuracoes')}?tab=precos"
+    return reverse("adicionais_orcamento")
+
+
 def listar_adicionais_orcamento(request: HttpRequest) -> HttpResponse:
     busca = request.GET.get("q", "").strip()
     context = _ajustes_orcamento_context(request, busca)
@@ -179,6 +190,7 @@ def listar_adicionais_orcamento(request: HttpRequest) -> HttpResponse:
 
 
 def novo_adicional_orcamento(request: HttpRequest) -> HttpResponse:
+    return_url = _ajustes_orcamento_return_url(request)
     if request.method == "POST":
         form = AdicionalOrcamentoForm(request.POST)
         if form.is_valid():
@@ -186,7 +198,7 @@ def novo_adicional_orcamento(request: HttpRequest) -> HttpResponse:
             adicional.owner = request.user
             adicional.save()
             messages.success(request, f"Adicional '{adicional.name}' cadastrado com sucesso.")
-            return redirect("adicionais_orcamento")
+            return redirect(return_url)
     else:
         form = AdicionalOrcamentoForm(
             initial={
@@ -200,18 +212,21 @@ def novo_adicional_orcamento(request: HttpRequest) -> HttpResponse:
         **_ajustes_orcamento_context(request),
         "form": form,
         "is_edit": False,
+        "return_url": return_url,
+        "return_target": _ajustes_orcamento_return_target(request),
     }
     return render(request, "service/adicional_orcamento_form.html", context)
 
 
 def editar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
+    return_url = _ajustes_orcamento_return_url(request)
     adicional = get_object_or_404(owned_queryset(AdicionalOrcamento.objects, request.user), pk=pk)
     if request.method == "POST":
         form = AdicionalOrcamentoForm(request.POST, instance=adicional)
         if form.is_valid():
             adicional = form.save()
             messages.success(request, f"Adicional '{adicional.name}' atualizado com sucesso.")
-            return redirect("adicionais_orcamento")
+            return redirect(return_url)
     else:
         form = AdicionalOrcamentoForm(instance=adicional)
 
@@ -220,6 +235,8 @@ def editar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
         "form": form,
         "adicional": adicional,
         "is_edit": True,
+        "return_url": return_url,
+        "return_target": _ajustes_orcamento_return_target(request),
     }
     return render(request, "service/adicional_orcamento_form.html", context)
 
@@ -228,14 +245,16 @@ def deletar_adicional_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method != "POST":
         return redirect("adicionais_orcamento")
 
+    return_url = _ajustes_orcamento_return_url(request)
     adicional = get_object_or_404(owned_queryset(AdicionalOrcamento.objects, request.user), pk=pk)
     nome = adicional.name
     adicional.delete()
     messages.success(request, f"Adicional '{nome}' excluído com sucesso.")
-    return redirect("adicionais_orcamento")
+    return redirect(return_url)
 
 
 def novo_multiplicador_orcamento(request: HttpRequest) -> HttpResponse:
+    return_url = _ajustes_orcamento_return_url(request)
     if request.method == "POST":
         form = MultiplicadorOrcamentoForm(request.POST)
         if form.is_valid():
@@ -243,7 +262,7 @@ def novo_multiplicador_orcamento(request: HttpRequest) -> HttpResponse:
             multiplicador.owner = request.user
             multiplicador.save()
             messages.success(request, f"Multiplicador '{multiplicador.name}' cadastrado com sucesso.")
-            return redirect("adicionais_orcamento")
+            return redirect(return_url)
     else:
         form = MultiplicadorOrcamentoForm(initial={"ativo": True, "fator": 1.5})
 
@@ -251,18 +270,21 @@ def novo_multiplicador_orcamento(request: HttpRequest) -> HttpResponse:
         **_ajustes_orcamento_context(request),
         "form": form,
         "is_edit": False,
+        "return_url": return_url,
+        "return_target": _ajustes_orcamento_return_target(request),
     }
     return render(request, "service/multiplicador_orcamento_form.html", context)
 
 
 def editar_multiplicador_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
+    return_url = _ajustes_orcamento_return_url(request)
     multiplicador = get_object_or_404(owned_queryset(MultiplicadorOrcamento.objects, request.user), pk=pk)
     if request.method == "POST":
         form = MultiplicadorOrcamentoForm(request.POST, instance=multiplicador)
         if form.is_valid():
             multiplicador = form.save()
             messages.success(request, f"Multiplicador '{multiplicador.name}' atualizado com sucesso.")
-            return redirect("adicionais_orcamento")
+            return redirect(return_url)
     else:
         form = MultiplicadorOrcamentoForm(instance=multiplicador)
 
@@ -271,6 +293,8 @@ def editar_multiplicador_orcamento(request: HttpRequest, pk: int) -> HttpRespons
         "form": form,
         "multiplicador": multiplicador,
         "is_edit": True,
+        "return_url": return_url,
+        "return_target": _ajustes_orcamento_return_target(request),
     }
     return render(request, "service/multiplicador_orcamento_form.html", context)
 
@@ -279,11 +303,12 @@ def deletar_multiplicador_orcamento(request: HttpRequest, pk: int) -> HttpRespon
     if request.method != "POST":
         return redirect("adicionais_orcamento")
 
+    return_url = _ajustes_orcamento_return_url(request)
     multiplicador = get_object_or_404(owned_queryset(MultiplicadorOrcamento.objects, request.user), pk=pk)
     nome = multiplicador.name
     multiplicador.delete()
     messages.success(request, f"Multiplicador '{nome}' excluído com sucesso.")
-    return redirect("adicionais_orcamento")
+    return redirect(return_url)
 
 
 def _nome_servico_ordem(orcamento: Orcamento) -> str:

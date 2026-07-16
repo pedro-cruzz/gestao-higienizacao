@@ -12,13 +12,14 @@
             <article class="budget-modal-card" role="dialog" aria-modal="true" aria-labelledby="budget-multiplier-title">
                 <header class="budget-modal-header">
                     <h1 id="budget-multiplier-title">{% if is_edit %}Editar Multiplicador{% else %}Novo Multiplicador{% endif %}</h1>
-                    <a href="{% url 'adicionais_orcamento' %}" class="budget-modal-close" aria-label="Fechar">
+                    <a href="{{ return_url|default:'#' }}" class="budget-modal-close" aria-label="Fechar">
                         <i class="bi bi-x-lg"></i>
                     </a>
                 </header>
 
                 <form method="post" class="budget-modal-form">
                     {% csrf_token %}
+                    <input type="hidden" name="return_url" value="{{ return_target }}">
                     {{ form.non_field_errors }}
 
                     <label class="budget-modal-field" for="{{ form.name.id_for_label }}">
@@ -72,7 +73,7 @@
                     {{ form.ativo.errors }}
 
                     <footer class="budget-modal-actions">
-                        <a href="{% url 'adicionais_orcamento' %}" class="hf-btn hf-btn-light">Cancelar</a>
+                        <a href="{{ return_url|default:'#' }}" class="hf-btn hf-btn-light">Cancelar</a>
                         <button type="submit" class="hf-btn hf-btn-primary">Salvar</button>
                     </footer>
                 </form>

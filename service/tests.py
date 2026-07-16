@@ -449,6 +449,71 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "HigiFlow Limpeza Profissional Ltda")
         self.assertContains(response, "Salvar Alterações")
 
+    def test_configuracoes_usa_adicionais_e_multiplicadores_reais_do_admin(self):
+        outro_admin = get_user_model().objects.create_user(username="outro-config", password="senha-segura")
+        adicional = AdicionalOrcamento.objects.create(
+            owner=self.user,
+            name="Deslocamento urbano",
+            valor=45.0,
+            ativo=True,
+        )
+        multiplicador = MultiplicadorOrcamento.objects.create(
+            owner=self.user,
+            name="Tecido delicado",
+            fator=1.25,
+            ativo=True,
+        )
+        AdicionalOrcamento.objects.create(owner=outro_admin, name="Adicional de outro admin", valor=90.0)
+        MultiplicadorOrcamento.objects.create(owner=outro_admin, name="Multiplicador de outro admin", fator=1.5)
+
+        response = self.client.get(f"{reverse('configuracoes')}?tab=precos")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Deslocamento urbano")
+        self.assertContains(response, "Tecido delicado")
+        self.assertNotContains(response, "Adicional de outro admin")
+        self.assertNotContains(response, "Multiplicador de outro admin")
+        self.assertContains(response, f"{reverse('novo_adicional_orcamento')}?next=configuracoes")
+        self.assertContains(response, f"{reverse('novo_multiplicador_orcamento')}?next=configuracoes")
+        self.assertContains(response, f"{reverse('editar_adicional_orcamento', args=[adicional.pk])}?next=configuracoes")
+        self.assertContains(response, f"{reverse('editar_multiplicador_orcamento', args=[multiplicador.pk])}?next=configuracoes")
+
+    def test_admin_cria_adicional_e_multiplicador_pela_configuracao(self):
+        config_url = f"{reverse('configuracoes')}?tab=precos"
+
+        adicional_response = self.client.post(
+            f"{reverse('novo_adicional_orcamento')}?next=configuracoes",
+            {
+                "name": "Deslocamento config",
+                "descricao": "Taxa de atendimento externo",
+                "categoria": "Logistica",
+                "tipo_valor": "fixo",
+                "valor": "55.00",
+                "ativo": "on",
+            },
+        )
+        multiplicador_response = self.client.post(
+            f"{reverse('novo_multiplicador_orcamento')}?next=configuracoes",
+            {
+                "name": "Tamanho grande config",
+                "descricao": "Aplicado para itens grandes",
+                "aplica_em": "total",
+                "fator": "1.40",
+                "ativo": "on",
+            },
+        )
+
+        self.assertRedirects(adicional_response, config_url, fetch_redirect_response=False)
+        self.assertRedirects(multiplicador_response, config_url, fetch_redirect_response=False)
+        adicional = AdicionalOrcamento.objects.get(name="Deslocamento config")
+        multiplicador = MultiplicadorOrcamento.objects.get(name="Tamanho grande config")
+        self.assertEqual(adicional.owner, self.user)
+        self.assertEqual(multiplicador.owner, self.user)
+
+        orcamento_response = self.client.get(reverse("novo_orcamento"))
+        self.assertContains(orcamento_response, "Deslocamento config")
+        self.assertContains(orcamento_response, "Tamanho grande config")
+
     def test_login_placeholder_e_link_de_saida(self):
         inicio_response = self.client.get(reverse("inicio"))
         self.client.logout()

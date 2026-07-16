@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from service.access import ADMIN_GROUP, DEV_GROUP, TEAM_GROUP, is_dev_user
-from service.models import Cliente, Lead, Orcamento, OrdemServico, Service_catalog, Tecnico
+from service.models import AdicionalOrcamento, Cliente, Lead, MultiplicadorOrcamento, Orcamento, OrdemServico, Service_catalog, Tecnico
 from service.ownership import owned_queryset
 
 
@@ -300,7 +300,9 @@ def configuracoes(request: HttpRequest) -> HttpResponse:
         }
         messages.success(request, "Dados da empresa atualizados com sucesso.")
 
-    servicos = Service_catalog.objects.select_related("categoria").order_by("name")
+    servicos = owned_queryset(Service_catalog.objects.select_related("categoria"), request.user).order_by("name")
+    adicionais = owned_queryset(AdicionalOrcamento.objects, request.user).order_by("name", "id")
+    multiplicadores = owned_queryset(MultiplicadorOrcamento.objects, request.user).order_by("name", "id")
     usuarios = (
         get_user_model()
         .objects.select_related("tecnico_profile")
@@ -321,11 +323,8 @@ def configuracoes(request: HttpRequest) -> HttpResponse:
         "tecnicos_config": tecnicos,
         "active_settings_tab": active_tab,
         "empresa_config": empresa_config,
-        "adicionais_config": [
-            {"nome": "Manchas dificeis", "valor": 80},
-            {"nome": "Urina de animais", "valor": 120},
-            {"nome": "Mofo ou bolor", "valor": 100},
-        ],
+        "adicionais_config": adicionais,
+        "multiplicadores_config": multiplicadores,
         "perfis_acesso_config": [
             {
                 "nome": "Administrador",
@@ -339,17 +338,6 @@ def configuracoes(request: HttpRequest) -> HttpResponse:
                 "nome": "Técnico",
                 "descricao": "Acesso restrito apenas as OS atribuidas a ele",
             },
-        ],
-        "tecidos_config": [
-            {"nome": "Padrao", "multiplicador": "1.0"},
-            {"nome": "Nobuck/Camurca", "multiplicador": "1.2"},
-            {"nome": "Seda/Delicado", "multiplicador": "1.5"},
-        ],
-        "tamanhos_config": [
-            {"nome": "Pequeno", "multiplicador": "1.0"},
-            {"nome": "Medio", "multiplicador": "1.3"},
-            {"nome": "Grande", "multiplicador": "1.6"},
-            {"nome": "Extra Grande", "multiplicador": "2.0"},
         ],
     }
     return render(request, "service/configuracoes.html", context)
