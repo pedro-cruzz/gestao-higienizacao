@@ -47,12 +47,12 @@ class CategoriaCatalogoForm(forms.ModelForm):
         fields = ["name", "descricao"]
         labels = {
             "name": "Nome da categoria",
-            "descricao": "Descricao",
+            "descricao": "Descrição",
         }
         widgets = {
-            "name": forms.TextInput(attrs={"placeholder": "Ex.: Sofas"}),
+            "name": forms.TextInput(attrs={"placeholder": "Ex.: Sofás"}),
             "descricao": forms.Textarea(
-                attrs={"rows": 4, "placeholder": "Ex.: Itens de higienizacao para sofas, poltronas e chaises."}
+                attrs={"rows": 4, "placeholder": "Ex.: Itens de higienização para sofás, poltronas e chaises."}
             ),
         }
 
@@ -81,12 +81,12 @@ class ProdutoCatalogoForm(forms.ModelForm):
             "tecido",
         ]
         labels = {
-            "name": "Nome do servico ou item",
+            "name": "Nome do serviço ou item",
             "categoria": "Categoria",
             "valor": "Valor base",
             "imagem": "Imagem do item",
-            "descricao": "Descricao",
-            "tempo": "Tempo medio",
+            "descricao": "Descrição",
+            "tempo": "Tempo médio",
             "formato": "Formato",
             "tamanho": "Tamanho",
             "largura": "Largura",
@@ -94,15 +94,15 @@ class ProdutoCatalogoForm(forms.ModelForm):
             "tecido": "Material ou tecido",
         }
         widgets = {
-            "name": forms.TextInput(attrs={"placeholder": "Ex.: Sofa retratil 3 lugares"}),
+            "name": forms.TextInput(attrs={"placeholder": "Ex.: Sofá retrátil 3 lugares"}),
             "categoria": forms.Select(),
             "valor": forms.NumberInput(attrs={"step": "0.01", "placeholder": "0.00"}),
             "imagem": forms.ClearableFileInput(attrs={"accept": "image/*"}),
             "descricao": forms.Textarea(
-                attrs={"rows": 4, "placeholder": "Ex.: Higienizacao profunda com extratora e acabamento antiodor."}
+                attrs={"rows": 4, "placeholder": "Ex.: Higienização profunda com extratora e acabamento antiodor."}
             ),
             "tempo": forms.TextInput(attrs={"placeholder": "Ex.: 2 horas"}),
-            "formato": forms.TextInput(attrs={"placeholder": "Ex.: Retratil, chaise, canto"}),
+            "formato": forms.TextInput(attrs={"placeholder": "Ex.: Retrátil, chaise, canto"}),
             "tamanho": forms.TextInput(attrs={"placeholder": "Ex.: 2 lugares, queen, 2x3 m"}),
             "largura": forms.TextInput(attrs={"placeholder": "Ex.: 180 cm"}),
             "comprimento": forms.TextInput(attrs={"placeholder": "Ex.: 220 cm"}),
@@ -146,10 +146,10 @@ class ProdutoCatalogoForm(forms.ModelForm):
 
 class ClienteForm(forms.ModelForm):
     orcamento_origem = forms.ModelChoiceField(
-        label="Puxar dados de um orcamento",
+        label="Puxar dados de um orçamento",
         queryset=Orcamento.objects.none(),
         required=False,
-        empty_label="Preencher manualmente ou selecionar orcamento",
+        empty_label="Preencher manualmente ou selecionar orçamento",
         widget=forms.Select(),
     )
 
@@ -175,7 +175,7 @@ class ClienteForm(forms.ModelForm):
             "telefone": "Telefone",
             "cep": "CEP",
             "logradouro": "Logradouro",
-            "numero": "Numero",
+            "numero": "Número",
             "complemento": "Complemento",
             "bairro": "Bairro",
             "cidade": "Cidade",
@@ -188,8 +188,8 @@ class ClienteForm(forms.ModelForm):
             "telefone": forms.TextInput(attrs={"placeholder": "(11) 99999-9999"}),
             "cep": forms.TextInput(attrs={"placeholder": "00000-000", "autocomplete": "postal-code"}),
             "logradouro": forms.TextInput(attrs={"placeholder": "Rua, avenida ou travessa"}),
-            "numero": forms.TextInput(attrs={"placeholder": "Numero"}),
-            "complemento": forms.TextInput(attrs={"placeholder": "Apartamento, bloco, referencia"}),
+            "numero": forms.TextInput(attrs={"placeholder": "Número"}),
+            "complemento": forms.TextInput(attrs={"placeholder": "Apartamento, bloco, referência"}),
             "bairro": forms.TextInput(attrs={"placeholder": "Bairro"}),
             "cidade": forms.TextInput(attrs={"placeholder": "Cidade"}),
             "uf": forms.TextInput(attrs={"placeholder": "SP"}),
@@ -305,7 +305,7 @@ class LeadForm(forms.ModelForm):
             "origem": "Origem do Lead",
             "cep": "CEP",
             "logradouro": "Logradouro",
-            "numero": "Numero",
+            "numero": "Número",
             "complemento": "Complemento",
             "bairro": "Bairro",
             "cidade": "Cidade",
@@ -320,8 +320,8 @@ class LeadForm(forms.ModelForm):
             "origem": forms.Select(),
             "cep": forms.TextInput(attrs={"placeholder": "00000-000", "autocomplete": "postal-code"}),
             "logradouro": forms.TextInput(attrs={"placeholder": "Rua, avenida ou travessa"}),
-            "numero": forms.TextInput(attrs={"placeholder": "Numero"}),
-            "complemento": forms.TextInput(attrs={"placeholder": "Apartamento, bloco, referencia"}),
+            "numero": forms.TextInput(attrs={"placeholder": "Número"}),
+            "complemento": forms.TextInput(attrs={"placeholder": "Apartamento, bloco, referência"}),
             "bairro": forms.TextInput(attrs={"placeholder": "Bairro"}),
             "cidade": forms.TextInput(attrs={"placeholder": "Cidade"}),
             "uf": forms.TextInput(attrs={"placeholder": "SP"}),
@@ -442,7 +442,7 @@ class OrcamentoForm(forms.Form):
         widget=forms.Select(),
     )
     cliente = forms.ModelChoiceField(
-        label="Cliente ja cadastrado",
+        label="Cliente já cadastrado",
         queryset=Cliente.objects.none(),
         required=False,
         empty_label="Preencher manualmente ou selecionar cliente",
@@ -482,16 +482,16 @@ class OrcamentoForm(forms.Form):
         widget=forms.TextInput(attrs={"placeholder": "Rua, avenida ou travessa"}),
     )
     numero = forms.CharField(
-        label="Numero",
+        label="Número",
         required=False,
         max_length=20,
-        widget=forms.TextInput(attrs={"placeholder": "Numero"}),
+        widget=forms.TextInput(attrs={"placeholder": "Número"}),
     )
     complemento = forms.CharField(
         label="Complemento",
         required=False,
         max_length=120,
-        widget=forms.TextInput(attrs={"placeholder": "Apartamento, bloco, referencia"}),
+        widget=forms.TextInput(attrs={"placeholder": "Apartamento, bloco, referência"}),
     )
     bairro = forms.CharField(
         label="Bairro",
@@ -513,6 +513,7 @@ class OrcamentoForm(forms.Form):
     )
     endereco = forms.CharField(required=False, widget=forms.HiddenInput())
     descricao = forms.CharField(
+        label="Observações",
         required=False,
         widget=forms.Textarea(
             attrs={
@@ -527,7 +528,7 @@ class OrcamentoForm(forms.Form):
         initial=1,
     )
     itens = forms.ModelMultipleChoiceField(
-        label="Itens do catalogo",
+        label="Itens do catálogo",
         queryset=Service_catalog.objects.none(),
         widget=forms.SelectMultiple(attrs={"size": 8}),
     )
@@ -700,7 +701,7 @@ class ClienteVinculoOrcamentoForm(forms.Form):
 
 class TecnicoForm(forms.ModelForm):
     username = forms.CharField(
-        label="Usuario de acesso",
+        label="Usuário de acesso",
         max_length=150,
         widget=forms.TextInput(attrs={"placeholder": "Ex.: equipe-a"}),
     )
@@ -714,19 +715,19 @@ class TecnicoForm(forms.ModelForm):
         model = Tecnico
         fields = ["name", "email", "telefone", "especialidade", "ativo", "observacoes"]
         labels = {
-            "name": "Nome da equipe ou tecnico",
+            "name": "Nome da equipe ou técnico",
             "email": "Email",
             "telefone": "Telefone",
             "especialidade": "Especialidade",
             "ativo": "Ativo",
-            "observacoes": "Observacoes",
+            "observacoes": "Observações",
         }
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "Ex.: Equipe A"}),
             "email": forms.EmailInput(attrs={"placeholder": "equipe@empresa.com"}),
             "telefone": forms.TextInput(attrs={"placeholder": "(11) 99999-9999"}),
-            "especialidade": forms.TextInput(attrs={"placeholder": "Ex.: Sofas, tapetes, colchao"}),
-            "observacoes": forms.Textarea(attrs={"rows": 4, "placeholder": "Disponibilidade, area de atendimento ou detalhes internos."}),
+            "especialidade": forms.TextInput(attrs={"placeholder": "Ex.: Sofás, tapetes, colchão"}),
+            "observacoes": forms.Textarea(attrs={"rows": 4, "placeholder": "Disponibilidade, área de atendimento ou detalhes internos."}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -758,7 +759,7 @@ class TecnicoForm(forms.ModelForm):
         existing_user = user_model.objects.filter(username__iexact=username).first()
         current_user_id = self.instance.user_id if self.instance and self.instance.pk else None
         if existing_user and existing_user.pk != current_user_id:
-            raise forms.ValidationError("Ja existe um usuario com este login.")
+            raise forms.ValidationError("Já existe um usuário com este login.")
         return username
 
     def save(self, commit=True):
@@ -815,12 +816,12 @@ class AdminUserForm(forms.ModelForm):
         fields = ["first_name", "username", "email", "is_active"]
         labels = {
             "first_name": "Nome do admin/dono",
-            "username": "Usuario de acesso",
+            "username": "Usuário de acesso",
             "email": "Email",
             "is_active": "Ativo",
         }
         widgets = {
-            "first_name": forms.TextInput(attrs={"placeholder": "Ex.: Joao Silva"}),
+            "first_name": forms.TextInput(attrs={"placeholder": "Ex.: João Silva"}),
             "username": forms.TextInput(attrs={"placeholder": "Ex.: joao-admin"}),
             "email": forms.EmailInput(attrs={"placeholder": "admin@empresa.com"}),
         }
@@ -849,9 +850,9 @@ class AdminUserForm(forms.ModelForm):
         cleaned_data = super().clean()
         if self.actor and self.instance and self.instance.pk == self.actor.pk:
             if cleaned_data.get("perfil") != DEV_GROUP:
-                self.add_error("perfil", "Voce nao pode remover o proprio perfil dev.")
+                self.add_error("perfil", "Você não pode remover o próprio perfil dev.")
             if not cleaned_data.get("is_active"):
-                self.add_error("is_active", "Voce nao pode desativar o proprio usuario.")
+                self.add_error("is_active", "Você não pode desativar o próprio usuário.")
         return cleaned_data
 
     def clean_email(self):
@@ -863,7 +864,7 @@ class AdminUserForm(forms.ModelForm):
         existing_user = user_model.objects.filter(username__iexact=username).first()
         current_user_id = self.instance.pk if self.instance and self.instance.pk else None
         if existing_user and existing_user.pk != current_user_id:
-            raise forms.ValidationError("Ja existe um usuario com este login.")
+            raise forms.ValidationError("Já existe um usuário com este login.")
         return username
 
     def save(self, commit=True):
@@ -900,7 +901,7 @@ class PerfilUsuarioForm(forms.ModelForm):
     senha_atual = forms.CharField(
         label="Senha atual",
         required=False,
-        widget=forms.PasswordInput(attrs={"placeholder": "Obrigatoria apenas para trocar a senha"}),
+        widget=forms.PasswordInput(attrs={"placeholder": "Obrigatória apenas para trocar a senha"}),
     )
     nova_senha = forms.CharField(
         label="Nova senha",
@@ -919,14 +920,14 @@ class PerfilUsuarioForm(forms.ModelForm):
         labels = {
             "first_name": "Nome",
             "last_name": "Sobrenome",
-            "username": "Usuario de acesso",
+            "username": "Usuário de acesso",
             "email": "Email",
         }
         widgets = {
             "first_name": forms.TextInput(attrs={"placeholder": "Seu nome"}),
             "last_name": forms.TextInput(attrs={"placeholder": "Seu sobrenome"}),
             "username": forms.TextInput(attrs={"placeholder": "seu.usuario"}),
-            "email": forms.EmailInput(attrs={"placeholder": "voce@empresa.com"}),
+            "email": forms.EmailInput(attrs={"placeholder": "usuario@empresa.com"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -941,11 +942,11 @@ class PerfilUsuarioForm(forms.ModelForm):
             return foto
 
         if foto.size > 3 * 1024 * 1024:
-            raise forms.ValidationError("Envie uma imagem com ate 3 MB.")
+            raise forms.ValidationError("Envie uma imagem com até 3 MB.")
 
         content_type = getattr(foto, "content_type", "")
         if content_type and not content_type.startswith("image/"):
-            raise forms.ValidationError("Envie um arquivo de imagem valido.")
+            raise forms.ValidationError("Envie um arquivo de imagem válido.")
 
         return foto
 
@@ -958,7 +959,7 @@ class PerfilUsuarioForm(forms.ModelForm):
         existing_user = user_model.objects.filter(username__iexact=username).first()
         current_user_id = self.instance.pk if self.instance and self.instance.pk else None
         if existing_user and existing_user.pk != current_user_id:
-            raise forms.ValidationError("Ja existe um usuario com este login.")
+            raise forms.ValidationError("Já existe um usuário com este login.")
         return username
 
     def clean(self):
@@ -976,7 +977,7 @@ class PerfilUsuarioForm(forms.ModelForm):
             if not nova_senha:
                 self.add_error("nova_senha", "Informe a nova senha.")
             elif nova_senha != confirmar_senha:
-                self.add_error("confirmar_senha", "As senhas nao conferem.")
+                self.add_error("confirmar_senha", "As senhas não conferem.")
             else:
                 validate_password(nova_senha, self.user)
 
@@ -1020,27 +1021,27 @@ class OrdemServicoForm(forms.ModelForm):
             "checklist",
         ]
         labels = {
-            "orcamento": "Orcamento de origem",
+            "orcamento": "Orçamento de origem",
             "cliente": "Cliente",
-            "titulo": "Titulo da OS",
-            "descricao": "Servico a realizar",
-            "endereco": "Endereco do servico",
+            "titulo": "Título da OS",
+            "descricao": "Serviço a realizar",
+            "endereco": "Endereço do serviço",
             "data_agendada": "Data agendada",
             "hora_inicio": "Hora inicial",
             "hora_fim": "Hora final prevista",
-            "tecnico": "Equipe tecnica",
-            "administrador_executa": "Administrador/dono executa o servico",
+            "tecnico": "Equipe técnica",
+            "administrador_executa": "Administrador/dono executa o serviço",
             "status": "Status",
             "valor": "Valor",
-            "instrucoes": "Instrucoes internas",
-            "checklist": "Checklist do servico",
+            "instrucoes": "Instruções internas",
+            "checklist": "Checklist do serviço",
         }
         widgets = {
             "orcamento": forms.Select(),
             "cliente": forms.Select(),
-            "titulo": forms.TextInput(attrs={"placeholder": "Ex.: Higienizacao sofa - Cliente Maria"}),
-            "descricao": forms.Textarea(attrs={"rows": 4, "placeholder": "Detalhes do servico, itens, produtos e cuidados."}),
-            "endereco": forms.TextInput(attrs={"placeholder": "Endereco completo do atendimento"}),
+            "titulo": forms.TextInput(attrs={"placeholder": "Ex.: Higienização sofá - Cliente Maria"}),
+            "descricao": forms.Textarea(attrs={"rows": 4, "placeholder": "Detalhes do serviço, itens, produtos e cuidados."}),
+            "endereco": forms.TextInput(attrs={"placeholder": "Endereço completo do atendimento"}),
             "data_agendada": forms.DateInput(attrs={"type": "date"}),
             "hora_inicio": forms.TimeInput(attrs={"type": "time"}),
             "hora_fim": forms.TimeInput(attrs={"type": "time"}),
@@ -1048,7 +1049,7 @@ class OrdemServicoForm(forms.ModelForm):
             "administrador_executa": forms.CheckboxInput(),
             "status": forms.Select(),
             "valor": forms.NumberInput(attrs={"step": "0.01", "placeholder": "0.00"}),
-            "instrucoes": forms.Textarea(attrs={"rows": 3, "placeholder": "Orientacoes para quem vai executar."}),
+            "instrucoes": forms.Textarea(attrs={"rows": 3, "placeholder": "Orientações para quem vai executar."}),
             "checklist": forms.Textarea(attrs={"rows": 4, "placeholder": "Ex.: Fotografar antes/depois; aspirar; extrair; finalizar."}),
         }
 
@@ -1106,7 +1107,7 @@ class OrdemServicoForm(forms.ModelForm):
         if not mutable_data.get("cliente") and orcamento.cliente_id:
             mutable_data["cliente"] = str(orcamento.cliente_id)
         if not mutable_data.get("titulo"):
-            mutable_data["titulo"] = f"Servico para {orcamento.name}"
+            mutable_data["titulo"] = f"Serviço para {orcamento.name}"
         if not mutable_data.get("descricao"):
             itens = ", ".join(item.name for item in orcamento.itens.all())
             mutable_data["descricao"] = itens or orcamento.descricao or ""
@@ -1121,13 +1122,13 @@ class OrdemServicoForm(forms.ModelForm):
         if not cleaned_data.get("tecnico") and not cleaned_data.get("administrador_executa"):
             self.add_error(
                 "administrador_executa",
-                "Selecione uma equipe tecnica ou marque que o administrador/dono executa o servico.",
+                "Selecione uma equipe técnica ou marque que o administrador/dono executa o serviço.",
             )
 
         hora_inicio = cleaned_data.get("hora_inicio")
         hora_fim = cleaned_data.get("hora_fim")
         if hora_inicio and hora_fim and hora_fim <= hora_inicio:
-            self.add_error("hora_fim", "A hora final deve ser posterior a hora inicial.")
+            self.add_error("hora_fim", "A hora final deve ser posterior à hora inicial.")
         return cleaned_data
 
 
@@ -1137,19 +1138,19 @@ class OrdemServicoConclusaoForm(forms.ModelForm):
         fields = ["status", "observacoes_execucao", "checklist"]
         labels = {
             "status": "Status final",
-            "observacoes_execucao": "Observacoes da execucao",
+            "observacoes_execucao": "Observações da execução",
             "checklist": "Checklist executado",
         }
         widgets = {
             "status": forms.Select(),
-            "observacoes_execucao": forms.Textarea(attrs={"rows": 4, "placeholder": "Relate o que foi feito, intercorrencias e orientacoes ao cliente."}),
+            "observacoes_execucao": forms.Textarea(attrs={"rows": 4, "placeholder": "Relate o que foi feito, intercorrências e orientações ao cliente."}),
             "checklist": forms.Textarea(attrs={"rows": 4}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["status"].choices = [
-            (OrdemServico.Status.CONCLUIDA, "Concluida"),
+            (OrdemServico.Status.CONCLUIDA, "Concluída"),
             (OrdemServico.Status.EM_ANDAMENTO, "Em andamento"),
             (OrdemServico.Status.CANCELADA, "Cancelada"),
         ]

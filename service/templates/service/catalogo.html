@@ -1,12 +1,12 @@
 {% extends "service/base.html" %}
 
-{% block title %}Catalogo | HigiFlow{% endblock %}
+{% block title %}Catálogo | HigiFlow{% endblock %}
 
 {% block content %}
     <section class="page-heading">
         <div>
-            <h1>Catalogo</h1>
-            <p>Servicos, produtos e itens usados para montar orcamentos rapidamente.</p>
+            <h1>Catálogo</h1>
+            <p>Serviços, produtos e itens usados para montar orçamentos rapidamente.</p>
         </div>
         <div class="dashboard-actions">
             <a href="{% url 'nova_categoria' %}" class="hf-btn hf-btn-light">
@@ -19,17 +19,17 @@
             </a>
             <a href="{% url 'novo_orcamento' %}" class="hf-btn hf-btn-light">
                 <i class="bi bi-file-earmark-text"></i>
-                <span>Novo orcamento</span>
+                <span>Novo orçamento</span>
             </a>
         </div>
     </section>
 
-    <section class="metric-grid catalog-metrics" aria-label="Indicadores do catalogo">
+    <section class="metric-grid catalog-metrics" aria-label="Indicadores do catálogo">
         <article class="metric-card">
             <div>
                 <p>Itens cadastrados</p>
                 <strong>{{ total_itens }}</strong>
-                <span><i class="bi bi-box-seam"></i> disponiveis</span>
+                <span><i class="bi bi-box-seam"></i> disponíveis</span>
             </div>
             <span class="metric-icon"><i class="bi bi-grid"></i></span>
         </article>
@@ -38,25 +38,25 @@
             <div>
                 <p>Categorias</p>
                 <strong>{{ total_categorias }}</strong>
-                <span><i class="bi bi-tags"></i> tipos de servico</span>
+                <span><i class="bi bi-tags"></i> tipos de serviço</span>
             </div>
             <span class="metric-icon"><i class="bi bi-layers"></i></span>
         </article>
 
         <article class="metric-card">
             <div>
-                <p>Valor medio</p>
+                <p>Valor médio</p>
                 <strong>R$ {{ valor_medio|floatformat:0 }}</strong>
-                <span><i class="bi bi-cash-stack"></i> base de calculo</span>
+                <span><i class="bi bi-cash-stack"></i> base de cálculo</span>
             </div>
             <span class="metric-icon"><i class="bi bi-currency-dollar"></i></span>
         </article>
 
         <article class="metric-card">
             <div>
-                <p>Uso no orcamento</p>
+                <p>Uso no orçamento</p>
                 <strong>Auto</strong>
-                <span><i class="bi bi-lightning-charge"></i> item pre-selecionado</span>
+                <span><i class="bi bi-lightning-charge"></i> item pré-selecionado</span>
             </div>
             <span class="metric-icon"><i class="bi bi-magic"></i></span>
         </article>
@@ -65,7 +65,7 @@
     <section class="catalog-toolbar">
         <form method="get" class="catalog-search">
             <i class="bi bi-search"></i>
-            <input id="q" name="q" value="{{ busca }}" placeholder="Buscar por sofa, tapete, tecido ou descricao" aria-label="Buscar no catalogo">
+            <input id="q" name="q" value="{{ busca }}" placeholder="Buscar por sofá, tapete, tecido ou descrição" aria-label="Buscar no catálogo">
         </form>
 
         <div class="catalog-filter-list" aria-label="Categorias cadastradas">
@@ -79,7 +79,7 @@
         </div>
     </section>
 
-    <section class="orcamentos-panel" aria-label="Categorias do catalogo">
+    <section class="orcamentos-panel" aria-label="Categorias do catálogo">
         <div class="leads-toolbar">
             <div>
                 <h2 class="mb-1">Categorias</h2>
@@ -96,16 +96,16 @@
                 <thead>
                     <tr>
                         <th>Categoria</th>
-                        <th>Descricao</th>
+                        <th>Descrição</th>
                         <th>Itens</th>
-                        <th>Acoes</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for categoria in categorias %}
                         <tr>
                             <td class="quote-number">{{ categoria.name }}</td>
-                            <td>{{ categoria.descricao|default:"Sem descricao" }}</td>
+                            <td>{{ categoria.descricao|default:"Sem descrição" }}</td>
                             <td>
                                 <span class="status-pill {% if categoria.total %}status-soft-blue{% else %}status-gray{% endif %}">
                                     {{ categoria.total }} item(ns)
@@ -119,7 +119,7 @@
                                         data-bs-toggle="dropdown"
                                         data-bs-boundary="viewport"
                                         aria-expanded="false"
-                                        aria-label="Abrir menu de acoes de {{ categoria.name }}"
+                                        aria-label="Abrir menu de ações de {{ categoria.name }}"
                                     >
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
@@ -142,7 +142,7 @@
                                                 data-hf-confirm
                                                 data-hf-confirm-icon="warning"
                                                 data-hf-confirm-title="Excluir categoria?"
-                                                data-hf-confirm-text="Esta acao removera a categoria permanentemente."
+                                                data-hf-confirm-text="Esta ação removerá a categoria permanentemente."
                                                 data-hf-confirm-button="Excluir"
                                             >
                                                 {% csrf_token %}
@@ -169,7 +169,7 @@
     </section>
 
     {% if itens %}
-        <section class="catalog-grid" aria-label="Itens do catalogo">
+        <section class="catalog-grid" aria-label="Itens do catálogo">
             {% for item in itens %}
                 <article class="catalog-card">
                     <div class="catalog-card-media">
@@ -183,38 +183,38 @@
                     </div>
 
                     <header>
-                        <span class="status-pill status-soft-blue">{{ item.categoria_nome|default:"Servico" }}</span>
+                        <span class="status-pill status-soft-blue">{{ item.categoria_nome|default:"Serviço" }}</span>
                         <strong>R$ {{ item.valor|floatformat:2 }}</strong>
                     </header>
 
                     <div class="catalog-card-body">
                         <h2>{{ item.name }}</h2>
-                        <p>{{ item.descricao|default:"Sem descricao cadastrada." }}</p>
+                        <p>{{ item.descricao|default:"Sem descrição cadastrada." }}</p>
                     </div>
 
                     <dl class="catalog-specs">
                         <div>
                             <dt>Tempo</dt>
-                            <dd>{{ item.tempo|default:"Nao informado" }}</dd>
+                            <dd>{{ item.tempo|default:"Não informado" }}</dd>
                         </div>
                         <div>
                             <dt>Formato</dt>
-                            <dd>{{ item.formato|default:"Nao informado" }}</dd>
+                            <dd>{{ item.formato|default:"Não informado" }}</dd>
                         </div>
                         <div>
                             <dt>Tamanho</dt>
-                            <dd>{{ item.tamanho|default:"Nao informado" }}</dd>
+                            <dd>{{ item.tamanho|default:"Não informado" }}</dd>
                         </div>
                         <div>
                             <dt>Material</dt>
-                            <dd>{{ item.tecido|default:"Nao informado" }}</dd>
+                            <dd>{{ item.tecido|default:"Não informado" }}</dd>
                         </div>
                     </dl>
 
                     <footer class="catalog-card-actions">
                         <a href="{% url 'novo_orcamento' %}?item={{ item.pk }}" class="hf-btn hf-btn-primary">
                             <i class="bi bi-file-earmark-plus"></i>
-                            <span>Orcar item</span>
+                            <span>Orçar item</span>
                         </a>
                         <a href="{% url 'editar_produto' item.pk %}" class="hf-btn hf-btn-light">
                             <i class="bi bi-pencil"></i>
@@ -226,7 +226,7 @@
                             data-hf-confirm
                             data-hf-confirm-icon="warning"
                             data-hf-confirm-title="Excluir item?"
-                            data-hf-confirm-text="Este item sera removido do catalogo e deixara de aparecer em novos orcamentos."
+                            data-hf-confirm-text="Este item será removido do catálogo e deixará de aparecer em novos orçamentos."
                             data-hf-confirm-button="Excluir"
                         >
                             {% csrf_token %}
@@ -243,7 +243,7 @@
         <section class="empty-state catalog-empty">
             <i class="bi bi-inboxes"></i>
             <strong>Nenhum item encontrado</strong>
-            <span>Cadastre o primeiro servico, como sofa retratil, tapete ou colchao, para usar nos orcamentos.</span>
+            <span>Cadastre o primeiro serviço, como sofá retrátil, tapete ou colchão, para usar nos orçamentos.</span>
             <div class="dashboard-actions">
                 <a href="{% url 'nova_categoria' %}" class="hf-btn hf-btn-light">Cadastrar categoria</a>
                 <a href="{% url 'novo_produto' %}" class="hf-btn hf-btn-primary">Cadastrar item</a>

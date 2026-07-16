@@ -48,7 +48,7 @@ class ViaCepService:
         cep_limpo = self._normalizar_cep(cep)
         payload = self._get_json(f"/ws/{cep_limpo}/json/")
         if payload.get("erro"):
-            raise ViaCepLookupError("Nenhum endereco foi encontrado para o CEP informado.")
+            raise ViaCepLookupError("Nenhum endereço foi encontrado para o CEP informado.")
         return self._normalizar_endereco(payload)
 
     def buscar_por_endereco(
@@ -73,7 +73,7 @@ class ViaCepService:
         path = f"/ws/{quote(uf_limpa)}/{quote(cidade_limpa)}/{quote(logradouro_limpo)}/json/"
         payload = self._get_json(path)
         if not isinstance(payload, list):
-            raise ViaCepLookupError("A API ViaCEP retornou um formato de endereco inesperado.")
+            raise ViaCepLookupError("A API ViaCEP retornou um formato de endereço inesperado.")
 
         resultados = [self._normalizar_endereco(item) for item in payload if self._aceita_bairro(item, bairro)]
         return resultados
@@ -91,7 +91,7 @@ class ViaCepService:
 
     def _normalizar_endereco(self, payload: dict[str, Any]) -> EnderecoViaCep:
         if not isinstance(payload, dict):
-            raise ViaCepLookupError("A API ViaCEP retornou um formato de endereco inesperado.")
+            raise ViaCepLookupError("A API ViaCEP retornou um formato de endereço inesperado.")
 
         return EnderecoViaCep(
             cep=(payload.get("cep") or "").strip(),
@@ -112,16 +112,16 @@ class ViaCepService:
         except HTTPError as exc:
             logger.warning("Falha ao consultar ViaCEP. status=%s url=%s", exc.code, url)
             if exc.code == 400:
-                raise ViaCepLookupError("Os dados informados para consulta de CEP sao invalidos.") from exc
+                raise ViaCepLookupError("Os dados informados para consulta de CEP são inválidos.") from exc
             if exc.code in {500, 502, 503, 504}:
                 raise ViaCepTemporaryUnavailableError(
-                    "A consulta de CEP esta indisponivel no momento. "
-                    "Voce pode preencher o endereco manualmente e tentar novamente depois."
+                    "A consulta de CEP está indisponível no momento. "
+                    "Você pode preencher o endereço manualmente e tentar novamente depois."
                 ) from exc
             raise ViaCepLookupError("Falha ao consultar a API ViaCEP.") from exc
         except (TimeoutError, URLError) as exc:
             logger.warning("Falha de conexao ao consultar ViaCEP. url=%s erro=%s", url, exc)
             raise ViaCepTemporaryUnavailableError(
-                "Nao foi possivel consultar o ViaCEP no momento. "
-                "Voce pode preencher o endereco manualmente e tentar novamente depois."
+                "Não foi possível consultar o ViaCEP no momento. "
+                "Você pode preencher o endereço manualmente e tentar novamente depois."
             ) from exc

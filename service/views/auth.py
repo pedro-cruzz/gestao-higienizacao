@@ -25,7 +25,7 @@ class ServiceLoginView(LoginView):
     def form_valid(self, form):
         user = form.get_user()
         if not has_service_access(user):
-            form.add_error(None, "Seu usuario ainda nao tem perfil de acesso no HigiFlow.")
+            form.add_error(None, "Seu usuário ainda não tem perfil de acesso no HigiFlow.")
             return self.form_invalid(form)
         return super().form_valid(form)
 
@@ -36,20 +36,20 @@ def painel_inicial(request: HttpRequest) -> HttpResponse:
         return dashboard_view(request)
     if is_team_user(request.user):
         return redirect("agenda")
-    raise PermissionDenied("Seu usuario nao tem permissao para acessar esta area.")
+    raise PermissionDenied("Seu usuário não tem permissão para acessar esta área.")
 
 
 @login_required
 def sair(request: HttpRequest) -> HttpResponse:
     logout(request)
-    messages.success(request, "Voce saiu do HigiFlow com seguranca.")
+    messages.success(request, "Você saiu do HigiFlow com segurança.")
     return redirect("login")
 
 
 @login_required
 def perfil_usuario(request: HttpRequest) -> HttpResponse:
     if not is_admin_user(request.user):
-        raise PermissionDenied("Seu usuario nao tem permissao para acessar esta area.")
+        raise PermissionDenied("Seu usuário não tem permissão para acessar esta área.")
 
     if request.method == "POST":
         form = PerfilUsuarioForm(request.POST, request.FILES, instance=request.user)

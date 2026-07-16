@@ -27,7 +27,7 @@
                     <i class="bi bi-pencil-square"></i>
                     <span>Editar</span>
                 </a>
-                <form method="post" action="{% url 'deletar_os' ordem.pk %}" class="d-inline ms-2" data-hf-confirm data-hf-confirm-icon="warning" data-hf-confirm-title="Excluir OS?" data-hf-confirm-text="Esta acao removera a ordem de servico permanentemente." data-hf-confirm-button="Excluir">
+                <form method="post" action="{% url 'deletar_os' ordem.pk %}" class="d-inline ms-2" data-hf-confirm data-hf-confirm-icon="warning" data-hf-confirm-title="Excluir OS?" data-hf-confirm-text="Esta ação removerá a ordem de serviço permanentemente." data-hf-confirm-button="Excluir">
                     {% csrf_token %}
                     <button type="submit" class="hf-btn hf-btn-outline-danger">
                         <i class="bi bi-trash"></i>
@@ -43,7 +43,7 @@
             <div>
                 <p>Status</p>
                 <strong>{{ ordem.get_status_display }}</strong>
-                <span><i class="bi bi-clipboard-check"></i>Ordem de servico</span>
+                <span><i class="bi bi-clipboard-check"></i>Ordem de serviço</span>
             </div>
             <span class="metric-icon"><i class="bi bi-list-check"></i></span>
         </article>
@@ -57,9 +57,9 @@
         </article>
         <article class="metric-card">
             <div>
-                <p>Responsavel</p>
+                <p>Responsável</p>
                 <strong>{{ ordem.responsavel_nome }}</strong>
-                <span><i class="bi bi-person-gear"></i>Execucao</span>
+                <span><i class="bi bi-person-gear"></i>Execução</span>
             </div>
             <span class="metric-icon"><i class="bi bi-person-check"></i></span>
         </article>
@@ -67,7 +67,7 @@
             <div>
                 <p>Valor</p>
                 <strong>R$ {{ ordem.valor|floatformat:2 }}</strong>
-                <span><i class="bi bi-wallet2"></i>Servico</span>
+                <span><i class="bi bi-wallet2"></i>Serviço</span>
             </div>
             <span class="metric-icon"><i class="bi bi-currency-dollar"></i></span>
         </article>
@@ -77,21 +77,21 @@
         <div class="orcamento-main-stack">
             <article class="dashboard-card orcamento-panel">
                 <header>
-                    <h2>Execucao</h2>
+                    <h2>Execução</h2>
                     <span class="status-pill {{ status_class }}">{{ ordem.get_status_display }}</span>
                 </header>
                 <div class="orcamento-detail-list">
                     <div>
-                        <span>Servico</span>
-                        <strong>{{ ordem.descricao|default:"Sem descricao" }}</strong>
+                        <span>Serviço</span>
+                        <strong>{{ ordem.descricao|default:"Sem descrição" }}</strong>
                     </div>
                     <div>
-                        <span>Endereco</span>
-                        <strong>{{ ordem.endereco|default:"Sem endereco" }}</strong>
+                        <span>Endereço</span>
+                        <strong>{{ ordem.endereco|default:"Sem endereço" }}</strong>
                     </div>
                     <div>
-                        <span>Instrucoes</span>
-                        <strong>{{ ordem.instrucoes|default:"Sem instrucoes internas" }}</strong>
+                        <span>Instruções</span>
+                        <strong>{{ ordem.instrucoes|default:"Sem instruções internas" }}</strong>
                     </div>
                     <div>
                         <span>Checklist</span>
@@ -99,7 +99,7 @@
                     </div>
                     {% if ordem.observacoes_execucao %}
                         <div>
-                            <span>Observacoes da execucao</span>
+                            <span>Observações da execução</span>
                             <strong>{{ ordem.observacoes_execucao }}</strong>
                         </div>
                     {% endif %}
@@ -116,13 +116,13 @@
                 <div class="service-map-header">
                     <div>
                         <h2>Mapa e rota</h2>
-                        <p class="muted-copy mb-0">{{ mapa.endereco|default:"Endereco do servico nao informado." }}</p>
+                        <p class="muted-copy mb-0">{{ mapa.endereco|default:"Endereço do serviço não informado." }}</p>
                     </div>
                     {% if mapa %}
                         <div class="service-map-actions">
                             <button type="button" class="btn btn-success" data-use-location disabled>
                                 <i class="bi bi-crosshair"></i>
-                                Usar minha localizacao
+                                Usar minha localização
                             </button>
                             <button type="button" class="btn btn-outline-secondary" data-map-fullscreen>
                                 <i class="bi bi-arrows-fullscreen"></i>
@@ -142,9 +142,9 @@
 
                 {% if mapa %}
                     <div class="service-map-canvas" data-map-canvas></div>
-                    <div class="service-map-status muted-copy" data-map-status>Localizando endereco do servico...</div>
+                    <div class="service-map-status muted-copy" data-map-status>Localizando endereço do serviço...</div>
                 {% else %}
-                    <div class="empty-state text-center p-4 mt-3">Cadastre o endereco do servico para visualizar o mapa.</div>
+                    <div class="empty-state text-center p-4 mt-3">Cadastre o endereço do serviço para visualizar o mapa.</div>
                 {% endif %}
             </article>
 
@@ -173,7 +173,7 @@
                     <div class="form-actions span-2">
                         <button type="submit" class="hf-btn hf-btn-primary">
                             <i class="bi bi-check2-circle"></i>
-                            <span>Salvar execucao</span>
+                            <span>Salvar execução</span>
                         </button>
                     </div>
                 </form>
@@ -221,14 +221,14 @@
                 </header>
                 {% if ordem.orcamento %}
                     <div class="orcamento-linked-client">
-                        <strong>Orcamento #{{ ordem.orcamento.pk }}</strong>
+                        <strong>Orçamento #{{ ordem.orcamento.pk }}</strong>
                         <span>{{ ordem.orcamento.name }} - R$ {{ ordem.orcamento.valor|floatformat:2 }}</span>
                     </div>
                     {% if hf_is_admin %}
                         <div class="orcamento-action-list mt-3">
                             <a class="hf-btn hf-btn-light" href="{% url 'orcamento_detalhe' ordem.orcamento.pk %}">
                                 <i class="bi bi-file-earmark-text"></i>
-                                <span>Abrir orcamento</span>
+                                <span>Abrir orçamento</span>
                             </a>
                         </div>
                     {% endif %}
@@ -282,8 +282,8 @@
                 }
                 locationButton.disabled = isLoading || !destination;
                 locationButton.innerHTML = isLoading
-                    ? '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Tracando rota'
-                    : '<i class="bi bi-crosshair"></i> Usar minha localizacao';
+                    ? '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Traçando rota'
+                    : '<i class="bi bi-crosshair"></i> Usar minha localização';
             }
 
             function syncMapSize() {
@@ -328,7 +328,7 @@
                     });
                     const payload = await response.json();
                     if (!response.ok || !payload.ok) {
-                        throw new Error(payload.error || "Nao foi possivel localizar o endereco.");
+                        throw new Error(payload.error || "Não foi possível localizar o endereço.");
                     }
 
                     destination = L.latLng(
@@ -338,13 +338,13 @@
 
                     L.marker(destination)
                         .addTo(map)
-                        .bindPopup("Local do servico");
+                        .bindPopup("Local do serviço");
                     map.setView(destination, 16);
 
                     if (locationButton) {
                         locationButton.disabled = false;
                     }
-                    setStatus("Endereco localizado. A rota pode ser tracada pela localizacao atual.", "success");
+                    setStatus("Endereço localizado. A rota pode ser traçada pela localização atual.", "success");
                 } catch (error) {
                     setStatus(error.message, "error");
                 }
@@ -360,7 +360,7 @@
 
                 userMarker = L.marker(origin)
                     .addTo(map)
-                    .bindPopup("Sua localizacao");
+                    .bindPopup("Sua localização");
 
                 routeControl = L.Routing.control({
                     waypoints: [origin, destination],
@@ -383,14 +383,14 @@
                 routeControl.on("routesfound", (event) => {
                     const summary = event.routes[0]?.summary || {};
                     setStatus(
-                        `Rota tracada: ${formatDistance(summary.totalDistance)} - ${formatDuration(summary.totalTime)}.`,
+                        `Rota traçada: ${formatDistance(summary.totalDistance)} - ${formatDuration(summary.totalTime)}.`,
                         "success",
                     );
                     setButtonLoading(false);
                 });
 
                 routeControl.on("routingerror", () => {
-                    setStatus("Nao foi possivel tracar a rota dentro do app. Use o Maps como alternativa.", "error");
+                    setStatus("Não foi possível traçar a rota dentro do app. Use o Maps como alternativa.", "error");
                     setButtonLoading(false);
                 });
             }
@@ -400,18 +400,18 @@
                     return;
                 }
                 if (!navigator.geolocation) {
-                    setStatus("Este navegador nao permite usar a localizacao atual.", "error");
+                    setStatus("Este navegador não permite usar a localização atual.", "error");
                     return;
                 }
 
                 setButtonLoading(true);
-                setStatus("Aguardando permissao de localizacao...", "muted");
+                setStatus("Aguardando permissão de localização...", "muted");
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         traceRoute(L.latLng(position.coords.latitude, position.coords.longitude));
                     },
                     () => {
-                        setStatus("Nao foi possivel acessar sua localizacao.", "error");
+                        setStatus("Não foi possível acessar sua localização.", "error");
                         setButtonLoading(false);
                     },
                     {

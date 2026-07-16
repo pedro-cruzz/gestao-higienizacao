@@ -212,9 +212,9 @@ class ServiceViewsTests(TestCase):
         response = self.client.get(reverse("catalogo"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Catalogo")
+        self.assertContains(response, "Catálogo")
         self.assertContains(response, self.item_a.name)
-        self.assertContains(response, "Orcar item")
+        self.assertContains(response, "Orçar item")
 
     def test_lista_clientes_retorna_ok(self):
         cliente = Cliente.objects.create(
@@ -439,15 +439,15 @@ class ServiceViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Configura")
-        self.assertContains(response, "Tabela de Precos")
-        self.assertContains(response, "Usuarios e Permissoes")
+        self.assertContains(response, "Tabela de Preços")
+        self.assertContains(response, "Usuários e Permissões")
         self.assertContains(response, "Dados da Empresa")
-        self.assertContains(response, "Usuarios do Sistema")
+        self.assertContains(response, "Usuários do Sistema")
         self.assertContains(response, "Perfis de Acesso")
-        self.assertContains(response, "Equipe tecnica")
-        self.assertContains(response, "Razao Social")
+        self.assertContains(response, "Equipe técnica")
+        self.assertContains(response, "Razão Social")
         self.assertContains(response, "HigiFlow Limpeza Profissional Ltda")
-        self.assertContains(response, "Salvar Alteracoes")
+        self.assertContains(response, "Salvar Alterações")
 
     def test_login_placeholder_e_link_de_saida(self):
         inicio_response = self.client.get(reverse("inicio"))
@@ -919,7 +919,7 @@ class ServiceViewsTests(TestCase):
         response = self.client.get(reverse("novo_cliente"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Puxar dados de um orcamento")
+        self.assertContains(response, "Puxar dados de um orçamento")
         self.assertContains(response, "Cliente Origem Form")
 
     def test_edita_cliente(self):
@@ -970,8 +970,8 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "120.00")
         self.assertContains(response, reverse("editar_orcamento", args=[orcamento.pk]))
         self.assertContains(response, reverse("deletar_orcamento", args=[orcamento.pk]))
-        self.assertContains(response, "Editar orcamento")
-        self.assertContains(response, "Excluir orcamento")
+        self.assertContains(response, "Editar orçamento")
+        self.assertContains(response, "Excluir orçamento")
 
     def test_lista_ordens_servico_retorna_ok(self):
         ordem = OrdemServico.objects.create(
@@ -997,7 +997,7 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "data-os-map-route")
         self.assertContains(response, "data-os-map-route-external")
         self.assertContains(response, "Rota no Maps")
-        self.assertContains(response, "Rota tracada")
+        self.assertContains(response, "Rota traçada")
 
     def test_equipe_ve_apenas_ordens_do_proprio_tecnico(self):
         group = Group.objects.create(name=TEAM_GROUP)
@@ -1059,7 +1059,7 @@ class ServiceViewsTests(TestCase):
         self.assertNotContains(detalhe_response, ">Editar<")
         self.assertNotContains(detalhe_response, ">Excluir<")
         self.assertContains(detalhe_response, "Orcamento Equipe")
-        self.assertNotContains(detalhe_response, "Abrir orcamento")
+        self.assertNotContains(detalhe_response, "Abrir orçamento")
         self.assertEqual(self.client.get(reverse("os_detalhe", args=[ordem_outra.pk])).status_code, 404)
         self.assertEqual(
             self.client.post(
@@ -1093,7 +1093,7 @@ class ServiceViewsTests(TestCase):
 
         detalhe_response = self.client.get(reverse("os_detalhe", args=[ordem.pk]))
         self.assertEqual(detalhe_response.status_code, 200)
-        self.assertContains(detalhe_response, "Abrir orcamento")
+        self.assertContains(detalhe_response, "Abrir orçamento")
 
     def test_atualiza_status_os_pelo_kanban(self):
         ordem = OrdemServico.objects.create(
@@ -1689,7 +1689,7 @@ class ServiceViewsTests(TestCase):
         response = self.client.get(reverse("orcamento_detalhe", args=[orcamento.pk]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Ainda nao vinculado")
+        self.assertContains(response, "Ainda não vinculado")
 
     def test_aprova_orcamento_com_cliente_vinculado(self):
         cliente = Cliente.objects.create(
@@ -1991,7 +1991,7 @@ class ServiceViewsTests(TestCase):
         ordem = OrdemServico.objects.get(orcamento=orcamento)
         self.assertEqual(ordem.cliente, cliente)
         self.assertEqual(ordem.tecnico, tecnico)
-        self.assertEqual(ordem.titulo, "Servico para Cliente OS")
+        self.assertEqual(ordem.titulo, "Serviço para Cliente OS")
         self.assertEqual(ordem.valor, 120.0)
         self.assertEqual(ordem.endereco, "Rua OS, 10")
 

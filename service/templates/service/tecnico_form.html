@@ -5,8 +5,8 @@
 {% block content %}
     <section class="page-heading">
         <div>
-            <h1>{% if is_edit %}Editar equipe{% else %}Nova equipe tecnica{% endif %}</h1>
-            <p>Use este cadastro para distribuir servicos na agenda e nas OS.</p>
+            <h1>{% if is_edit %}Editar equipe{% else %}Nova equipe técnica{% endif %}</h1>
+            <p>Use este cadastro para distribuir serviços na agenda e nas OS.</p>
         </div>
         <a href="{% url 'tecnicos' %}" class="hf-btn hf-btn-light">
             <i class="bi bi-arrow-left"></i>
@@ -17,7 +17,7 @@
     <section class="catalog-form-layout">
         <article class="catalog-form-panel">
             <header>
-                <span class="status-pill status-soft-blue">Usuario operacional</span>
+                <span class="status-pill status-soft-blue">Usuário operacional</span>
                 <h2>Dados da equipe</h2>
             </header>
 
@@ -71,7 +71,7 @@
                 <div class="form-actions span-2">
                     <button type="submit" class="hf-btn hf-btn-primary">
                         <i class="bi bi-check-lg"></i>
-                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar equipe{% endif %}</span>
+                        <span>{% if is_edit %}Salvar alterações{% else %}Salvar equipe{% endif %}</span>
                     </button>
                     <a href="{% url 'tecnicos' %}" class="hf-btn hf-btn-light">Cancelar</a>
                 </div>

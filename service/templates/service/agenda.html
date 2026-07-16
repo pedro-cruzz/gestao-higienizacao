@@ -6,18 +6,18 @@
     <section class="page-heading agenda-heading">
         <div>
             <h1>Agenda</h1>
-            <p>{{ total_mes }} servico(s) programado(s) neste mes.</p>
+            <p>{{ total_mes }} serviço(s) programado(s) neste mês.</p>
         </div>
 
-        <div class="agenda-week-controls" aria-label="Navegacao do mes">
-            <a href="{% url 'agenda' %}?data={{ mes_anterior }}" class="agenda-nav-button" aria-label="Mes anterior">
+        <div class="agenda-week-controls" aria-label="Navegação do mês">
+            <a href="{% url 'agenda' %}?data={{ mes_anterior }}" class="agenda-nav-button" aria-label="Mês anterior">
                 <i class="bi bi-chevron-left"></i>
             </a>
             <a href="{% url 'agenda' %}?data={{ hoje }}" class="agenda-period">
                 <i class="bi bi-calendar3"></i>
                 <span>{{ periodo_mes }}</span>
             </a>
-            <a href="{% url 'agenda' %}?data={{ proximo_mes }}" class="agenda-nav-button" aria-label="Proximo mes">
+            <a href="{% url 'agenda' %}?data={{ proximo_mes }}" class="agenda-nav-button" aria-label="Próximo mês">
                 <i class="bi bi-chevron-right"></i>
             </a>
         </div>
@@ -26,8 +26,8 @@
     <section class="agenda-month-card" aria-label="Agenda mensal">
         <header class="agenda-section-header">
             <div>
-                <h2>Visao mensal</h2>
-                <p>Ordens distribuidas por dia do mes.</p>
+                <h2>Visão mensal</h2>
+                <p>Ordens distribuídas por dia do mês.</p>
             </div>
         </header>
 
@@ -83,9 +83,9 @@
         <header class="agenda-section-header">
             <div>
                 <h2>Semana selecionada</h2>
-                <p>{{ total_semana }} servico(s) programado(s) nesta semana.</p>
+                <p>{{ total_semana }} serviço(s) programado(s) nesta semana.</p>
             </div>
-            <div class="agenda-week-controls" aria-label="Navegacao da semana">
+            <div class="agenda-week-controls" aria-label="Navegação da semana">
                 <a href="{% url 'agenda' %}?data={{ semana_anterior }}" class="agenda-nav-button" aria-label="Semana anterior">
                     <i class="bi bi-chevron-left"></i>
                 </a>
@@ -93,7 +93,7 @@
                     <i class="bi bi-calendar3"></i>
                     <span>{{ periodo_agenda }}</span>
                 </a>
-                <a href="{% url 'agenda' %}?data={{ proxima_semana }}" class="agenda-nav-button" aria-label="Proxima semana">
+                <a href="{% url 'agenda' %}?data={{ proxima_semana }}" class="agenda-nav-button" aria-label="Próxima semana">
                     <i class="bi bi-chevron-right"></i>
                 </a>
             </div>
@@ -113,7 +113,7 @@
                                 class="agenda-route-button"
                                 data-route-day
                                 data-route-stops="{{ dia.rota_stops_json }}"
-                                aria-label="Tracar rota do dia {{ dia.data|date:'d/m' }}"
+                                aria-label="Traçar rota do dia {{ dia.data|date:'d/m' }}"
                             >
                                 <i class="bi bi-sign-turn-right"></i>
                                 <span>Rota</span>
@@ -132,7 +132,7 @@
                                 data-client="{{ ordem.cliente_nome }}"
                                 data-schedule="{{ ordem.data_agendada|date:'d/m/Y' }} {{ ordem.hora_inicio|time:'H:i' }}"
                                 data-responsible="{{ ordem.responsavel_nome }}"
-                                data-address="{{ ordem.mapa.endereco|default:'Endereco nao informado' }}"
+                                data-address="{{ ordem.mapa.endereco|default:'Endereço não informado' }}"
                                 data-maps-url="{{ ordem.mapa.maps_url }}"
                                 data-route-url="{{ ordem.mapa.rota_url }}"
                                 data-status="{{ ordem.get_status_display }}"
@@ -145,7 +145,7 @@
                                 <span class="status-pill {{ ordem.status_css }}">{{ ordem.get_status_display }}</span>
                             </button>
                         {% empty %}
-                            <div class="agenda-empty">Sem servicos</div>
+                            <div class="agenda-empty">Sem serviços</div>
                         {% endfor %}
                     </div>
                 </article>
@@ -171,7 +171,7 @@
             <div class="modal-content agenda-os-modal">
                 <div class="modal-header">
                     <div>
-                        <span class="agenda-os-modal-kicker">Ordem de Servico</span>
+                        <span class="agenda-os-modal-kicker">Ordem de Serviço</span>
                         <h2 class="modal-title" id="agendaOsModalTitle">Detalhes da OS</h2>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
@@ -191,11 +191,11 @@
                             <dd data-os-modal-schedule></dd>
                         </div>
                         <div>
-                            <dt>Responsavel</dt>
+                            <dt>Responsável</dt>
                             <dd data-os-modal-responsible></dd>
                         </div>
                         <div>
-                            <dt>Endereco</dt>
+                            <dt>Endereço</dt>
                             <dd data-os-modal-address></dd>
                         </div>
                     </dl>
@@ -277,8 +277,8 @@
                 if (!navigator.geolocation) {
                     window.hfAlert?.({
                         icon: "warning",
-                        title: "Localizacao indisponivel",
-                        text: "Seu navegador nao permite usar o endereco atual como ponto inicial.",
+                        title: "Localização indisponível",
+                        text: "Seu navegador não permite usar o endereço atual como ponto inicial.",
                     });
                     return;
                 }
@@ -307,8 +307,8 @@
                         routeButton.disabled = false;
                         window.hfAlert?.({
                             icon: "warning",
-                            title: "Localizacao nao autorizada",
-                            text: "Autorize a localizacao para montar a rota a partir do seu endereco atual.",
+                            title: "Localização não autorizada",
+                            text: "Autorize a localização para montar a rota a partir do seu endereço atual.",
                         });
                     },
                     {

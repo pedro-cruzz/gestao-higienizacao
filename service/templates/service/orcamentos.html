@@ -105,7 +105,7 @@
                                     <a
                                         href="{% url 'orcamento_detalhe' linha.obj.pk %}"
                                         class="quote-icon-button"
-                                        aria-label="Abrir orcamento {{ linha.numero }}"
+                                        aria-label="Abrir orçamento {{ linha.numero }}"
                                     >
                                         <i class="bi bi-eye"></i>
                                     </a>
@@ -113,7 +113,7 @@
                                         <a
                                             href="{% url 'orcamento_detalhe' linha.obj.pk %}?aprovar=1"
                                             class="quote-icon-button"
-                                            aria-label="Aprovar orcamento {{ linha.numero }}"
+                                            aria-label="Aprovar orçamento {{ linha.numero }}"
                                         >
                                             <i class="bi bi-send"></i>
                                         </a>
@@ -121,7 +121,7 @@
                                     <a
                                         href="{% url 'gerar_orcamento_pdf' linha.obj.pk %}"
                                         class="quote-icon-button"
-                                        aria-label="Baixar PDF do orcamento {{ linha.numero }}"
+                                        aria-label="Baixar PDF do orçamento {{ linha.numero }}"
                                     >
                                         <i class="bi bi-download"></i>
                                     </a>
@@ -131,14 +131,14 @@
                                         data-bs-toggle="dropdown"
                                         data-bs-boundary="viewport"
                                         aria-expanded="false"
-                                        aria-label="Abrir menu de acoes do orcamento {{ linha.numero }}"
+                                        aria-label="Abrir menu de ações do orçamento {{ linha.numero }}"
                                     >
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
                                         <a href="{% url 'editar_orcamento' linha.obj.pk %}" class="dropdown-item hf-actions-menu-item">
                                             <i class="bi bi-pencil-square"></i>
-                                            <span>Editar orcamento</span>
+                                            <span>Editar orçamento</span>
                                         </a>
                                         <div class="dropdown-divider"></div>
                                         <form
@@ -147,14 +147,14 @@
                                             class="m-0"
                                             data-hf-confirm
                                             data-hf-confirm-icon="warning"
-                                            data-hf-confirm-title="Excluir orcamento?"
-                                            data-hf-confirm-text="Esta acao removera o orcamento permanentemente."
+                                            data-hf-confirm-title="Excluir orçamento?"
+                                            data-hf-confirm-text="Esta ação removerá o orçamento permanentemente."
                                             data-hf-confirm-button="Excluir"
                                         >
                                             {% csrf_token %}
                                             <button type="submit" class="dropdown-item hf-actions-menu-item hf-actions-menu-danger">
                                                 <i class="bi bi-trash"></i>
-                                                <span>Excluir orcamento</span>
+                                                <span>Excluir orçamento</span>
                                             </button>
                                         </form>
                                     </div>

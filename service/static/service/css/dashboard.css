@@ -1,8 +1,11 @@
 :root {
     color-scheme: light;
     --hf-bg: #f3f4f6;
-    --hf-sidebar: #1f2937;
-    --hf-sidebar-muted: #99a1af;
+    --hf-sidebar: #2664eb;
+    --hf-sidebar-muted: rgba(255, 255, 255, 0.7);
+    --hf-sidebar-active: rgba(16, 185, 129, 0.5);
+    --hf-sidebar-hover: rgba(255, 255, 255, 0.12);
+    --hf-login-brand: #1f2937;
     --hf-text: #0a0a0a;
     --hf-muted: #717182;
     --hf-blue: #2664eb;
@@ -19,8 +22,11 @@
 html[data-theme="dark"] {
     color-scheme: dark;
     --hf-bg: #0f172a;
-    --hf-sidebar: #020617;
-    --hf-sidebar-muted: #94a3b8;
+    --hf-sidebar: #2664eb;
+    --hf-sidebar-muted: rgba(255, 255, 255, 0.7);
+    --hf-sidebar-active: rgba(16, 185, 129, 0.5);
+    --hf-sidebar-hover: rgba(255, 255, 255, 0.12);
+    --hf-login-brand: #020617;
     --hf-text: #e5e7eb;
     --hf-muted: #94a3b8;
     --hf-blue: #60a5fa;
@@ -98,16 +104,16 @@ body.login-page {
 }
 
 .hf-brand-logo {
-    width: 61px;
-    height: 61px;
+    width: 142px;
+    height: 51px;
     display: block;
     object-fit: contain;
 }
 
 .hf-brand small {
-    color: var(--hf-sidebar-muted);
+    color: #fff;
     font-size: 12px;
-    line-height: 20px;
+    line-height: 16px;
 }
 
 .hf-nav {
@@ -139,10 +145,14 @@ body.login-page {
     font-size: 18px;
 }
 
-.hf-nav-link:hover,
+.hf-nav-link:hover {
+    color: #fff;
+    background: var(--hf-sidebar-hover);
+}
+
 .hf-nav-link.active {
     color: #fff;
-    background: var(--hf-blue);
+    background: var(--hf-sidebar-active);
 }
 
 .hf-sidebar-exit {
@@ -164,12 +174,12 @@ body.login-page {
 .hf-logout-link:hover,
 .hf-logout-link:focus {
     color: #fff;
-    background: transparent;
+    background: var(--hf-sidebar-hover);
 }
 
 .hf-logout-link:hover i,
 .hf-logout-link:focus i {
-    color: var(--hf-blue);
+    color: #fff;
 }
 
 .hf-main {
@@ -197,7 +207,7 @@ body.login-page {
 }
 
 .login-panel-brand {
-    background: var(--hf-sidebar);
+    background: var(--hf-login-brand);
 }
 
 .login-form-stack {
@@ -435,8 +445,8 @@ body.login-page {
 }
 
 .login-brand-logo {
-    width: 120px;
-    height: 120px;
+    width: 142px;
+    height: 51px;
     object-fit: contain;
 }
 
@@ -6092,10 +6102,14 @@ body.service-map-open {
         padding: 16px;
     }
 
-    .hf-brand-mark,
-    .hf-brand-logo {
+    .hf-brand-mark {
         width: 52px;
         height: 52px;
+    }
+
+    .hf-brand-logo {
+        width: 142px;
+        height: 51px;
     }
 
     .hf-nav {
@@ -6448,9 +6462,12 @@ html[data-theme="dark"] .hf-swal-popup {
     border-color: var(--hf-border);
 }
 
-html[data-theme="dark"] .login-panel-brand,
 html[data-theme="dark"] .hf-sidebar {
     background: var(--hf-sidebar);
+}
+
+html[data-theme="dark"] .login-panel-brand {
+    background: var(--hf-login-brand);
 }
 
 html[data-theme="dark"] .hf-brand,

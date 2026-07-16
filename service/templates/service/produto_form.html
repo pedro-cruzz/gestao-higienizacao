@@ -6,7 +6,7 @@
     <section class="page-heading">
         <div>
             <h1>{% if is_edit %}Editar item{% else %}Novo item{% endif %}</h1>
-            <p>Cadastre servicos, produtos ou tipos de estofado que entram nos orcamentos.</p>
+            <p>Cadastre serviços, produtos ou tipos de estofado que entram nos orçamentos.</p>
         </div>
         <div class="dashboard-actions">
             <a href="{% url 'nova_categoria' %}" class="hf-btn hf-btn-light">
@@ -15,7 +15,7 @@
             </a>
             <a href="{% url 'catalogo' %}" class="hf-btn hf-btn-light">
                 <i class="bi bi-arrow-left"></i>
-                <span>Catalogo</span>
+                <span>Catálogo</span>
             </a>
         </div>
     </section>
@@ -60,7 +60,7 @@
                         {% endif %}
                         <div>
                             {{ form.imagem }}
-                            <p class="field-helper">Use uma foto do item, tecido ou servico. Formatos comuns como JPG, PNG e WebP.</p>
+                            <p class="field-helper">Use uma foto do item, tecido ou serviço. Formatos comuns como JPG, PNG e WebP.</p>
                             {{ form.imagem.errors }}
                         </div>
                     </div>
@@ -111,7 +111,7 @@
                 <div class="form-actions span-2">
                     <button type="submit" class="hf-btn hf-btn-primary">
                         <i class="bi bi-check-lg"></i>
-                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar item{% endif %}</span>
+                        <span>{% if is_edit %}Salvar alterações{% else %}Salvar item{% endif %}</span>
                     </button>
                     <a href="{% url 'catalogo' %}" class="hf-btn hf-btn-light">Cancelar</a>
                 </div>
@@ -120,7 +120,7 @@
 
         <aside class="dashboard-card catalog-recent">
             <header>
-                <h2>Ultimos itens</h2>
+                <h2>Últimos itens</h2>
                 <a href="{% url 'catalogo' %}">Ver todos <i class="bi bi-chevron-right"></i></a>
             </header>
 

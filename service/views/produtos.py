@@ -15,13 +15,13 @@ def novo_produto(request: HttpRequest) -> HttpResponse:
             set_owner(produto, request.user)
             produto.save()
             form.save_m2m()
-            messages.success(request, f"Item '{produto.name}' cadastrado no catalogo com sucesso.")
+            messages.success(request, f"Item '{produto.name}' cadastrado no catálogo com sucesso.")
             return redirect("catalogo")
     else:
         form = ProdutoCatalogoForm(user=request.user)
 
     if request.method == "GET" and not owned_queryset(CategoriaCatalogo.objects, request.user).exists():
-        messages.info(request, "Cadastre uma categoria antes de adicionar itens ao catalogo.")
+        messages.info(request, "Cadastre uma categoria antes de adicionar itens ao catálogo.")
 
     context = {
         "form": form,
@@ -62,5 +62,5 @@ def deletar_produto(request: HttpRequest, pk: int) -> HttpResponse:
     nome = produto.name
     produto.delete()
 
-    messages.success(request, f"Item '{nome}' excluido do catalogo com sucesso.")
+    messages.success(request, f"Item '{nome}' excluído do catálogo com sucesso.")
     return redirect("catalogo")

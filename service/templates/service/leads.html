@@ -108,14 +108,14 @@
                                         data-bs-toggle="dropdown"
                                         data-bs-boundary="viewport"
                                         aria-expanded="false"
-                                        aria-label="Abrir menu de acoes do lead {{ lead.name }}"
+                                        aria-label="Abrir menu de ações do lead {{ lead.name }}"
                                     >
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-end hf-actions-menu">
                                         <a href="{% url 'novo_orcamento' %}?lead={{ lead.obj.pk }}" class="dropdown-item hf-actions-menu-item">
                                             <i class="bi bi-file-earmark-text"></i>
-                                            <span>Criar orcamento</span>
+                                            <span>Criar orçamento</span>
                                         </a>
                                         {% if lead.convertido and lead.cliente %}
                                             <a href="{% url 'editar_cliente' lead.cliente.pk %}" class="dropdown-item hf-actions-menu-item">

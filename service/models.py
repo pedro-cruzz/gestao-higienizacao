@@ -93,7 +93,7 @@ class Lead(models.Model):
         MANUAL = "manual", "Manual"
         WHATSAPP = "whatsapp", "WhatsApp"
         INSTAGRAM = "instagram", "Instagram"
-        INDICACAO = "indicacao", "Indicacao"
+        INDICACAO = "indicacao", "Indicação"
         SITE = "site", "Site"
         OUTRO = "outro", "Outro"
 
@@ -331,7 +331,7 @@ class OrdemServico(models.Model):
     class Status(models.TextChoices):
         AGENDADA = "agendada", "Agendada"
         EM_ANDAMENTO = "em_andamento", "Em andamento"
-        CONCLUIDA = "concluida", "Concluida"
+        CONCLUIDA = "concluida", "Concluída"
         CANCELADA = "cancelada", "Cancelada"
 
     id = models.AutoField(primary_key=True)
@@ -365,7 +365,7 @@ class OrdemServico(models.Model):
     )
     administrador_executa = models.BooleanField(
         default=False,
-        help_text="Marque quando o administrador ou dono executar o servico.",
+        help_text="Marque quando o administrador ou dono executar o serviço.",
     )
     titulo = models.CharField(max_length=140)
     descricao = models.TextField(null=True, blank=True)
@@ -396,4 +396,4 @@ class OrdemServico(models.Model):
     def responsavel_nome(self):
         if self.administrador_executa:
             return "Administrador / dono"
-        return self.tecnico.name if self.tecnico else "Sem responsavel"
+        return self.tecnico.name if self.tecnico else "Sem responsável"

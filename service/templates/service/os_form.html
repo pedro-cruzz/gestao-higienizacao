@@ -5,8 +5,8 @@
 {% block content %}
     <section class="page-heading">
         <div>
-            <h1>{% if is_edit %}Editar OS #{{ ordem.pk }}{% else %}Nova Ordem de Servico{% endif %}</h1>
-            <p>Defina agenda, responsavel e instrucoes para execucao.</p>
+            <h1>{% if is_edit %}Editar OS #{{ ordem.pk }}{% else %}Nova Ordem de Serviço{% endif %}</h1>
+            <p>Defina agenda, responsável e instruções para execução.</p>
         </div>
         <div class="dashboard-actions">
             <a href="{% url 'ordens_servico' %}" class="hf-btn hf-btn-light">
@@ -23,8 +23,8 @@
     <section class="catalog-form-layout">
         <article class="catalog-form-panel">
             <header>
-                <span class="status-pill status-soft-blue">Operacao</span>
-                <h2>{% if is_edit %}Atualizar OS{% else %}Agendar servico{% endif %}</h2>
+                <span class="status-pill status-soft-blue">Operação</span>
+                <h2>{% if is_edit %}Atualizar OS{% else %}Agendar serviço{% endif %}</h2>
             </header>
 
             <form method="post" class="catalog-form">
@@ -120,7 +120,7 @@
                 <div class="form-actions span-2">
                     <button type="submit" class="hf-btn hf-btn-primary">
                         <i class="bi bi-check-lg"></i>
-                        <span>{% if is_edit %}Salvar alteracoes{% else %}Criar OS{% endif %}</span>
+                        <span>{% if is_edit %}Salvar alterações{% else %}Criar OS{% endif %}</span>
                     </button>
                     <a href="{% url 'ordens_servico' %}" class="hf-btn hf-btn-light">Cancelar</a>
                 </div>
@@ -129,7 +129,7 @@
 
         <aside class="dashboard-card catalog-recent">
             <header>
-                <h2>Equipe tecnica</h2>
+                <h2>Equipe técnica</h2>
                 <a href="{% url 'tecnicos' %}">Ver todos <i class="bi bi-chevron-right"></i></a>
             </header>
 

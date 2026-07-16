@@ -6,7 +6,7 @@
     <section class="page-heading">
         <div>
             <h1>{% if is_edit %}Editar acesso{% else %}Novo acesso{% endif %}</h1>
-            <p>Devs gerenciam acessos. Admins usam todas as funcoes do sistema, exceto a area dev.</p>
+            <p>Devs gerenciam acessos. Admins usam todas as funções do sistema, exceto a área dev.</p>
         </div>
         <a href="{% url 'admins' %}" class="hf-btn hf-btn-light">
             <i class="bi bi-arrow-left"></i>
@@ -17,7 +17,7 @@
     <section class="catalog-form-layout">
         <article class="catalog-form-panel">
             <header>
-                <span class="status-pill status-soft-blue">Usuario do sistema</span>
+                <span class="status-pill status-soft-blue">Usuário do sistema</span>
                 <h2>Dados de acesso</h2>
             </header>
 
@@ -61,7 +61,7 @@
                 <div class="form-actions span-2">
                     <button type="submit" class="hf-btn hf-btn-primary">
                         <i class="bi bi-check-lg"></i>
-                        <span>{% if is_edit %}Salvar alteracoes{% else %}Salvar acesso{% endif %}</span>
+                        <span>{% if is_edit %}Salvar alterações{% else %}Salvar acesso{% endif %}</span>
                     </button>
                     <a href="{% url 'admins' %}" class="hf-btn hf-btn-light">Cancelar</a>
                 </div>

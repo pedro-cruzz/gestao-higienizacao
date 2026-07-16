@@ -162,13 +162,13 @@ def deletar_categoria(request: HttpRequest, pk: int) -> HttpResponse:
     if categoria.itens.exists():
         messages.error(
             request,
-            f"Categoria '{categoria.name}' nao pode ser excluida porque possui itens vinculados.",
+            f"Categoria '{categoria.name}' não pode ser excluída porque possui itens vinculados.",
         )
         return redirect("catalogo")
 
     nome = categoria.name
     categoria.delete()
-    messages.success(request, f"Categoria '{nome}' excluida com sucesso.")
+    messages.success(request, f"Categoria '{nome}' excluída com sucesso.")
     return redirect("catalogo")
 
 
@@ -503,6 +503,6 @@ def deletar_cliente(request: HttpRequest, pk: int) -> HttpResponse:
     nome = cliente.name
     cliente.delete()
 
-    messages.success(request, f"Cliente '{nome}' excluido com sucesso.")
+    messages.success(request, f"Cliente '{nome}' excluído com sucesso.")
     return redirect("clientes")
 

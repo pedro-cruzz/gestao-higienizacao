@@ -51,7 +51,7 @@ def novo_admin(request: HttpRequest) -> HttpResponse:
         form = AdminUserForm(request.POST, actor=request.user)
         if form.is_valid():
             user = form.save()
-            messages.success(request, f"Usuario '{user.get_full_name() or user.username}' cadastrado com sucesso.")
+            messages.success(request, f"Usuário '{user.get_full_name() or user.username}' cadastrado com sucesso.")
             return redirect("admins")
     else:
         form = AdminUserForm(initial={"is_active": True, "perfil": ADMIN_GROUP}, actor=request.user)
@@ -65,7 +65,7 @@ def editar_admin(request: HttpRequest, pk: int) -> HttpResponse:
         form = AdminUserForm(request.POST, instance=user, actor=request.user)
         if form.is_valid():
             user = form.save()
-            messages.success(request, f"Usuario '{user.get_full_name() or user.username}' atualizado com sucesso.")
+            messages.success(request, f"Usuário '{user.get_full_name() or user.username}' atualizado com sucesso.")
             return redirect("admins")
     else:
         form = AdminUserForm(instance=user, actor=request.user)
@@ -79,7 +79,7 @@ def deletar_admin(request: HttpRequest, pk: int) -> HttpResponse:
 
     user = get_object_or_404(_usuarios_de_acesso().distinct(), pk=pk)
     if user.pk == request.user.pk:
-        messages.error(request, "Voce nao pode excluir o proprio usuario.")
+        messages.error(request, "Você não pode excluir o próprio usuário.")
         return redirect("admins")
 
     if _usuario_e_dev(user) and not is_dev_user(request.user):
@@ -87,5 +87,5 @@ def deletar_admin(request: HttpRequest, pk: int) -> HttpResponse:
 
     nome = user.get_full_name() or user.username
     user.delete()
-    messages.success(request, f"Usuario '{nome}' excluido com sucesso.")
+    messages.success(request, f"Usuário '{nome}' excluído com sucesso.")
     return redirect("admins")

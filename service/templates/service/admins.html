@@ -31,11 +31,11 @@
                 <thead>
                     <tr>
                         <th>Nome</th>
-                        <th>Usuario</th>
+                        <th>Usuário</th>
                         <th>Email</th>
                         <th>Perfil</th>
                         <th>Status</th>
-                        <th>Acoes</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -62,7 +62,7 @@
                                         data-bs-toggle="dropdown"
                                         data-bs-boundary="viewport"
                                         aria-expanded="false"
-                                        aria-label="Abrir menu de acoes de {{ admin.username }}"
+                                        aria-label="Abrir menu de ações de {{ admin.username }}"
                                     >
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
@@ -80,7 +80,7 @@
                                                 data-hf-confirm
                                                 data-hf-confirm-icon="warning"
                                                 data-hf-confirm-title="Excluir acesso?"
-                                                data-hf-confirm-text="Esta acao removera o usuario de acesso permanentemente."
+                                                data-hf-confirm-text="Esta ação removerá o usuário de acesso permanentemente."
                                                 data-hf-confirm-button="Excluir"
                                             >
                                                 {% csrf_token %}
