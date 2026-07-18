@@ -182,11 +182,13 @@ def listar_clientes(request: HttpRequest) -> HttpResponse:
             Q(name__icontains=busca)
             | Q(email__icontains=busca)
             | Q(telefone__icontains=busca)
+            | Q(cnpj__icontains=busca)
             | Q(endereco__icontains=busca)
             | Q(bairro__icontains=busca)
             | Q(cidade__icontains=busca)
             | Q(uf__icontains=busca)
             | Q(status__icontains=busca)
+            | Q(observacoes__icontains=busca)
         )
 
     clientes = clientes.annotate(
@@ -194,13 +196,6 @@ def listar_clientes(request: HttpRequest) -> HttpResponse:
         total_gasto=Sum("orcamentos__valor"),
         ticket_medio=Avg("orcamentos__valor"),
     )
-
-    def tipo_cliente(cliente: Cliente) -> str:
-        texto = f"{cliente.name} {cliente.email}".lower()
-        termos_empresariais = ("empresa", "ltda", "tech", "hotel", "plaza", "clean", "corp", "comercial")
-        if any(termo in texto for termo in termos_empresariais):
-            return "Empresarial"
-        return "Residencial"
 
     def mes_cliente(cliente: Cliente) -> str:
         meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -223,8 +218,8 @@ def listar_clientes(request: HttpRequest) -> HttpResponse:
             "desde": mes_cliente(cliente),
             "contato": contato_cliente(cliente),
             "localizacao": localizacao_cliente(cliente),
-            "tipo": tipo_cliente(cliente),
-            "tipo_class": "client-type-business" if tipo_cliente(cliente) == "Empresarial" else "client-type-residential",
+            "tipo": cliente.get_tipo_cliente_display(),
+            "tipo_class": "client-type-business" if cliente.tipo_cliente == Cliente.TipoCliente.EMPRESARIAL else "client-type-residential",
             "servicos": cliente.total_servicos or 0,
             "total_gasto": cliente.total_gasto or 0,
             "ticket_medio": cliente.ticket_medio or 0,
@@ -359,6 +354,7 @@ def listar_leads(request: HttpRequest) -> HttpResponse:
 def _cliente_initial_orcamento(orcamento: Orcamento) -> dict:
     return {
         "orcamento_origem": orcamento.pk,
+        "tipo_cliente": Cliente.TipoCliente.RESIDENCIAL,
         "name": orcamento.name,
         "email": orcamento.email,
         "telefone": orcamento.telefone,
@@ -376,6 +372,7 @@ def _cliente_initial_orcamento(orcamento: Orcamento) -> dict:
 
 def _cliente_initial_lead(lead: Lead) -> dict:
     return {
+        "tipo_cliente": Cliente.TipoCliente.RESIDENCIAL,
         "name": lead.name,
         "email": lead.email,
         "telefone": lead.telefone,
@@ -396,9 +393,11 @@ def _orcamentos_origem_cliente(request: HttpRequest):
     return [
         {
             "id": orcamento.pk,
+            "tipo_cliente": Cliente.TipoCliente.RESIDENCIAL,
             "name": orcamento.name,
             "email": orcamento.email or "",
             "telefone": orcamento.telefone or "",
+            "cnpj": "",
             "cep": orcamento.cep or "",
             "logradouro": orcamento.logradouro or "",
             "numero": orcamento.numero or "",
@@ -406,6 +405,7 @@ def _orcamentos_origem_cliente(request: HttpRequest):
             "bairro": orcamento.bairro or "",
             "cidade": orcamento.cidade or "",
             "uf": orcamento.uf or "",
+            "observacoes": "",
             "endereco": orcamento.endereco or "",
             "status": Cliente.Status.CONVERTIDO,
         }
@@ -439,10 +439,11 @@ def novo_cliente(request: HttpRequest) -> HttpResponse:
         initial = _cliente_initial_lead(lead) if lead else _cliente_initial_orcamento(orcamento) if orcamento else None
         form = ClienteForm(initial=initial, user=request.user)
 
+    orcamentos_origem = _orcamentos_origem_cliente(request)
     context = {
         "form": form,
         "clientes_recentes": owned_queryset(Cliente.objects, request.user).order_by("-created_at", "-id")[:5],
-        "orcamentos_origem": _orcamentos_origem_cliente(request),
+        "orcamentos_origem": orcamentos_origem,
         "is_edit": False,
     }
     return render(request, "service/cliente_form.html", context)

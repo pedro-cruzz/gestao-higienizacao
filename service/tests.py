@@ -939,8 +939,34 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(cliente.uf, "SP")
         self.assertIn("Praca da Se, 300", cliente.endereco)
 
+    def test_cria_cliente_empresarial(self):
+        response = self.client.post(
+            reverse("novo_cliente"),
+            {
+                "tipo_cliente": Cliente.TipoCliente.EMPRESARIAL,
+                "name": "Empresa Clean Tech Ltda",
+                "telefone": "1134567890",
+                "cnpj": "12.345.678/0001-90",
+                "cep": "01001-000",
+                "logradouro": "Praça da Sé",
+                "numero": "300",
+                "bairro": "Sé",
+                "cidade": "São Paulo",
+                "uf": "sp",
+                "observacoes": "Atendimento em horário comercial.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        cliente = Cliente.objects.get(name="Empresa Clean Tech Ltda")
+        self.assertEqual(cliente.tipo_cliente, Cliente.TipoCliente.EMPRESARIAL)
+        self.assertEqual(cliente.cnpj, "12.345.678/0001-90")
+        self.assertEqual(cliente.observacoes, "Atendimento em horário comercial.")
+        self.assertEqual(cliente.uf, "SP")
+
     def test_cria_cliente_puxando_dados_do_orcamento(self):
         orcamento = Orcamento.objects.create(
+            owner=self.user,
             name="Cliente do Orcamento",
             email="origem@teste.com",
             telefone="11988889999",
@@ -975,6 +1001,7 @@ class ServiceViewsTests(TestCase):
 
     def test_form_cliente_exibe_opcao_de_orcamento(self):
         Orcamento.objects.create(
+            owner=self.user,
             name="Cliente Origem Form",
             email="form@teste.com",
             quantidade=1,
@@ -989,6 +1016,7 @@ class ServiceViewsTests(TestCase):
 
     def test_edita_cliente(self):
         cliente = Cliente.objects.create(
+            owner=self.user,
             name="Cliente Antigo",
             email="antigo@teste.com",
             telefone="11955556666",

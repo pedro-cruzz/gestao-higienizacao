@@ -156,9 +156,11 @@ class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
         fields = [
+            "tipo_cliente",
             "name",
             "email",
             "telefone",
+            "cnpj",
             "cep",
             "logradouro",
             "numero",
@@ -166,36 +168,47 @@ class ClienteForm(forms.ModelForm):
             "bairro",
             "cidade",
             "uf",
+            "observacoes",
             "endereco",
             "status",
         ]
         labels = {
-            "name": "Nome do cliente",
-            "email": "Email",
-            "telefone": "Telefone",
+            "tipo_cliente": "Tipo de cliente",
+            "name": "Nome completo",
+            "email": "E-mail",
+            "telefone": "WhatsApp",
+            "cnpj": "CNPJ",
             "cep": "CEP",
-            "logradouro": "Logradouro",
+            "logradouro": "Endereço",
             "numero": "Número",
             "complemento": "Complemento",
             "bairro": "Bairro",
             "cidade": "Cidade",
-            "uf": "UF",
+            "uf": "Estado",
+            "observacoes": "Observações",
             "status": "Status",
         }
         widgets = {
-            "name": forms.TextInput(attrs={"placeholder": "Ex.: Maria Souza"}),
+            "tipo_cliente": forms.RadioSelect(),
+            "name": forms.TextInput(attrs={"placeholder": "Digite o nome completo"}),
             "email": forms.EmailInput(attrs={"placeholder": "cliente@empresa.com"}),
-            "telefone": forms.TextInput(attrs={"placeholder": "(11) 99999-9999"}),
+            "telefone": forms.TextInput(attrs={"placeholder": "(00) 00000-0000"}),
+            "cnpj": forms.TextInput(attrs={"placeholder": "00.000.000/0000-00"}),
             "cep": forms.TextInput(attrs={"placeholder": "00000-000", "autocomplete": "postal-code"}),
-            "logradouro": forms.TextInput(attrs={"placeholder": "Rua, avenida ou travessa"}),
-            "numero": forms.TextInput(attrs={"placeholder": "Número"}),
-            "complemento": forms.TextInput(attrs={"placeholder": "Apartamento, bloco, referência"}),
-            "bairro": forms.TextInput(attrs={"placeholder": "Bairro"}),
-            "cidade": forms.TextInput(attrs={"placeholder": "Cidade"}),
+            "logradouro": forms.TextInput(attrs={"placeholder": "Rua, Avenida, etc."}),
+            "numero": forms.TextInput(attrs={"placeholder": "Nº"}),
+            "complemento": forms.TextInput(attrs={"placeholder": "Apto, Sala, etc."}),
+            "bairro": forms.TextInput(attrs={"placeholder": "Digite o bairro"}),
+            "cidade": forms.TextInput(attrs={"placeholder": "Digite a cidade"}),
             "uf": forms.TextInput(attrs={"placeholder": "SP"}),
-            "observacoes": forms.Textarea(attrs={"rows": 4, "placeholder": "Adicione observacoes sobre o lead..."}),
+            "observacoes": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "Informações adicionais, preferências, restrições de acesso, etc.",
+                }
+            ),
             "endereco": forms.HiddenInput(),
-            "status": forms.Select(),
+            "status": forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -211,8 +224,11 @@ class ClienteForm(forms.ModelForm):
         )
         self.fields["orcamento_origem"].label_from_instance = self._orcamento_label
         self.fields["orcamento_origem"].widget.attrs["class"] = "form-select"
+        self.fields["tipo_cliente"].required = False
         for field_name in [
+            "email",
             "telefone",
+            "cnpj",
             "cep",
             "logradouro",
             "numero",
@@ -222,12 +238,15 @@ class ClienteForm(forms.ModelForm):
             "uf",
             "observacoes",
             "endereco",
+            "status",
         ]:
             self.fields[field_name].required = False
 
         for name, field in self.fields.items():
-            if name == "status":
-                field.widget.attrs["class"] = "form-select"
+            if name == "tipo_cliente":
+                field.widget.attrs["class"] = "client-type-radio"
+            elif name == "status":
+                field.widget.attrs["class"] = ""
             elif name != "endereco":
                 field.widget.attrs["class"] = "form-control text-uppercase" if name == "uf" else "form-control"
 
@@ -248,9 +267,11 @@ class ClienteForm(forms.ModelForm):
             return mutable_data
 
         for field_name in [
+            "tipo_cliente",
             "name",
             "email",
             "telefone",
+            "cnpj",
             "cep",
             "logradouro",
             "numero",
@@ -258,6 +279,7 @@ class ClienteForm(forms.ModelForm):
             "bairro",
             "cidade",
             "uf",
+            "observacoes",
             "endereco",
         ]:
             if not mutable_data.get(field_name):
@@ -270,11 +292,16 @@ class ClienteForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        cleaned_data["tipo_cliente"] = cleaned_data.get("tipo_cliente") or Cliente.TipoCliente.RESIDENCIAL
         cleaned_data["email"] = normalizar_email(cleaned_data.get("email"))
         cleaned_data["telefone"] = normalizar_telefone(cleaned_data.get("telefone"))
+        cleaned_data["cnpj"] = (cleaned_data.get("cnpj") or "").strip()
+        if cleaned_data["tipo_cliente"] != Cliente.TipoCliente.EMPRESARIAL:
+            cleaned_data["cnpj"] = ""
         endereco = montar_endereco_limpo(cleaned_data)
         cleaned_data["uf"] = (cleaned_data.get("uf") or "").strip().upper()
         cleaned_data["endereco"] = endereco or (cleaned_data.get("endereco") or "").strip()
+        cleaned_data["status"] = cleaned_data.get("status") or Cliente.Status.NOVO
         return cleaned_data
 
 

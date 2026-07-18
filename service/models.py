@@ -259,6 +259,10 @@ class MultiplicadorOrcamento(models.Model):
 
 
 class Cliente(models.Model):
+    class TipoCliente(models.TextChoices):
+        RESIDENCIAL = "residencial", "Residencial"
+        EMPRESARIAL = "empresarial", "Empresarial"
+
     class Status(models.TextChoices):
         NOVO = "novo", "Novo"
         CONTATADO = "contatado", "Contatado"
@@ -273,9 +277,15 @@ class Cliente(models.Model):
         blank=True,
         related_name="clientes",
     )
+    tipo_cliente = models.CharField(
+        max_length=20,
+        choices=TipoCliente.choices,
+        default=TipoCliente.RESIDENCIAL,
+    )
     name = models.CharField(max_length=100, null=False)
-    email = models.EmailField(null=False)
+    email = models.EmailField(null=True, blank=True)
     telefone = models.CharField(max_length=20, null=True, blank=True)
+    cnpj = models.CharField(max_length=18, null=True, blank=True)
     endereco = models.CharField(max_length=255, null=True, blank=True)
     cep = models.CharField(max_length=9, null=True, blank=True)
     logradouro = models.CharField(max_length=120, null=True, blank=True)
@@ -284,6 +294,7 @@ class Cliente(models.Model):
     bairro = models.CharField(max_length=120, null=True, blank=True)
     cidade = models.CharField(max_length=120, null=True, blank=True)
     uf = models.CharField(max_length=2, null=True, blank=True)
+    observacoes = models.TextField(null=True, blank=True)
     status = models.CharField(
         max_length=20,
         choices=Status.choices,

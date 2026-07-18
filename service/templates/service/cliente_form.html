@@ -3,199 +3,291 @@
 {% block title %}{% if is_edit %}Editar Cliente{% else %}Novo Cliente{% endif %} | HigiFlow{% endblock %}
 
 {% block content %}
-    <section class="hero-card card border-0 p-4 p-lg-5 mb-4">
-        <span class="badge rounded-pill px-3 py-2 mb-3">Clientes</span>
-        <h1 class="display-6 fw-semibold">{% if is_edit %}Atualize os dados do cliente.{% else %}Cadastre um novo cliente na base.{% endif %}</h1>
-        <p class="mb-0 text-white-50">
-            Guarde contato, endereço e status para agilizar orçamentos e acompanhamentos.
-        </p>
+    <section class="client-create-heading">
+        <a href="{% url 'clientes' %}" class="quote-create-back" aria-label="Voltar para clientes">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h1>{% if is_edit %}Editar Cliente{% else %}Cadastrar Novo Cliente{% endif %}</h1>
+            <p>{% if is_edit %}Atualize os dados do cliente{% else %}Preencha os dados do cliente{% endif %}</p>
+        </div>
     </section>
 
-    <section class="row g-4">
-        <article class="col-12 col-xl-8">
-            <div class="content-card p-4">
-                <h2 class="h4 mb-4">{% if is_edit %}Editar cliente{% else %}Novo cliente{% endif %}</h2>
-                <form method="post" class="row g-3" data-cep-url-template="{% url 'buscar_endereco_cep' '00000000' %}">
-                    {% csrf_token %}
-                    {{ form.non_field_errors }}
+    <form
+        method="post"
+        class="client-create-card"
+        data-client-form
+        data-cep-url-template="{% url 'buscar_endereco_cep' '00000000' %}"
+    >
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.email.as_hidden }}
+        {{ form.status }}
+        {{ form.endereco }}
 
-                    {% if not is_edit %}
-                        <div class="col-12">
-                            <label for="{{ form.orcamento_origem.id_for_label }}" class="form-label fw-semibold">{{ form.orcamento_origem.label }}</label>
-                            {{ form.orcamento_origem }}
-                            {{ form.orcamento_origem.errors }}
-                            <p class="muted-copy small mb-0 mt-1">Selecione um orçamento para preencher os dados do cliente automaticamente.</p>
-                        </div>
-                    {% endif %}
+        {% if not is_edit and orcamentos_origem %}
+            <section class="client-origin-panel">
+                <label for="{{ form.orcamento_origem.id_for_label }}">{{ form.orcamento_origem.label }}</label>
+                {{ form.orcamento_origem }}
+                {{ form.orcamento_origem.errors }}
+            </section>
+        {% endif %}
 
-                    <div class="col-12 col-md-6">
-                        <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">{{ form.name.label }}</label>
-                        {{ form.name }}
-                        {{ form.name.errors }}
-                    </div>
+        {% with tipo_cliente=form.tipo_cliente.value|default:"residencial" %}
+            <section class="client-form-section">
+                <h2>Tipo de Cliente</h2>
+                <div class="client-type-selector" role="radiogroup" aria-label="Tipo de cliente">
+                    <label class="client-type-option{% if tipo_cliente == 'residencial' %} active{% endif %}" data-client-type-option>
+                        <input
+                            type="radio"
+                            name="{{ form.tipo_cliente.html_name }}"
+                            value="residencial"
+                            {% if tipo_cliente == 'residencial' %}checked{% endif %}
+                        >
+                        <span class="client-type-icon"><i class="bi bi-house-door"></i></span>
+                        <span>
+                            <strong>Residencial</strong>
+                            <small>Pessoa física</small>
+                        </span>
+                    </label>
 
-                    <div class="col-12 col-md-6">
-                        <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">{{ form.email.label }}</label>
-                        {{ form.email }}
-                        {{ form.email.errors }}
-                    </div>
+                    <label class="client-type-option{% if tipo_cliente == 'empresarial' %} active{% endif %}" data-client-type-option>
+                        <input
+                            type="radio"
+                            name="{{ form.tipo_cliente.html_name }}"
+                            value="empresarial"
+                            {% if tipo_cliente == 'empresarial' %}checked{% endif %}
+                        >
+                        <span class="client-type-icon"><i class="bi bi-building"></i></span>
+                        <span>
+                            <strong>Empresarial</strong>
+                            <small>Pessoa jurídica</small>
+                        </span>
+                    </label>
+                </div>
+                {{ form.tipo_cliente.errors }}
+            </section>
+        {% endwith %}
 
-                    <div class="col-12 col-md-6">
-                        <label for="{{ form.telefone.id_for_label }}" class="form-label fw-semibold">{{ form.telefone.label }}</label>
-                        {{ form.telefone }}
-                        {{ form.telefone.errors }}
-                    </div>
+        <section class="client-form-section">
+            <h2>Dados Básicos</h2>
+            <div class="client-form-grid">
+                <label class="client-field client-field-wide" for="{{ form.name.id_for_label }}">
+                    <span><span data-client-name-label>Nome completo</span> <strong>*</strong></span>
+                    {{ form.name }}
+                    {{ form.name.errors }}
+                </label>
 
-                    <div class="col-12 col-md-6">
-                        <label for="{{ form.status.id_for_label }}" class="form-label fw-semibold">{{ form.status.label }}</label>
-                        {{ form.status }}
-                        {{ form.status.errors }}
-                    </div>
+                <label class="client-field" for="{{ form.telefone.id_for_label }}">
+                    <span>{{ form.telefone.label }} <strong>*</strong></span>
+                    {{ form.telefone }}
+                    {{ form.telefone.errors }}
+                </label>
 
-                    {{ form.endereco }}
+                <label class="client-field" for="{{ form.cnpj.id_for_label }}" data-client-cnpj-field>
+                    <span>{{ form.cnpj.label }}</span>
+                    {{ form.cnpj }}
+                    {{ form.cnpj.errors }}
+                </label>
+            </div>
+        </section>
 
-                    <div class="col-12">
-                        <div class="d-flex align-items-center justify-content-between gap-3 mb-1">
-                            <h3 class="h5 mb-0">Endereço</h3>
-                            <span class="status-pill status-soft-blue">ViaCEP</span>
-                        </div>
-                        <p class="muted-copy small mb-0">Digite o CEP para preencher rua, bairro, cidade e UF automaticamente.</p>
-                    </div>
-
-                    <div class="col-12 col-md-4">
-                        <label for="{{ form.cep.id_for_label }}" class="form-label fw-semibold">{{ form.cep.label }}</label>
-                        <div class="input-group">
-                            {{ form.cep }}
-                            <button type="button" class="btn btn-outline-secondary" data-cep-search>
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                        {{ form.cep.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-8">
-                        <label for="{{ form.logradouro.id_for_label }}" class="form-label fw-semibold">{{ form.logradouro.label }}</label>
-                        {{ form.logradouro }}
-                        {{ form.logradouro.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-3">
-                        <label for="{{ form.numero.id_for_label }}" class="form-label fw-semibold">{{ form.numero.label }}</label>
-                        {{ form.numero }}
-                        {{ form.numero.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-5">
-                        <label for="{{ form.complemento.id_for_label }}" class="form-label fw-semibold">{{ form.complemento.label }}</label>
-                        {{ form.complemento }}
-                        {{ form.complemento.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-4">
-                        <label for="{{ form.bairro.id_for_label }}" class="form-label fw-semibold">{{ form.bairro.label }}</label>
-                        {{ form.bairro }}
-                        {{ form.bairro.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-8">
-                        <label for="{{ form.cidade.id_for_label }}" class="form-label fw-semibold">{{ form.cidade.label }}</label>
-                        {{ form.cidade }}
-                        {{ form.cidade.errors }}
-                    </div>
-
-                    <div class="col-12 col-md-4">
-                        <label for="{{ form.uf.id_for_label }}" class="form-label fw-semibold">{{ form.uf.label }}</label>
-                        {{ form.uf }}
-                        {{ form.uf.errors }}
-                    </div>
-
-                    <div class="col-12 d-flex flex-wrap gap-2">
-                        <button type="submit" class="btn btn-success">
-                            {% if is_edit %}Salvar alterações{% else %}Salvar cliente{% endif %}
+        <section class="client-form-section">
+            <h2>Endereço</h2>
+            <div class="client-address-grid">
+                <label class="client-field client-field-cep" for="{{ form.cep.id_for_label }}">
+                    <span>{{ form.cep.label }} <strong>*</strong></span>
+                    <span class="client-cep-row">
+                        {{ form.cep }}
+                        <button type="button" class="client-cep-button" data-cep-search aria-label="Buscar CEP">
+                            <i class="bi bi-search"></i>
                         </button>
-                        <a href="{% url 'clientes' %}" class="btn btn-outline-secondary">Cancelar</a>
-                    </div>
-                </form>
-            </div>
-        </article>
+                    </span>
+                    {{ form.cep.errors }}
+                </label>
 
-        <aside class="col-12 col-xl-4">
-            <div class="section-card p-4">
-                <h2 class="h4 mb-4">Clientes recentes</h2>
-                {% if clientes_recentes %}
-                    <div class="list-group list-group-flush">
-                        {% for cliente_recente in clientes_recentes %}
-                            <div class="list-group-item px-0 py-3 bg-transparent border-bottom">
-                                <div class="d-flex justify-content-between gap-3">
-                                    <div>
-                                        <div class="fw-semibold">{{ cliente_recente.name }}</div>
-                                        <div class="small muted-copy">{{ cliente_recente.telefone|default:cliente_recente.email }}</div>
-                                    </div>
-                                    <span class="badge text-bg-light border text-dark rounded-pill align-self-start">{{ cliente_recente.get_status_display }}</span>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="empty-state text-center p-4">
-                        Nenhum outro cliente cadastrado ainda.
-                    </div>
-                {% endif %}
+                <label class="client-field client-field-address" for="{{ form.logradouro.id_for_label }}">
+                    <span>{{ form.logradouro.label }} <strong>*</strong></span>
+                    {{ form.logradouro }}
+                    {{ form.logradouro.errors }}
+                </label>
+
+                <label class="client-field" for="{{ form.numero.id_for_label }}">
+                    <span>{{ form.numero.label }} <strong>*</strong></span>
+                    {{ form.numero }}
+                    {{ form.numero.errors }}
+                </label>
+
+                <label class="client-field" for="{{ form.complemento.id_for_label }}">
+                    <span>{{ form.complemento.label }}</span>
+                    {{ form.complemento }}
+                    {{ form.complemento.errors }}
+                </label>
+
+                <label class="client-field" for="{{ form.bairro.id_for_label }}">
+                    <span>{{ form.bairro.label }} <strong>*</strong></span>
+                    {{ form.bairro }}
+                    {{ form.bairro.errors }}
+                </label>
+
+                <label class="client-field" for="{{ form.cidade.id_for_label }}">
+                    <span>{{ form.cidade.label }} <strong>*</strong></span>
+                    {{ form.cidade }}
+                    {{ form.cidade.errors }}
+                </label>
+
+                <label class="client-field client-field-state" for="{{ form.uf.id_for_label }}">
+                    <span>{{ form.uf.label }} <strong>*</strong></span>
+                    {{ form.uf }}
+                    {{ form.uf.errors }}
+                </label>
+
+                <label class="client-field client-field-wide" for="{{ form.observacoes.id_for_label }}">
+                    <span>{{ form.observacoes.label }}</span>
+                    {{ form.observacoes }}
+                    {{ form.observacoes.errors }}
+                </label>
             </div>
-        </aside>
-    </section>
+        </section>
+
+        <footer class="client-form-actions">
+            <p><strong>*</strong> Campos obrigatórios</p>
+            <div>
+                <a href="{% url 'clientes' %}" class="hf-btn hf-btn-light">Cancelar</a>
+                <button type="submit" class="hf-btn hf-btn-primary">
+                    {% if is_edit %}Salvar alterações{% else %}Cadastrar Cliente{% endif %}
+                </button>
+            </div>
+        </footer>
+    </form>
 {% endblock %}
 
 {% block extra_scripts %}
     {% if not is_edit %}
         {{ orcamentos_origem|json_script:"orcamentos-origem-data" }}
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const select = document.querySelector("[name='orcamento_origem']");
-                const dataElement = document.getElementById("orcamentos-origem-data");
-                if (!select || !dataElement) {
+    {% endif %}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.querySelector("[data-client-form]");
+            if (!form) {
+                return;
+            }
+
+            const typeInputs = form.querySelectorAll("input[name='tipo_cliente']");
+            const nameInput = form.querySelector("[name='name']");
+            const nameLabel = form.querySelector("[data-client-name-label]");
+            const cnpjField = form.querySelector("[data-client-cnpj-field]");
+            const cnpjInput = form.querySelector("[name='cnpj']");
+            const telefoneInput = form.querySelector("[name='telefone']");
+
+            function onlyDigits(value, limit) {
+                return value.replace(/\D/g, "").slice(0, limit);
+            }
+
+            function formatPhone(value) {
+                const digits = onlyDigits(value, 11);
+                if (digits.length <= 2) return digits;
+                if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+                return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+            }
+
+            function formatCnpj(value) {
+                const digits = onlyDigits(value, 14);
+                if (digits.length <= 2) return digits;
+                if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+                if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+                if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+                return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+            }
+
+            function currentType() {
+                return form.querySelector("input[name='tipo_cliente']:checked")?.value || "residencial";
+            }
+
+            function syncClientType() {
+                const isBusiness = currentType() === "empresarial";
+                form.querySelectorAll("[data-client-type-option]").forEach((option) => {
+                    option.classList.toggle("active", option.querySelector("input")?.checked);
+                });
+                if (nameLabel) {
+                    nameLabel.textContent = isBusiness ? "Razão Social" : "Nome completo";
+                }
+                if (nameInput) {
+                    nameInput.placeholder = isBusiness ? "Digite a razão social da empresa" : "Digite o nome completo";
+                }
+                if (cnpjField) {
+                    cnpjField.hidden = !isBusiness;
+                }
+            }
+
+            typeInputs.forEach((input) => input.addEventListener("change", syncClientType));
+            syncClientType();
+
+            if (telefoneInput) {
+                telefoneInput.addEventListener("input", () => {
+                    telefoneInput.value = formatPhone(telefoneInput.value);
+                });
+            }
+            if (cnpjInput) {
+                cnpjInput.addEventListener("input", () => {
+                    cnpjInput.value = formatCnpj(cnpjInput.value);
+                });
+            }
+
+            const originSelect = form.querySelector("[name='orcamento_origem']");
+            const dataElement = document.getElementById("orcamentos-origem-data");
+            if (!originSelect || !dataElement) {
+                return;
+            }
+
+            const orcamentos = JSON.parse(dataElement.textContent).reduce((accumulator, orcamento) => {
+                accumulator[String(orcamento.id)] = orcamento;
+                return accumulator;
+            }, {});
+
+            const fieldNames = [
+                "tipo_cliente",
+                "name",
+                "email",
+                "telefone",
+                "cnpj",
+                "cep",
+                "logradouro",
+                "numero",
+                "complemento",
+                "bairro",
+                "cidade",
+                "uf",
+                "observacoes",
+                "endereco",
+                "status",
+            ];
+
+            function applyOrcamentoData() {
+                const orcamento = orcamentos[originSelect.value];
+                if (!orcamento) {
                     return;
                 }
 
-                const orcamentos = JSON.parse(dataElement.textContent).reduce((accumulator, orcamento) => {
-                    accumulator[String(orcamento.id)] = orcamento;
-                    return accumulator;
-                }, {});
-
-                const fieldNames = [
-                    "name",
-                    "email",
-                    "telefone",
-                    "cep",
-                    "logradouro",
-                    "numero",
-                    "complemento",
-                    "bairro",
-                    "cidade",
-                    "uf",
-                    "endereco",
-                    "status",
-                ];
-
-                function applyOrcamentoData() {
-                    const orcamento = orcamentos[select.value];
-                    if (!orcamento) {
+                fieldNames.forEach((fieldName) => {
+                    const field = form.querySelector(`[name='${fieldName}']`);
+                    if (!field) {
                         return;
                     }
+                    if (fieldName === "tipo_cliente") {
+                        const radio = form.querySelector(`input[name='tipo_cliente'][value='${orcamento[fieldName] || "residencial"}']`);
+                        if (radio) radio.checked = true;
+                    } else {
+                        field.value = orcamento[fieldName] || "";
+                    }
+                });
+                syncClientType();
+            }
 
-                    fieldNames.forEach((fieldName) => {
-                        const field = document.querySelector(`[name='${fieldName}']`);
-                        if (field) {
-                            field.value = orcamento[fieldName] || "";
-                        }
-                    });
-                }
-
-                select.addEventListener("change", applyOrcamentoData);
-                if (select.value) {
-                    applyOrcamentoData();
-                }
-            });
-        </script>
-    {% endif %}
+            originSelect.addEventListener("change", applyOrcamentoData);
+            if (originSelect.value) {
+                applyOrcamentoData();
+            }
+        });
+    </script>
 {% endblock %}

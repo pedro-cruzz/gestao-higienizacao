@@ -3351,6 +3351,251 @@ body.login-page {
     font-weight: 500;
 }
 
+.client-create-heading {
+    width: min(892px, 100%);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin: 0 auto 18px;
+}
+
+.client-create-heading h1 {
+    margin: 0;
+    color: var(--hf-text);
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 36px;
+}
+
+.client-create-heading p {
+    margin: 0;
+    color: var(--hf-muted);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.client-create-card {
+    width: min(892px, 100%);
+    display: grid;
+    gap: 24px;
+    margin: 0 auto;
+    border: 1px solid var(--hf-border);
+    border-radius: 10px;
+    padding: 24px;
+    background: var(--hf-card);
+}
+
+.client-origin-panel {
+    display: grid;
+    gap: 8px;
+    border: 1px solid var(--hf-border);
+    border-radius: 10px;
+    padding: 14px;
+    background: var(--hf-surface-muted);
+}
+
+.client-origin-panel label,
+.client-form-section h2 {
+    margin: 0;
+    color: var(--hf-text);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+}
+
+.client-form-section {
+    display: grid;
+    gap: 16px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--hf-border);
+}
+
+.client-form-section:last-of-type {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.client-type-selector {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.client-type-option {
+    min-width: 0;
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--hf-border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    cursor: pointer;
+    background: var(--hf-card);
+    transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.client-type-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.client-type-option.active,
+.client-type-option:has(input:checked) {
+    border-color: var(--hf-blue);
+    background: var(--hf-soft-blue);
+}
+
+.client-type-icon {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--hf-muted);
+    background: var(--hf-input);
+}
+
+.client-type-option.active .client-type-icon,
+.client-type-option:has(input:checked) .client-type-icon {
+    color: var(--hf-blue);
+    background: var(--hf-soft-blue-strong);
+}
+
+.client-type-option strong,
+.client-type-option small {
+    display: block;
+}
+
+.client-type-option strong {
+    color: var(--hf-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.client-type-option small {
+    color: var(--hf-muted);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.client-form-grid,
+.client-address-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.client-field {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.client-field > span:first-child {
+    color: var(--hf-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.client-field > span:first-child strong,
+.client-form-actions p strong {
+    color: #d4183d;
+    font-weight: 500;
+}
+
+.client-field .form-control,
+.client-field .form-select,
+.client-origin-panel .form-select {
+    min-height: 40px;
+    border: 0;
+    border-radius: 10px;
+    padding: 8px 16px;
+    color: var(--hf-text);
+    background-color: var(--hf-input);
+    font-size: 16px;
+    line-height: 24px;
+    box-shadow: none;
+}
+
+.client-field textarea.form-control {
+    min-height: 88px;
+    resize: vertical;
+}
+
+.client-field .form-control:focus,
+.client-field .form-select:focus,
+.client-origin-panel .form-select:focus {
+    outline: 2px solid var(--hf-blue);
+    outline-offset: 0;
+}
+
+.client-field-wide {
+    grid-column: 1 / -1;
+}
+
+.client-field-cep {
+    grid-column: span 1;
+}
+
+.client-field-address {
+    grid-column: span 3;
+}
+
+.client-field-state {
+    grid-column: span 2;
+}
+
+.client-cep-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 40px;
+    gap: 8px;
+}
+
+.client-cep-button {
+    width: 40px;
+    height: 40px;
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: var(--hf-blue);
+}
+
+.client-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 1px;
+}
+
+.client-form-actions p {
+    margin: 0;
+    color: var(--hf-muted);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.client-form-actions > div {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.client-create-card .errorlist {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: #d4183d;
+    font-size: 12px;
+    line-height: 16px;
+}
+
 .clientes-actions {
     justify-content: center;
 }
@@ -5636,6 +5881,16 @@ body.service-map-open {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .client-form-grid,
+    .client-address-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .client-field-address,
+    .client-field-state {
+        grid-column: span 1;
+    }
+
     .service-orders-board {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 16px;
@@ -5787,6 +6042,19 @@ body.service-map-open {
     .settings-users-header .hf-btn,
     .settings-small-button {
         width: 100%;
+    }
+
+    .client-type-selector {
+        grid-template-columns: 1fr;
+    }
+
+    .client-form-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .client-form-actions > div {
+        justify-content: flex-end;
     }
 
     .agenda-week-controls {
@@ -6079,6 +6347,34 @@ body.service-map-open {
     }
 
     .lead-create-actions .hf-btn {
+        width: 100%;
+    }
+
+    .client-create-heading {
+        align-items: flex-start;
+    }
+
+    .client-create-card {
+        padding: 20px;
+    }
+
+    .client-form-grid,
+    .client-address-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .client-field-wide,
+    .client-field-cep,
+    .client-field-address,
+    .client-field-state {
+        grid-column: auto;
+    }
+
+    .client-form-actions > div {
+        flex-direction: column-reverse;
+    }
+
+    .client-form-actions .hf-btn {
         width: 100%;
     }
 
