@@ -1018,6 +1018,26 @@ body.login-page {
     cursor: pointer;
 }
 
+.lead-filter-submit {
+    border: 1px solid transparent;
+    padding: 9px 17px;
+    line-height: 20px;
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.lead-filter-submit:hover,
+.lead-filter-submit:focus-visible,
+.lead-filter-submit.is-active {
+    color: var(--hf-blue);
+    border-color: var(--hf-blue);
+    background: rgba(38, 100, 235, 0.09);
+}
+
+.lead-filter-submit:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(38, 100, 235, 0.14);
+}
+
 .filter-clear-button {
     width: 40px;
     height: 40px;
@@ -1031,6 +1051,24 @@ body.login-page {
 
 .filter-clear-button:hover {
     color: var(--hf-blue);
+}
+
+.lead-filter-clear {
+    border: 1px solid transparent;
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.lead-filter-clear:hover,
+.lead-filter-clear:focus-visible,
+.lead-filter-clear.is-active {
+    color: var(--hf-blue);
+    border-color: var(--hf-blue);
+    background: rgba(38, 100, 235, 0.09);
+}
+
+.lead-filter-clear:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(38, 100, 235, 0.14);
 }
 
 .leads-table-wrap {
@@ -6931,6 +6969,17 @@ html[data-theme="dark"] .hf-theme-toggle:hover,
 html[data-theme="dark"] .hf-theme-toggle:focus {
     color: var(--hf-blue);
     background: var(--hf-soft-blue);
+}
+
+html[data-theme="dark"] .lead-filter-submit:hover,
+html[data-theme="dark"] .lead-filter-submit:focus-visible,
+html[data-theme="dark"] .lead-filter-submit.is-active,
+html[data-theme="dark"] .lead-filter-clear:hover,
+html[data-theme="dark"] .lead-filter-clear:focus-visible,
+html[data-theme="dark"] .lead-filter-clear.is-active {
+    color: var(--hf-blue);
+    border-color: var(--hf-blue);
+    background: rgba(38, 100, 235, 0.09);
 }
 
 html[data-theme="dark"] .leads-table thead tr,

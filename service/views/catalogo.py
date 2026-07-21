@@ -343,6 +343,7 @@ def listar_leads(request: HttpRequest) -> HttpResponse:
         "origem_filtro": origem,
         "data_inicio": data_inicio,
         "data_fim": data_fim,
+        "filtros_aplicados": any([busca, status, origem, data_inicio, data_fim]),
         "status_choices": Lead.Status.choices,
         "origem_choices": Lead.Origem.choices,
         "leads": leads,

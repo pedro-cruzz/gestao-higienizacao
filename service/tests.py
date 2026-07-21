@@ -638,18 +638,21 @@ class ServiceViewsTests(TestCase):
 
     def test_filtra_leads_por_status_origem_e_periodo(self):
         dentro = Lead.objects.create(
+            owner=self.user,
             name="Lead Dentro",
             email="dentro@teste.com",
             status=Lead.Status.AGUARDANDO,
             origem=Lead.Origem.WHATSAPP,
         )
         fora_status = Lead.objects.create(
+            owner=self.user,
             name="Lead Fora Status",
             email="fora-status@teste.com",
             status=Lead.Status.NOVO,
             origem=Lead.Origem.WHATSAPP,
         )
         fora_data = Lead.objects.create(
+            owner=self.user,
             name="Lead Fora Data",
             email="fora-data@teste.com",
             status=Lead.Status.AGUARDANDO,
@@ -680,6 +683,8 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "Lead Dentro")
         self.assertNotContains(response, "Lead Fora Status")
         self.assertNotContains(response, "Lead Fora Data")
+        self.assertContains(response, 'class="filter-button lead-filter-submit is-active"')
+        self.assertContains(response, 'class="filter-clear-button lead-filter-clear is-active"')
 
     def test_cria_lead_com_endereco_via_cep(self):
         response = self.client.post(

@@ -54,16 +54,16 @@
                 </label>
 
                 <label class="lead-filter-field lead-filter-date">
-                    <span>Ate</span>
+                    <span>Até</span>
                     <input type="date" name="data_fim" value="{{ data_fim }}" aria-label="Data final">
                 </label>
 
                 <div class="lead-filter-actions">
-                    <button type="submit" class="filter-button">
+                    <button type="submit" class="filter-button lead-filter-submit{% if filtros_aplicados %} is-active{% endif %}">
                         <i class="bi bi-funnel"></i>
                         <span>Filtrar</span>
                     </button>
-                    <a href="{% url 'leads' %}" class="filter-clear-button" aria-label="Limpar filtros">
+                    <a href="{% url 'leads' %}" class="filter-clear-button lead-filter-clear{% if filtros_aplicados %} is-active{% endif %}" aria-label="Limpar filtros">
                         <i class="bi bi-x-lg"></i>
                     </a>
                 </div>
