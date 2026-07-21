@@ -522,7 +522,7 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(login_response.status_code, 200)
         self.assertContains(login_response, "login-shell")
         self.assertContains(login_response, "Bem-vindo ao HigiFlow")
-        self.assertContains(login_response, "seu.usuario")
+        self.assertContains(login_response, "seu@email.com")
         self.assertContains(login_response, "Gerencie seu neg")
         self.assertNotContains(login_response, "hf-sidebar")
         self.assertContains(login_response, reverse("password_reset"))
