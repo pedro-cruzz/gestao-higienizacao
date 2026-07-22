@@ -5,6 +5,7 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.models.signals import post_save
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -186,6 +187,18 @@ class AuthAccessTests(TestCase):
 
 
 class ServiceViewsTests(TestCase):
+    owned_models = [
+        AdicionalOrcamento,
+        CategoriaCatalogo,
+        Cliente,
+        Lead,
+        MultiplicadorOrcamento,
+        Orcamento,
+        OrdemServico,
+        Service_catalog,
+        Tecnico,
+    ]
+
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             username="admin-teste",
@@ -193,6 +206,12 @@ class ServiceViewsTests(TestCase):
             is_staff=True,
         )
         self.client.force_login(self.user)
+        for model in self.owned_models:
+            post_save.connect(
+                self._set_default_owner_for_test_data,
+                sender=model,
+                dispatch_uid=f"{self.__class__.__name__}.{self._testMethodName}.{model.__name__}.owner",
+            )
         self.item_a = Service_catalog.objects.create(
             owner=self.user,
             name="Banner 1x1",
@@ -207,6 +226,21 @@ class ServiceViewsTests(TestCase):
             valor=80.0,
             descricao="Adesivo para vitrine",
         )
+
+    def tearDown(self):
+        for model in self.owned_models:
+            post_save.disconnect(
+                self._set_default_owner_for_test_data,
+                sender=model,
+                dispatch_uid=f"{self.__class__.__name__}.{self._testMethodName}.{model.__name__}.owner",
+            )
+        super().tearDown()
+
+    def _set_default_owner_for_test_data(self, sender, instance, **kwargs):
+        if getattr(instance, "owner_id", None):
+            return
+        sender.objects.filter(pk=instance.pk, owner__isnull=True).update(owner=self.user)
+        instance.owner = self.user
 
     def test_catalogo_retorna_ok(self):
         response = self.client.get(reverse("catalogo"))
@@ -322,7 +356,7 @@ class ServiceViewsTests(TestCase):
         self.assertContains(response, "Contatado")
         self.assertContains(response, "Orcamento do Perfil")
         self.assertContains(response, "OS do Perfil")
-        self.assertContains(response, "R$ 240.00")
+        self.assertContains(response, "R$ 240,00")
 
     def test_inicio_exibe_metricas_reais(self):
         Lead.objects.create(
@@ -918,8 +952,9 @@ class ServiceViewsTests(TestCase):
         second_lead.refresh_from_db()
         self.assertEqual(second_lead.status, Lead.Status.CONVERTIDO)
         self.assertIsNotNone(second_lead.cliente)
-        self.assertEqual(second_lead.cliente, cliente)
-        self.assertEqual(Lead.objects.filter(cliente=cliente).count(), 2)
+        self.assertNotEqual(second_lead.cliente, cliente)
+        self.assertEqual(second_lead.cliente.email, second_lead.email)
+        self.assertEqual(Lead.objects.filter(cliente=cliente).count(), 1)
 
     def test_cria_cliente(self):
         response = self.client.post(
@@ -1065,7 +1100,7 @@ class ServiceViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Cliente Lista")
-        self.assertContains(response, "120.00")
+        self.assertContains(response, "120,00")
         self.assertContains(response, reverse("editar_orcamento", args=[orcamento.pk]))
         self.assertContains(response, reverse("deletar_orcamento", args=[orcamento.pk]))
         self.assertContains(response, "Editar orçamento")

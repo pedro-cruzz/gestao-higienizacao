@@ -162,6 +162,24 @@ Abra no navegador:
 http://127.0.0.1:8000/
 ```
 
+## Deploy no Render com Neon
+
+Para iniciar com dados novos, use um banco Neon vazio ou recrie o banco atual no painel da Neon. Depois configure as variáveis de ambiente no Render com base em `.env.example`.
+
+Variáveis obrigatórias para produção:
+
+- `DJANGO_DEBUG=False`
+- `SECRET_KEY`
+- `DATABASE_URL` com a URL PostgreSQL da Neon e SSL
+- `DJANGO_ALLOWED_HOSTS` com o domínio do Render ou domínio próprio
+- `DJANGO_CSRF_TRUSTED_ORIGINS` com `https://...`
+- `HIGIFLOW_DEV_USERNAME`
+- `HIGIFLOW_DEV_PASSWORD`
+
+O `build.sh` instala dependências, coleta estáticos, aplica migrations e roda `setup_access_groups`. Quando `HIGIFLOW_DEV_USERNAME` e `HIGIFLOW_DEV_PASSWORD` estiverem definidos, esse comando também cria ou atualiza o usuário dev inicial.
+
+Depois do primeiro login com o dev inicial, crie os admins/donos das empresas pelo menu de usuários e permissões.
+
 ## Comandos Uteis
 
 ### Criar novas migrations
