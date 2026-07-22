@@ -7,6 +7,15 @@ from service.models import CategoriaCatalogo, Service_catalog
 from service.ownership import owned_queryset, set_owner
 
 
+def _deletar_imagem_catalogo(imagem) -> None:
+    if not imagem:
+        return
+
+    nome = imagem.name
+    if nome:
+        imagem.storage.delete(nome)
+
+
 def novo_produto(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = ProdutoCatalogoForm(request.POST, request.FILES, user=request.user)
@@ -34,11 +43,14 @@ def novo_produto(request: HttpRequest) -> HttpResponse:
 
 def editar_produto(request: HttpRequest, pk: int) -> HttpResponse:
     produto = get_object_or_404(owned_queryset(Service_catalog.objects, request.user), pk=pk)
+    imagem_anterior = produto.imagem.name if produto.imagem else ""
 
     if request.method == "POST":
         form = ProdutoCatalogoForm(request.POST, request.FILES, instance=produto, user=request.user)
         if form.is_valid():
             produto = form.save()
+            if imagem_anterior and produto.imagem.name != imagem_anterior:
+                produto.imagem.storage.delete(imagem_anterior)
             messages.success(request, f"Item '{produto.name}' atualizado com sucesso.")
             return redirect("catalogo")
     else:
@@ -60,7 +72,9 @@ def deletar_produto(request: HttpRequest, pk: int) -> HttpResponse:
 
     produto = get_object_or_404(owned_queryset(Service_catalog.objects, request.user), pk=pk)
     nome = produto.name
+    imagem = produto.imagem
     produto.delete()
+    _deletar_imagem_catalogo(imagem)
 
     messages.success(request, f"Item '{nome}' excluído do catálogo com sucesso.")
     return redirect("catalogo")

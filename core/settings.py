@@ -39,6 +39,12 @@ def env_list(name: str, default: list[str] | None = None) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def csrf_origin(value: str) -> str:
+    if value.startswith(("http://", "https://")):
+        return value
+    return f"https://{value}"
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -63,7 +69,10 @@ RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
+CSRF_TRUSTED_ORIGINS = [
+    csrf_origin(origin)
+    for origin in env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
+]
 if RENDER_EXTERNAL_HOSTNAME:
     CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
 
@@ -207,6 +216,9 @@ EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", default=False)
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+CLOUDINARY_URL = os.getenv("CLOUDINARY_URL", "")
+CLOUDINARY_CATALOG_FOLDER = os.getenv("CLOUDINARY_CATALOG_FOLDER", "higiflow/catalogo")
 
 VIACEP_BASE_URL = "https://viacep.com.br"
 VIACEP_TIMEOUT = 5

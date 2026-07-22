@@ -173,12 +173,30 @@ Variáveis obrigatórias para produção:
 - `DATABASE_URL` com a URL PostgreSQL da Neon e SSL
 - `DJANGO_ALLOWED_HOSTS` com o domínio do Render ou domínio próprio
 - `DJANGO_CSRF_TRUSTED_ORIGINS` com `https://...`
+- `CLOUDINARY_URL` para armazenar fotos do catálogo fora do disco do Render
 - `HIGIFLOW_DEV_USERNAME`
 - `HIGIFLOW_DEV_PASSWORD`
 
 O `build.sh` instala dependências, coleta estáticos, aplica migrations e roda `setup_access_groups`. Quando `HIGIFLOW_DEV_USERNAME` e `HIGIFLOW_DEV_PASSWORD` estiverem definidos, esse comando também cria ou atualiza o usuário dev inicial.
 
 Depois do primeiro login com o dev inicial, crie os admins/donos das empresas pelo menu de usuários e permissões.
+
+### Fotos do catálogo na Cloudinary
+
+Crie uma conta/projeto na Cloudinary e copie a variável `CLOUDINARY_URL` no formato:
+
+```text
+cloudinary://api_key:api_secret@cloud_name
+```
+
+No Render, adicione:
+
+```text
+CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
+CLOUDINARY_CATALOG_FOLDER=higiflow/catalogo
+```
+
+Quando `CLOUDINARY_URL` existir, as novas imagens do catálogo são enviadas para a Cloudinary. Sem essa variável, o desenvolvimento local continua usando `MEDIA_ROOT`.
 
 ## Comandos Uteis
 
