@@ -319,6 +319,68 @@ class ServiceViewsTests(TestCase):
         self.assertContains(catalogo_response, self.item_a.name)
         self.assertNotContains(catalogo_response, produto_outro.name)
 
+    def test_catalogo_e_exclusivo_por_admin(self):
+        other_admin = get_user_model().objects.create_user(username="admin-catalogo", password="senha-segura")
+        categoria_propria = CategoriaCatalogo.objects.create(owner=self.user, name="Sofas proprios")
+        categoria_outro = CategoriaCatalogo.objects.create(owner=other_admin, name="Sofas do outro admin")
+        produto_outro = Service_catalog.objects.create(
+            owner=other_admin,
+            categoria=categoria_outro,
+            name="Servico exclusivo de outro admin",
+            valor=999.0,
+        )
+
+        catalogo_response = self.client.get(reverse("catalogo"))
+
+        self.assertEqual(catalogo_response.status_code, 200)
+        self.assertContains(catalogo_response, categoria_propria.name)
+        self.assertContains(catalogo_response, self.item_a.name)
+        self.assertNotContains(catalogo_response, categoria_outro.name)
+        self.assertNotContains(catalogo_response, produto_outro.name)
+
+    def test_admin_nao_usa_categoria_de_outro_admin_no_catalogo(self):
+        other_admin = get_user_model().objects.create_user(username="admin-categoria", password="senha-segura")
+        categoria_outro = CategoriaCatalogo.objects.create(owner=other_admin, name="Categoria externa")
+
+        form_response = self.client.get(reverse("novo_produto"))
+        self.assertNotContains(form_response, "Categoria externa")
+
+        response = self.client.post(
+            reverse("novo_produto"),
+            {
+                "name": "Item indevido",
+                "categoria": categoria_outro.pk,
+                "valor": 120.0,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Service_catalog.objects.filter(name="Item indevido").exists())
+
+    def test_admin_nao_usa_item_de_catalogo_de_outro_admin_no_orcamento(self):
+        other_admin = get_user_model().objects.create_user(username="admin-item", password="senha-segura")
+        item_outro = Service_catalog.objects.create(
+            owner=other_admin,
+            name="Item externo",
+            valor=500.0,
+        )
+
+        form_response = self.client.get(reverse("novo_orcamento"))
+        self.assertNotContains(form_response, "Item externo")
+
+        response = self.client.post(
+            reverse("novo_orcamento"),
+            {
+                "name": "Cliente tentativa",
+                "email": "tentativa@teste.com",
+                "quantidade": 1,
+                "itens": [str(item_outro.pk)],
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Orcamento.objects.filter(name="Cliente tentativa").exists())
+
     def test_detalhe_cliente_retorna_perfil(self):
         cliente = Cliente.objects.create(
             owner=self.user,

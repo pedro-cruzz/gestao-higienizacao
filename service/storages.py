@@ -1,3 +1,5 @@
+import sys
+
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage, Storage
 
@@ -33,7 +35,7 @@ class CloudinaryCatalogStorage(Storage):
 
 
 def catalog_image_storage():
-    if getattr(settings, "CLOUDINARY_URL", ""):
+    if getattr(settings, "CLOUDINARY_URL", "") and "test" not in sys.argv:
         return CloudinaryCatalogStorage()
 
     return FileSystemStorage(location=settings.MEDIA_ROOT, base_url=settings.MEDIA_URL)
