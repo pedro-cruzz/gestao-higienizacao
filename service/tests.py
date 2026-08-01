@@ -1912,6 +1912,7 @@ class ServiceViewsTests(TestCase):
 
     def test_gera_pdf_do_orcamento(self):
         orcamento = Orcamento.objects.create(
+            owner=self.user,
             name="Cliente PDF",
             email="pdf@teste.com",
             telefone="11977776666",
@@ -1949,6 +1950,7 @@ class ServiceViewsTests(TestCase):
 
     def test_gera_pdf_personalizado_com_logo_e_frase(self):
         orcamento = Orcamento.objects.create(
+            owner=self.user,
             name="Cliente PDF Personalizado",
             email="pdf-personalizado@teste.com",
             quantidade=1,
@@ -2001,6 +2003,7 @@ class ServiceViewsTests(TestCase):
                 )
             )
         orcamento = Orcamento.objects.create(
+            owner=self.user,
             name="Cliente com nome muito longo para proposta comercial profissional",
             email="cliente-com-email-longo-para-pdf@teste.com",
             telefone="11999998888",
