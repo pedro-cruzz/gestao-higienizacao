@@ -5,10 +5,10 @@ from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 
-from service.access import has_service_access, is_admin_user, is_team_user
-from service.forms import PerfilUsuarioForm
+from service.access import has_service_access, is_admin_user, is_dev_user, is_team_user
+from service.forms import PerfilUsuarioForm, SegurancaUsuarioForm
 from service.views.comum import inicio as dashboard_view
 
 
@@ -51,14 +51,54 @@ def perfil_usuario(request: HttpRequest) -> HttpResponse:
     if not is_admin_user(request.user):
         raise PermissionDenied("Seu usuário não tem permissão para acessar esta área.")
 
-    if request.method == "POST":
-        form = PerfilUsuarioForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)
-            messages.success(request, "Perfil atualizado com sucesso.")
-            return redirect("perfil")
-    else:
-        form = PerfilUsuarioForm(instance=request.user)
+    active_tab = request.GET.get("tab")
+    if active_tab not in {"perfil", "seguranca"}:
+        active_tab = "perfil"
 
-    return render(request, "service/perfil.html", {"form": form})
+    if request.method == "POST":
+        form_kind = request.POST.get("form_kind")
+        if form_kind == "security":
+            active_tab = "seguranca"
+            profile_form = PerfilUsuarioForm(instance=request.user)
+            security_form = SegurancaUsuarioForm(request.POST, user=request.user)
+            if security_form.is_valid():
+                user = security_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, "Senha atualizada com sucesso.")
+                return redirect(f"{reverse('perfil')}?tab=seguranca")
+        else:
+            active_tab = "perfil"
+            profile_form = PerfilUsuarioForm(request.POST, request.FILES, instance=request.user)
+            security_form = SegurancaUsuarioForm(user=request.user)
+            if profile_form.is_valid():
+                user = profile_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, "Perfil atualizado com sucesso.")
+                return redirect("perfil")
+    else:
+        profile_form = PerfilUsuarioForm(instance=request.user)
+        security_form = SegurancaUsuarioForm(user=request.user)
+
+    tecnico = getattr(request.user, "tecnico_profile", None)
+    full_name = request.user.get_full_name().strip()
+    display_name = full_name or request.user.username
+    initials_source = full_name.split() or [request.user.username]
+    initials = "".join(part[0] for part in initials_source[:2] if part).upper() or "HF"
+    role_label = "Desenvolvedor" if is_dev_user(request.user) else "Administrador"
+    access_text = "Acesso de desenvolvedor" if is_dev_user(request.user) else "Acesso administrativo"
+
+    return render(
+        request,
+        "service/perfil.html",
+        {
+            "form": profile_form,
+            "profile_form": profile_form,
+            "security_form": security_form,
+            "active_profile_tab": active_tab,
+            "profile_display_name": display_name,
+            "profile_initials": initials,
+            "profile_role_label": role_label,
+            "profile_phone": getattr(tecnico, "telefone", None) or "Não informado",
+            "profile_access_text": access_text,
+        },
+    )

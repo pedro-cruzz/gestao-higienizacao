@@ -553,6 +553,25 @@ class ServiceViewsTests(TestCase):
         self.assertEqual(self.user.email, "pedro@teste.com")
         self.assertTrue(self.user.check_password("nova-senha-segura"))
 
+    def test_perfil_atualiza_senha_na_aba_seguranca(self):
+        response = self.client.post(
+            reverse("perfil"),
+            {
+                "form_kind": "security",
+                "senha_atual": "senha-segura",
+                "nova_senha": "nova-senha-segura-2",
+                "confirmar_senha": "nova-senha-segura-2",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('perfil')}?tab=seguranca",
+            fetch_redirect_response=False,
+        )
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("nova-senha-segura-2"))
+
     def test_perfil_salva_foto_de_perfil(self):
         foto = SimpleUploadedFile(
             "perfil.gif",
