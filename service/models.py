@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from service.storages import catalog_image_storage
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(
@@ -59,7 +61,7 @@ class Service_catalog(models.Model):
     )
     id = models.AutoField(primary_key=True)
     valor = models.FloatField(null=False)
-    imagem = models.ImageField(upload_to="catalogo/", null=True, blank=True)
+    imagem = models.ImageField(upload_to="catalogo/", storage=catalog_image_storage, null=True, blank=True)
     descricao = models.TextField(null=True)
     formato = models.CharField(max_length=100, null=True)
     tamanho = models.CharField(max_length=100, null=True)

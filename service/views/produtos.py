@@ -1,3 +1,4 @@
+from cloudinary.exceptions import Error as CloudinaryError
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -7,16 +8,35 @@ from service.models import CategoriaCatalogo, Service_catalog
 from service.ownership import owned_queryset, set_owner
 
 
+def _deletar_imagem_catalogo(imagem) -> None:
+    if not imagem:
+        return
+
+    nome = imagem.name
+    if nome:
+        imagem.storage.delete(nome)
+
+
+def _mensagem_erro_upload_imagem(exc: Exception) -> str:
+    return (
+        "Não foi possível enviar a imagem para a Cloudinary. "
+        "Confira a variável CLOUDINARY_URL no Render e tente novamente."
+    )
+
+
 def novo_produto(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = ProdutoCatalogoForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             produto = form.save(commit=False)
             set_owner(produto, request.user)
-            produto.save()
-            form.save_m2m()
-            messages.success(request, f"Item '{produto.name}' cadastrado no catálogo com sucesso.")
-            return redirect("catalogo")
+            try:
+                produto.save()
+                form.save_m2m()
+                messages.success(request, f"Item '{produto.name}' cadastrado no catálogo com sucesso.")
+                return redirect("catalogo")
+            except (CloudinaryError, OSError, ValueError) as exc:
+                form.add_error("imagem", _mensagem_erro_upload_imagem(exc))
     else:
         form = ProdutoCatalogoForm(user=request.user)
 
@@ -34,13 +54,19 @@ def novo_produto(request: HttpRequest) -> HttpResponse:
 
 def editar_produto(request: HttpRequest, pk: int) -> HttpResponse:
     produto = get_object_or_404(owned_queryset(Service_catalog.objects, request.user), pk=pk)
+    imagem_anterior = produto.imagem.name if produto.imagem else ""
 
     if request.method == "POST":
         form = ProdutoCatalogoForm(request.POST, request.FILES, instance=produto, user=request.user)
         if form.is_valid():
-            produto = form.save()
-            messages.success(request, f"Item '{produto.name}' atualizado com sucesso.")
-            return redirect("catalogo")
+            try:
+                produto = form.save()
+                if imagem_anterior and produto.imagem.name != imagem_anterior:
+                    produto.imagem.storage.delete(imagem_anterior)
+                messages.success(request, f"Item '{produto.name}' atualizado com sucesso.")
+                return redirect("catalogo")
+            except (CloudinaryError, OSError, ValueError) as exc:
+                form.add_error("imagem", _mensagem_erro_upload_imagem(exc))
     else:
         form = ProdutoCatalogoForm(instance=produto, user=request.user)
 
@@ -60,7 +86,9 @@ def deletar_produto(request: HttpRequest, pk: int) -> HttpResponse:
 
     produto = get_object_or_404(owned_queryset(Service_catalog.objects, request.user), pk=pk)
     nome = produto.name
+    imagem = produto.imagem
     produto.delete()
+    _deletar_imagem_catalogo(imagem)
 
     messages.success(request, f"Item '{nome}' excluído do catálogo com sucesso.")
     return redirect("catalogo")
