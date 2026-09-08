@@ -1028,6 +1028,51 @@ class PerfilUsuarioForm(forms.ModelForm):
         return user
 
 
+class SegurancaUsuarioForm(forms.Form):
+    senha_atual = forms.CharField(
+        label="Senha atual",
+        widget=forms.PasswordInput(attrs={"placeholder": "Digite sua senha atual"}),
+    )
+    nova_senha = forms.CharField(
+        label="Nova senha",
+        widget=forms.PasswordInput(attrs={"placeholder": "Digite a nova senha"}),
+    )
+    confirmar_senha = forms.CharField(
+        label="Confirmar nova senha",
+        widget=forms.PasswordInput(attrs={"placeholder": "Repita a nova senha"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        senha_atual = cleaned_data.get("senha_atual") or ""
+        nova_senha = cleaned_data.get("nova_senha") or ""
+        confirmar_senha = cleaned_data.get("confirmar_senha") or ""
+
+        if senha_atual and self.user and not self.user.check_password(senha_atual):
+            self.add_error("senha_atual", "Senha atual incorreta.")
+
+        if nova_senha != confirmar_senha:
+            self.add_error("confirmar_senha", "As senhas não conferem.")
+        elif nova_senha:
+            try:
+                validate_password(nova_senha, self.user)
+            except forms.ValidationError as error:
+                self.add_error("nova_senha", error)
+
+        return cleaned_data
+
+    def save(self):
+        self.user.set_password(self.cleaned_data["nova_senha"])
+        self.user.save(update_fields=["password"])
+        return self.user
+
+
 class OrdemServicoForm(forms.ModelForm):
     class Meta:
         model = OrdemServico

@@ -1,102 +1,243 @@
 {% extends "service/base.html" %}
 
-{% block title %}Perfil | HigiFlow{% endblock %}
+{% block title %}Meu Perfil | HigiFlow{% endblock %}
 
 {% block content %}
-    <section class="page-heading">
-        <div>
-            <h1>Meu perfil</h1>
-            <p>Atualize seus dados de acesso e informações da conta.</p>
-        </div>
-    </section>
+    <section class="profile-page">
+        <header class="profile-heading">
+            <a href="{% url 'inicio' %}" class="profile-back-button" aria-label="Voltar para o início">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h1>Meu Perfil</h1>
+                <p>Gerencie suas informações e preferências</p>
+            </div>
+        </header>
 
-    <section class="catalog-form-layout">
-        <article class="catalog-form-panel">
-            <header>
-                <span class="status-pill status-soft-blue">{% if hf_is_dev %}Dev{% else %}Admin{% endif %}</span>
-                <h2>Dados pessoais</h2>
-            </header>
-
-            <form method="post" class="catalog-form" enctype="multipart/form-data">
-                {% csrf_token %}
-                {{ form.non_field_errors }}
-
-                <div class="form-field span-2">
-                    <label for="{{ form.foto.id_for_label }}">{{ form.foto.label }}</label>
-                    <div class="profile-photo-upload">
+        <section class="profile-layout">
+            <aside class="profile-summary-card">
+                <div class="profile-avatar-wrap">
+                    <div class="profile-avatar-large">
                         {% if request.user.hf_profile.foto %}
                             <img
                                 src="{{ request.user.hf_profile.foto.url }}"
-                                alt="Foto de {{ request.user.get_full_name|default:request.user.username }}"
+                                alt="Foto de {{ profile_display_name }}"
                                 class="profile-photo-preview"
                             >
                         {% else %}
-                            <div class="profile-photo-placeholder">
-                                {{ request.user.get_full_name|default:request.user.username|slice:":2"|upper }}
-                            </div>
+                            <span class="profile-photo-placeholder">{{ profile_initials }}</span>
                         {% endif %}
-                        <div>
-                            {{ form.foto }}
-                            {{ form.foto.errors }}
-                            <p class="field-helper">Envie uma imagem valida com ate 3 MB.</p>
-                        </div>
                     </div>
+                    {% if active_profile_tab == "perfil" %}
+                        <label for="{{ profile_form.foto.id_for_label }}" class="profile-avatar-action" aria-label="Alterar foto">
+                            <i class="bi bi-camera"></i>
+                        </label>
+                    {% else %}
+                        <a href="{% url 'perfil' %}" class="profile-avatar-action" aria-label="Alterar foto">
+                            <i class="bi bi-camera"></i>
+                        </a>
+                    {% endif %}
                 </div>
 
-                <div class="form-field">
-                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
-                    {{ form.first_name }}
-                    {{ form.first_name.errors }}
-                </div>
-                <div class="form-field">
-                    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
-                    {{ form.last_name }}
-                    {{ form.last_name.errors }}
-                </div>
-                <div class="form-field">
-                    <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
-                    {{ form.username }}
-                    {{ form.username.errors }}
-                </div>
-                <div class="form-field">
-                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-                    {{ form.email }}
-                    {{ form.email.errors }}
-                </div>
+                <h2>{{ profile_display_name }}</h2>
+                <p class="profile-summary-email">{{ request.user.email|default:"E-mail não informado" }}</p>
+                <span class="profile-role-pill">{{ profile_role_label }}</span>
 
-                <div class="form-field span-2">
-                    <label for="{{ form.senha_atual.id_for_label }}">{{ form.senha_atual.label }}</label>
-                    {{ form.senha_atual }}
-                    {{ form.senha_atual.errors }}
-                </div>
-                <div class="form-field">
-                    <label for="{{ form.nova_senha.id_for_label }}">{{ form.nova_senha.label }}</label>
-                    {{ form.nova_senha }}
-                    {{ form.nova_senha.errors }}
-                </div>
-                <div class="form-field">
-                    <label for="{{ form.confirmar_senha.id_for_label }}">{{ form.confirmar_senha.label }}</label>
-                    {{ form.confirmar_senha }}
-                    {{ form.confirmar_senha.errors }}
-                </div>
+                <div class="profile-summary-divider"></div>
 
-                <div class="form-field">
-                    <label>Ultimo acesso</label>
-                    <input class="form-control" value="{{ request.user.last_login|date:'d/m/Y H:i'|default:'Sem registro' }}" disabled>
-                </div>
-                <div class="form-field">
-                    <label>Cadastro criado em</label>
-                    <input class="form-control" value="{{ request.user.date_joined|date:'d/m/Y H:i' }}" disabled>
-                </div>
+                <dl class="profile-summary-details">
+                    <div>
+                        <dt><i class="bi bi-envelope"></i><span>E-mail</span></dt>
+                        <dd>{{ request.user.email|default:"Não informado" }}</dd>
+                    </div>
+                    <div>
+                        <dt><i class="bi bi-telephone"></i><span>Telefone</span></dt>
+                        <dd>{{ profile_phone }}</dd>
+                    </div>
+                    <div>
+                        <dt><i class="bi bi-shield-check"></i><span>Acesso</span></dt>
+                        <dd>{{ profile_access_text }}</dd>
+                    </div>
+                </dl>
+            </aside>
 
-                <div class="form-actions span-2">
-                    <button type="submit" class="hf-btn hf-btn-primary">
-                        <i class="bi bi-check-lg"></i>
-                        <span>Salvar perfil</span>
-                    </button>
-                    <a href="{% url 'inicio' %}" class="hf-btn hf-btn-light">Cancelar</a>
-                </div>
-            </form>
-        </article>
+            <article class="profile-content-card">
+                <nav class="profile-tabs" aria-label="Seções do perfil">
+                    <a href="{% url 'perfil' %}" class="profile-tab{% if active_profile_tab == 'perfil' %} active{% endif %}">
+                        <i class="bi bi-person"></i>
+                        <span>Perfil</span>
+                    </a>
+                    <a href="{% url 'perfil' %}?tab=seguranca" class="profile-tab{% if active_profile_tab == 'seguranca' %} active{% endif %}">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>Segurança</span>
+                    </a>
+                </nav>
+
+                {% if active_profile_tab == "seguranca" %}
+                    <section class="profile-panel">
+                        <div class="profile-panel-inner">
+                            <header class="profile-panel-header">
+                                <h2>Alterar Senha</h2>
+                                <p>Use uma senha forte com pelo menos 8 caracteres</p>
+                            </header>
+
+                            <form method="post" class="profile-panel-form profile-security-form" novalidate>
+                                {% csrf_token %}
+                                <input type="hidden" name="form_kind" value="security">
+                                {{ security_form.non_field_errors }}
+
+                                <div class="profile-field">
+                                    <label for="{{ security_form.senha_atual.id_for_label }}">{{ security_form.senha_atual.label }}</label>
+                                    <div class="profile-input-wrap">
+                                        <i class="bi bi-lock"></i>
+                                        {{ security_form.senha_atual }}
+                                        <button type="button" class="profile-password-toggle" data-password-toggle aria-label="Mostrar ou ocultar senha">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    {{ security_form.senha_atual.errors }}
+                                </div>
+
+                                <div class="profile-field">
+                                    <label for="{{ security_form.nova_senha.id_for_label }}">{{ security_form.nova_senha.label }}</label>
+                                    <div class="profile-input-wrap">
+                                        <i class="bi bi-key"></i>
+                                        {{ security_form.nova_senha }}
+                                        <button type="button" class="profile-password-toggle" data-password-toggle aria-label="Mostrar ou ocultar senha">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    {{ security_form.nova_senha.errors }}
+                                </div>
+
+                                <div class="profile-field">
+                                    <label for="{{ security_form.confirmar_senha.id_for_label }}">{{ security_form.confirmar_senha.label }}</label>
+                                    <div class="profile-input-wrap">
+                                        <i class="bi bi-check2-circle"></i>
+                                        {{ security_form.confirmar_senha }}
+                                        <button type="button" class="profile-password-toggle" data-password-toggle aria-label="Mostrar ou ocultar senha">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    {{ security_form.confirmar_senha.errors }}
+                                </div>
+
+                                <div class="profile-form-footer">
+                                    <button type="submit" class="hf-btn hf-btn-primary profile-save-button">Atualizar senha</button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+                {% else %}
+                    <section class="profile-panel">
+                        <div class="profile-panel-inner">
+                            <header class="profile-panel-header">
+                                <h2>Informações Pessoais</h2>
+                                <p>Atualize seus dados de cadastro</p>
+                            </header>
+
+                            <form id="profile-details-form" method="post" enctype="multipart/form-data" class="profile-panel-form" novalidate>
+                                {% csrf_token %}
+                                <input type="hidden" name="form_kind" value="profile">
+                                {{ profile_form.non_field_errors }}
+
+                                <div class="profile-hidden-file">
+                                    {{ profile_form.foto }}
+                                    {{ profile_form.foto.errors }}
+                                </div>
+
+                                <div class="profile-field">
+                                    <label for="{{ profile_form.username.id_for_label }}">{{ profile_form.username.label }}</label>
+                                    <div class="profile-input-wrap">
+                                        <i class="bi bi-person"></i>
+                                        {{ profile_form.username }}
+                                    </div>
+                                    <p class="profile-field-helper">Nome de login usado para acessar o sistema.</p>
+                                    {{ profile_form.username.errors }}
+                                </div>
+
+                                <div class="profile-field">
+                                    <label>Nome completo</label>
+                                    <div class="profile-name-grid">
+                                        <div class="profile-input-wrap">
+                                            <i class="bi bi-person-vcard"></i>
+                                            {{ profile_form.first_name }}
+                                        </div>
+                                        <div class="profile-input-wrap">
+                                            <i class="bi bi-person-vcard"></i>
+                                            {{ profile_form.last_name }}
+                                        </div>
+                                    </div>
+                                    {{ profile_form.first_name.errors }}
+                                    {{ profile_form.last_name.errors }}
+                                </div>
+
+                                <div class="profile-field">
+                                    <label for="{{ profile_form.email.id_for_label }}">E-mail</label>
+                                    <div class="profile-input-wrap">
+                                        <i class="bi bi-envelope"></i>
+                                        {{ profile_form.email }}
+                                    </div>
+                                    {{ profile_form.email.errors }}
+                                </div>
+
+                                <div class="profile-field">
+                                    <label for="profile-phone">Telefone / WhatsApp</label>
+                                    <div class="profile-input-wrap">
+                                        <i class="bi bi-telephone"></i>
+                                        <input id="profile-phone" class="form-control" value="{{ profile_phone }}" disabled>
+                                    </div>
+                                </div>
+
+                                <div class="profile-field">
+                                    <label for="profile-role">Perfil de acesso</label>
+                                    <div class="profile-input-wrap">
+                                        <i class="bi bi-shield-check"></i>
+                                        <input id="profile-role" class="form-control" value="{{ profile_role_label }}" disabled>
+                                    </div>
+                                    <p class="profile-field-helper">O perfil de acesso é definido pelo administrador do sistema.</p>
+                                </div>
+
+                                <div class="profile-meta-grid">
+                                    <div class="profile-meta-item">
+                                        <span>Último acesso</span>
+                                        <strong>{{ request.user.last_login|date:"d/m/Y H:i"|default:"Sem registro" }}</strong>
+                                    </div>
+                                    <div class="profile-meta-item">
+                                        <span>Criado em</span>
+                                        <strong>{{ request.user.date_joined|date:"d/m/Y H:i" }}</strong>
+                                    </div>
+                                </div>
+
+                                <div class="profile-form-footer">
+                                    <button type="submit" class="hf-btn hf-btn-primary profile-save-button">Salvar alterações</button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+                {% endif %}
+            </article>
+        </section>
     </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        (() => {
+            document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const input = button.closest(".profile-input-wrap")?.querySelector("input");
+                    const icon = button.querySelector("i");
+                    if (!input || !icon) {
+                        return;
+                    }
+
+                    const nextType = input.type === "password" ? "text" : "password";
+                    input.type = nextType;
+                    icon.classList.toggle("bi-eye", nextType === "password");
+                    icon.classList.toggle("bi-eye-slash", nextType === "text");
+                });
+            });
+        })();
+    </script>
 {% endblock %}

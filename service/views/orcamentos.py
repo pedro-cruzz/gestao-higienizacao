@@ -4,6 +4,7 @@ from io import BytesIO
 from urllib.parse import quote_plus
 
 from django.contrib import messages
+from django.contrib.staticfiles import finders
 from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -935,7 +936,10 @@ def aprovar_orcamento(request: HttpRequest, pk: int) -> HttpResponse:
 
 def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
     orcamento = get_object_or_404(
-        owned_queryset(Orcamento.objects.prefetch_related("itens", "cliente"), request.user),
+        owned_queryset(
+            Orcamento.objects.select_related("cliente").prefetch_related("itens", "adicionais", "multiplicadores"),
+            request.user,
+        ),
         pk=pk,
     )
     itens = list(orcamento.itens.all())
@@ -949,7 +953,7 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
             hex_part = value[1:]
             if all(char in "0123456789abcdefABCDEF" for char in hex_part):
                 return value
-        return "#2577B5"
+        return "#2664EB"
 
     def image_reader_from_bytes(logo_bytes: bytes):
         try:
@@ -988,7 +992,7 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
             except Exception:
                 pass
 
-    pdf_brand = clean_text(request.POST.get("pdf_brand", ""), 42) or "ERP Higienização"
+    pdf_brand = clean_text(request.POST.get("pdf_brand", ""), 42) or "HigiFlow"
     pdf_phrase = clean_text(request.POST.get("pdf_phrase", orcamento.pdf_frase_cliente or ""), 180)
     accent_color = clean_color(request.POST.get("pdf_accent_color", ""))
     uploaded_logo_bytes = load_uploaded_logo_bytes()
@@ -1010,29 +1014,70 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
     pdf = canvas.Canvas(buffer, pagesize=A4)
     pdf.setTitle(f"Proposta comercial {orcamento.pk}")
 
-    navy = colors.HexColor("#111827")
-    ink = colors.HexColor("#172033")
-    muted = colors.HexColor("#667085")
+    ink = colors.HexColor("#0A0A0A")
+    muted = colors.HexColor("#717182")
     soft_text = colors.HexColor("#8A95A6")
-    line = colors.HexColor("#E4E7EC")
+    line = colors.HexColor("#E5E7EB")
     panel = colors.white
-    surface = colors.HexColor("#F8FAFC")
+    surface = colors.HexColor("#F8FAFF")
     accent = colors.HexColor(accent_color)
-    accent_soft = colors.HexColor("#EEF6FF")
+    accent_soft = colors.HexColor("#DBEAFE")
 
-    margin = 40
-    content_w = page_width - (margin * 2)
-    emission_date = timezone.localdate().strftime("%d/%m/%Y")
-    doc_number = f"PF-{timezone.localdate().year}-{orcamento.pk:04d}"
+    card_x = 24
+    card_y = 22
+    card_w = page_width - (card_x * 2)
+    card_h = page_height - (card_y * 2)
+    body_pad = 32
+    body_x = card_x + body_pad
+    body_w = card_w - (body_pad * 2)
+    footer_h = 52
+    header_h = 72
+    meta_h = 42
+    emission = timezone.localdate()
+    valid_until = emission + timedelta(days=15)
+    emission_date = emission.strftime("%d/%m/%Y")
+    valid_until_date = valid_until.strftime("%d/%m/%Y")
+    doc_number = f"#{orcamento.pk:04d}"
     note_text = pdf_phrase
 
-    table_title_h = 42
-    table_head_h = 30
-    table_bottom_pad = 12
-    first_table_top = 514
-    next_table_top = 718
-    last_table_bottom = 224
-    continue_table_bottom = 112
+    company_defaults = {
+        "razao_social": "HigiFlow Limpeza Profissional Ltda",
+        "cnpj": "12.345.678/0001-90",
+        "telefone": "(11) 3456-7890",
+        "email": "contato@higiflow.com.br",
+        "cep": "01234-567",
+        "endereco": "Av. Paulista, 1000",
+        "bairro": "Centro",
+        "cidade": "São Paulo, SP",
+    }
+    company_config = {**company_defaults, **request.session.get("empresa_config", {})}
+    if request.POST.get("pdf_brand"):
+        company_config["razao_social"] = pdf_brand
+
+    adicionais = list(orcamento.adicionais.all())
+    multiplicadores = list(orcamento.multiplicadores.all())
+    valor_servicos = sum(float(item.valor or 0) for item in itens)
+    valor_adicionais_fixos = sum(
+        float(adicional.valor or 0)
+        for adicional in adicionais
+        if adicional.tipo_valor != AdicionalOrcamento.TipoValor.PERCENTUAL
+    )
+    percentual_adicionais = sum(
+        float(adicional.valor or 0)
+        for adicional in adicionais
+        if adicional.tipo_valor == AdicionalOrcamento.TipoValor.PERCENTUAL
+    )
+    valor_adicionais_unitario = valor_adicionais_fixos + (valor_servicos * percentual_adicionais / 100)
+    fator_servicos = 1.0
+    fator_total = 1.0
+    for multiplicador in multiplicadores:
+        fator = float(multiplicador.fator or 1)
+        if multiplicador.aplica_em == MultiplicadorOrcamento.Aplicacao.SERVICOS:
+            fator_servicos *= fator
+        else:
+            fator_total *= fator
+    fator_multiplicadores = fator_servicos * fator_total
+    subtotal_orcamento = ((valor_servicos * fator_servicos) + valor_adicionais_unitario) * orcamento.quantidade
 
     def pdf_text(value: object, fallback: str = "-") -> str:
         text = " ".join(str(value or fallback).split())
@@ -1111,6 +1156,31 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
             cursor_y -= line_height
         return cursor_y
 
+    def draw_right_fitted_text(
+        text: object,
+        right_x: float,
+        y: float,
+        max_width: float,
+        font_name: str,
+        font_size: int,
+        fill_color,
+        min_size: int = 8,
+    ) -> None:
+        value = pdf_text(text)
+        size = font_size
+        while size > min_size and text_width(value, font_name, size) > max_width:
+            size -= 1
+        pdf.setFillColor(fill_color)
+        pdf.setFont(font_name, size)
+        if text_width(value, font_name, size) <= max_width:
+            pdf.drawRightString(right_x, y, value)
+            return
+
+        clipped = value
+        while clipped and text_width(f"{clipped}...", font_name, size) > max_width:
+            clipped = clipped[:-1]
+        pdf.drawRightString(right_x, y, f"{clipped}..." if clipped else value[:10])
+
     def draw_fitted_text(
         text: object,
         x: float,
@@ -1136,9 +1206,9 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
             clipped = clipped[:-1]
         pdf.drawString(x, y, f"{clipped}..." if clipped else value[:10])
 
-    def draw_panel(x: float, y: float, width: float, height: float, radius: float = 12, fill=panel) -> None:
+    def draw_panel(x: float, y: float, width: float, height: float, radius: float = 12, fill=panel, stroke_color=None) -> None:
         pdf.setFillColor(fill)
-        pdf.setStrokeColor(line)
+        pdf.setStrokeColor(stroke_color or line)
         pdf.setLineWidth(0.8)
         pdf.roundRect(x, y, width, height, radius, stroke=1, fill=1)
 
@@ -1147,165 +1217,162 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
         initials = "".join(word[0] for word in words[:2]).upper()
         return initials[:2] or "HF"
 
-    def draw_logo_box(x: float, y: float, size: float) -> None:
+    def image_reader_from_static(static_path: str):
+        file_path = finders.find(static_path)
+        if not file_path:
+            return None
+        try:
+            return ImageReader(file_path)
+        except Exception:
+            return None
+
+    official_logo = image_reader_from_static("service/img/pdf/pdf-logo-higiflow.png") or image_reader_from_static(
+        "service/img/logo_oficial.png"
+    )
+
+    def draw_image_fit(image, x: float, y: float, width: float, height: float, preserve: bool = True) -> bool:
+        if image is None:
+            return False
+        try:
+            logo_w, logo_h = image.getSize()
+            ratio = min(width / logo_w, height / logo_h) if preserve else max(width / logo_w, height / logo_h)
+            draw_w = logo_w * ratio
+            draw_h = logo_h * ratio
+            pdf.drawImage(
+                image,
+                x + (width - draw_w) / 2,
+                y + (height - draw_h) / 2,
+                width=draw_w,
+                height=draw_h,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
+            return True
+        except Exception:
+            return False
+
+    # AJUSTA PROPRIEDADES DA LOGO
+    def draw_header_logo(x: float, y: float, width: float, height: float) -> None:
         nonlocal uploaded_logo
         if uploaded_logo is not None:
             try:
-                logo_w, logo_h = uploaded_logo.getSize()
-                ratio = min((size - 12) / logo_w, (size - 12) / logo_h)
-                draw_w = logo_w * ratio
-                draw_h = logo_h * ratio
-                pdf.setFillColor(colors.white)
-                pdf.roundRect(x, y, size, size, 12, stroke=0, fill=1)
-                pdf.drawImage(
-                    uploaded_logo,
-                    x + (size - draw_w) / 2,
-                    y + (size - draw_h) / 2,
-                    width=draw_w,
-                    height=draw_h,
-                    preserveAspectRatio=True,
-                    mask="auto",
-                )
-                return
+                if draw_image_fit(uploaded_logo, x, y, width, height):
+                    return
             except Exception:
                 uploaded_logo = None
 
-        pdf.setFillColor(accent)
-        pdf.roundRect(x, y, size, size, 12, stroke=0, fill=1)
+        if official_logo is not None and draw_image_fit(official_logo, x, y, width, height):
+            return
         pdf.setFillColor(colors.white)
-        pdf.setFont("Helvetica-Bold", 15)
-        pdf.drawCentredString(x + size / 2, y + size / 2 - 5, brand_initials())
+        pdf.setFont("Helvetica-Bold", 19)
+        pdf.drawString(x, y + 9, pdf_text(pdf_brand or brand_initials()))
 
     def draw_page_base() -> None:
         pdf.setFillColor(colors.white)
         pdf.rect(0, 0, page_width, page_height, stroke=0, fill=1)
-        pdf.setFillColor(surface)
-        pdf.rect(0, 0, page_width, 92, stroke=0, fill=1)
-        pdf.setFillColor(accent)
-        pdf.rect(0, 0, 5, page_height, stroke=0, fill=1)
+        draw_panel(card_x, card_y, card_w, card_h, 14, colors.white)
 
     def draw_header(page_number: int, total_pages: int, first_page: bool) -> float:
-        header_h = 106 if first_page else 68
-        header_y = page_height - margin - header_h
-        header_radius = 18 if first_page else 14
-        pdf.setFillColor(navy)
-        pdf.roundRect(margin, header_y, content_w, header_h, header_radius, stroke=0, fill=1)
+        header_y = card_y + card_h - header_h
         pdf.setFillColor(accent)
-        pdf.roundRect(margin, header_y + header_h - 8, content_w, 8, header_radius, stroke=0, fill=1)
+        pdf.roundRect(card_x, header_y, card_w, header_h, 14, stroke=0, fill=1)
+        pdf.rect(card_x, header_y, card_w, 18, stroke=0, fill=1)
 
-        logo_size = 54 if first_page else 40
-        logo_x = margin + 20
-        logo_y = header_y + (header_h - logo_size) / 2
-        draw_logo_box(logo_x, logo_y, logo_size)
+        # CHAMA A FUNÇÃO DE AJUSTE DA LOGO E APLICA PARAMETROS
+        draw_header_logo(card_x + 12, header_y + 22, 141, 18)
 
-        brand_x = logo_x + logo_size + 18
-        meta_w = 154 if first_page else 142
-        meta_h = 64 if first_page else 46
-        meta_x = margin + content_w - meta_w - 18
-        meta_y = header_y + (header_h - meta_h) / 2
-        brand_max_w = meta_x - brand_x - 20
-
-        title_y = header_y + (68 if first_page else 38)
-        draw_fitted_text(pdf_brand, brand_x, title_y, brand_max_w, "Helvetica-Bold", 22 if first_page else 15, colors.white)
-        pdf.setFillColor(colors.HexColor("#D5E0EA"))
-        pdf.setFont("Helvetica", 10 if first_page else 8.5)
-        pdf.drawString(brand_x, title_y - (20 if first_page else 15), "Proposta comercial de serviços")
-        if first_page:
-            pdf.setFont("Helvetica-Bold", 9)
-            pdf.drawString(brand_x, header_y + 22, "Higienização profissional | atendimento técnico | proposta personalizada")
-
+        pdf.setFillColor(colors.Color(1, 1, 1, alpha=0.62))
+        pdf.setFont("Helvetica-Bold", 7.8)
+        pdf.drawRightString(card_x + card_w - 32, header_y + 47, "ORÇAMENTO")
         pdf.setFillColor(colors.white)
-        pdf.roundRect(meta_x, meta_y, meta_w, meta_h, 12, stroke=0, fill=1)
-        pdf.setFillColor(soft_text)
-        pdf.setFont("Helvetica-Bold", 7.5)
-        pdf.drawString(meta_x + 14, meta_y + meta_h - 18, "DOCUMENTO")
-        pdf.drawString(meta_x + 14, meta_y + (22 if first_page else 8), "EMISSAO")
-        pdf.setFillColor(ink)
-        pdf.setFont("Helvetica-Bold", 11 if first_page else 9)
-        pdf.drawString(meta_x + 14, meta_y + meta_h - 31, doc_number)
-        pdf.drawString(meta_x + 78, meta_y + (22 if first_page else 8), emission_date)
-        if not first_page:
-            pdf.setFillColor(soft_text)
-            pdf.setFont("Helvetica", 7.5)
-            pdf.drawRightString(meta_x + meta_w - 14, meta_y + 8, f"Pag. {page_number}/{total_pages}")
+        pdf.setFont("Helvetica-Bold", 20)
+        pdf.drawRightString(card_x + card_w - 32, header_y + 22, doc_number)
 
-        return header_y - (22 if first_page else 20)
+        meta_y = header_y - meta_h
+        pdf.setFillColor(surface)
+        pdf.rect(card_x, meta_y, card_w, meta_h, stroke=0, fill=1)
+        pdf.setStrokeColor(line)
+        pdf.setLineWidth(0.8)
+        pdf.line(card_x, meta_y, card_x + card_w, meta_y)
+        pdf.line(card_x, meta_y + meta_h, card_x + card_w, meta_y + meta_h)
+
+        def draw_meta_item(x: float, label: str, value: str) -> None:
+            pdf.setFillColor(accent)
+            pdf.circle(x, meta_y + 22, 2.2, stroke=0, fill=1)
+            pdf.setFillColor(muted)
+            pdf.setFont("Helvetica", 9)
+            pdf.drawString(x + 9, meta_y + 18, label)
+            pdf.setFillColor(ink)
+            pdf.setFont("Helvetica-Bold", 9)
+            pdf.drawString(x + 66, meta_y + 18, value)
+
+        draw_meta_item(card_x + 32, "Emitido em", emission_date)
+        draw_meta_item(card_x + 184, "Válido até", valid_until_date)
+        if total_pages > 1:
+            pdf.setFillColor(muted)
+            pdf.setFont("Helvetica", 8)
+            pdf.drawRightString(card_x + card_w - 32, meta_y + 18, f"Página {page_number} de {total_pages}")
+
+        return meta_y - 28
 
     def address_text() -> str:
         structured = _endereco_para_mapa(orcamento)
         return structured or orcamento.endereco or "Endereço não informado"
 
-    def draw_metric(label: str, value: str, x: float, y: float, width: float) -> None:
+    def company_address_text() -> str:
+        parts = [company_config.get("endereco"), company_config.get("bairro"), company_config.get("cidade")]
+        return " - ".join(str(part).strip() for part in parts if part)
+
+    def draw_contact_line(label: str, value: object, x: float, y: float, width: float) -> None:
         pdf.setFillColor(soft_text)
-        pdf.setFont("Helvetica-Bold", 7.8)
-        pdf.drawString(x, y, label.upper())
-        draw_fitted_text(value, x, y - 17, width, "Helvetica-Bold", 13, ink, 9)
+        pdf.setFont("Helvetica-Bold", 7)
+        pdf.drawString(x, y, label)
+        draw_fitted_text(value, x + 40, y, width - 40, "Helvetica", 8.6, muted, 7)
 
     def draw_client_summary(top_y: float) -> float:
-        card_h = 126
-        gap = 16
-        client_w = 322
-        summary_w = content_w - client_w - gap
-        y = top_y - card_h
-        client_x = margin
-        summary_x = client_x + client_w + gap
-
-        draw_panel(client_x, y, client_w, card_h)
-        draw_panel(summary_x, y, summary_w, card_h)
+        section_h = 104
+        y = top_y - section_h
+        col_gap = 28
+        col_w = (body_w - col_gap) / 2
+        client_x = body_x
+        company_x = body_x + col_w + col_gap
 
         pdf.setFillColor(accent)
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(client_x + 18, y + card_h - 24, "CLIENTE")
+        pdf.setFont("Helvetica-Bold", 7.8)
+        pdf.drawString(client_x, y + section_h - 8, "CLIENTE")
         draw_lines(
-            wrap_pdf_text(orcamento.name, client_w - 36, "Helvetica-Bold", 16, 1),
-            client_x + 18,
-            y + card_h - 48,
+            wrap_pdf_text(orcamento.name, col_w, "Helvetica-Bold", 10.8, 1),
+            client_x,
+            y + section_h - 28,
             "Helvetica-Bold",
-            16,
-            18,
+            10.8,
+            13,
             ink,
         )
 
-        contact_y = y + card_h - 72
-        contact_lines = [
-            f"Email: {pdf_text(orcamento.email)}",
-            f"Telefone: {pdf_text(orcamento.telefone)}",
-        ]
-        for contact in contact_lines:
-            draw_lines(
-                wrap_pdf_text(contact, client_w - 36, "Helvetica", 9.5, 1),
-                client_x + 18,
-                contact_y,
-                "Helvetica",
-                9.5,
-                12,
-                muted,
-            )
-            contact_y -= 15
+        draw_contact_line("TEL.", orcamento.telefone, client_x, y + section_h - 50, col_w)
+        draw_contact_line("E-MAIL", orcamento.email, client_x, y + section_h - 68, col_w)
+        draw_contact_line("END.", address_text(), client_x, y + section_h - 86, col_w)
 
-        draw_lines(
-            wrap_pdf_text(address_text(), client_w - 36, "Helvetica", 9.3, 2),
-            client_x + 18,
-            y + 24,
-            "Helvetica",
-            9.3,
-            11,
-            muted,
-        )
+        divider_x = body_x + col_w + (col_gap / 2)
+        pdf.setStrokeColor(line)
+        pdf.line(divider_x, y + 12, divider_x, y + section_h - 8)
 
-        pdf.setFillColor(accent_soft)
-        pdf.roundRect(summary_x + 14, y + card_h - 49, summary_w - 28, 35, 10, stroke=0, fill=1)
         pdf.setFillColor(accent)
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(summary_x + 26, y + card_h - 28, "TOTAL")
-        draw_fitted_text(money(orcamento.valor), summary_x + 26, y + card_h - 45, summary_w - 52, "Helvetica-Bold", 17, accent, 10)
-
-        metric_y = y + 50
-        draw_metric("Quantidade", str(orcamento.quantidade), summary_x + 18, metric_y, 62)
-        draw_metric("Itens", str(len(itens)), summary_x + 92, metric_y, 48)
-        pdf.setFillColor(muted)
-        pdf.setFont("Helvetica", 8.5)
-        pdf.drawString(summary_x + 18, y + 22, f"Status: {'Concluído' if orcamento.aprovado else 'Pendente'}")
+        pdf.setFont("Helvetica-Bold", 7.8)
+        pdf.drawString(company_x, y + section_h - 8, "EMPRESA")
+        draw_lines(
+            wrap_pdf_text(company_config.get("razao_social"), col_w, "Helvetica-Bold", 10.8, 1),
+            company_x,
+            y + section_h - 28,
+            "Helvetica-Bold",
+            10.8,
+            13,
+            ink,
+        )
+        draw_contact_line("TEL.", company_config.get("telefone"), company_x, y + section_h - 50, col_w)
+        draw_contact_line("E-MAIL", company_config.get("email"), company_x, y + section_h - 68, col_w)
+        draw_contact_line("END.", company_address_text(), company_x, y + section_h - 86, col_w)
 
         return y - 28
 
@@ -1324,172 +1391,276 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
             pieces.append(item.descricao)
         return " | ".join(pieces) or "Higienização profissional com acabamento técnico."
 
-    def build_rows() -> list[dict]:
-        service_w = content_w - 210
-        rows = []
+    def format_factor(value: float) -> str:
+        return f"{value:.2f}".rstrip("0").rstrip(".")
+
+    def adicional_value(adicional: AdicionalOrcamento) -> str:
+        value = float(adicional.valor or 0)
+        if adicional.tipo_valor == AdicionalOrcamento.TipoValor.PERCENTUAL:
+            return f"+ {format_factor(value)}%"
+        return f"+ {money(value)}"
+
+    def build_blocks() -> list[dict]:
+        service_w = body_w - 136
+        blocks = []
         for item in itens:
             name_lines = wrap_pdf_text(item.name or "-", service_w, "Helvetica-Bold", 10.5, 2)
-            detail_lines = wrap_pdf_text(item_detail(item), service_w, "Helvetica", 8.5, 2)
-            row_h = max(58, 21 + len(name_lines) * 12 + len(detail_lines) * 10)
-            rows.append(
+            detail_lines = wrap_pdf_text(item_detail(item), service_w, "Helvetica", 8.2, 2)
+            row_h = max(56, 20 + len(name_lines) * 12 + len(detail_lines) * 10)
+            blocks.append(
                 {
+                    "kind": "service",
                     "name_lines": name_lines,
                     "detail_lines": detail_lines,
-                    "quantity": str(orcamento.quantidade),
-                    "unit_value": money(item.valor),
-                    "total_value": money(item.valor * orcamento.quantidade),
+                    "total_value": money(float(item.valor or 0) * orcamento.quantidade),
                     "height": min(row_h, 82),
                 }
             )
-        return rows
+        if not blocks:
+            blocks.append(
+                {
+                    "kind": "empty",
+                    "height": 52,
+                    "text": "Nenhum serviço vinculado a este orçamento.",
+                }
+            )
+        if adicionais:
+            blocks.append(
+                {
+                    "kind": "rules",
+                    "title": "ADICIONAIS",
+                    "rows": [(adicional.name, adicional_value(adicional)) for adicional in adicionais],
+                    "height": 28 + (len(adicionais) * 20),
+                }
+            )
+        if multiplicadores:
+            blocks.append(
+                {
+                    "kind": "rules",
+                    "title": "MULTIPLICADORES",
+                    "rows": [
+                        (multiplicador.name, f"x {format_factor(float(multiplicador.fator or 1))}")
+                        for multiplicador in multiplicadores
+                    ],
+                    "height": 28 + (len(multiplicadores) * 20),
+                }
+            )
+        return blocks
 
-    def row_total_height(rows: list[dict]) -> float:
-        return sum(row["height"] for row in rows)
+    def block_total_height(blocks: list[dict]) -> float:
+        return sum(block["height"] for block in blocks)
+
+    summary_block_h = 108
+    summary_conditions_gap = 14
+    conditions_footer_gap = 12
+    services_final_gap = 10
+
+    def final_condition_lines() -> list[str]:
+        lines = [
+            "Orçamento válido por 15 dias a partir da data de emissão",
+            "Pagamento: à vista com 5% de desconto ou parcelado em até 3x",
+            "Garantia de 30 dias para os serviços realizados",
+            "Agendamento sujeito à disponibilidade da equipe técnica",
+        ]
+        if note_text:
+            lines.append(f"Observação: {note_text}")
+        return lines
+
+    def final_condition_items() -> list[list[str]]:
+        return [wrap_pdf_text(line_text, body_w - 46, "Helvetica", 8.5, 2) for line_text in final_condition_lines()]
+
+    def final_conditions_height() -> float:
+        return 38 + sum(max(14, len(lines) * 10 + 4) for lines in final_condition_items())
+
+    def final_reserved_height() -> float:
+        return summary_block_h + summary_conditions_gap + final_conditions_height()
 
     def page_capacity(first_page: bool, last_page: bool) -> float:
-        table_top = first_table_top if first_page else next_table_top
-        table_bottom = last_table_bottom if last_page else continue_table_bottom
-        return table_top - table_bottom - table_title_h - table_head_h - table_bottom_pad
+        top = card_y + card_h - header_h - meta_h - 28
+        if first_page:
+            top -= 132
+        if last_page:
+            bottom = card_y + footer_h + conditions_footer_gap + final_reserved_height() + services_final_gap
+            return max(80, top - 22 - bottom)
+        bottom = card_y + footer_h + 28
+        return max(80, top - bottom - 30)
 
-    def paginate_rows(rows: list[dict]) -> list[dict]:
-        if not rows:
-            return [{"rows": [], "first": True, "last": True}]
+    def paginate_blocks(blocks: list[dict]) -> list[dict]:
+        if not blocks:
+            return [{"blocks": [], "first": True, "last": True}]
 
         pages = []
-        remaining = rows[:]
+        remaining = blocks[:]
         first_page = True
         while remaining:
-            if row_total_height(remaining) <= page_capacity(first_page, True):
-                page_rows = remaining
+            if block_total_height(remaining) <= page_capacity(first_page, True):
+                page_blocks = remaining
                 remaining = []
-                pages.append({"rows": page_rows, "first": first_page, "last": True})
+                pages.append({"blocks": page_blocks, "first": first_page, "last": True})
                 break
 
             capacity = page_capacity(first_page, False)
             taken = []
             used = 0
-            for row in remaining:
-                if taken and used + row["height"] > capacity:
+            for block in remaining:
+                if taken and used + block["height"] > capacity:
                     break
-                taken.append(row)
-                used += row["height"]
+                taken.append(block)
+                used += block["height"]
 
             if not taken:
                 taken = [remaining[0]]
-            pages.append({"rows": taken, "first": first_page, "last": False})
-            remaining = remaining[len(taken) :]
+            next_remaining = remaining[len(taken) :]
+            if not next_remaining:
+                if len(taken) > 1 and block_total_height([taken[-1]]) <= page_capacity(False, True):
+                    final_page_blocks = [taken.pop()]
+                    pages.append({"blocks": taken, "first": first_page, "last": False})
+                    pages.append({"blocks": final_page_blocks, "first": False, "last": True})
+                else:
+                    pages.append({"blocks": taken, "first": first_page, "last": False})
+                    pages.append({"blocks": [], "first": False, "last": True})
+                break
+            pages.append({"blocks": taken, "first": first_page, "last": False})
+            remaining = next_remaining
             first_page = False
         return pages
 
-    def draw_table_header(x: float, y: float, width: float) -> None:
-        pdf.setFillColor(surface)
-        pdf.roundRect(x + 14, y - table_head_h + 2, width - 28, table_head_h - 2, 8, stroke=0, fill=1)
-        pdf.setFillColor(soft_text)
-        pdf.setFont("Helvetica-Bold", 7.8)
-        pdf.drawString(x + 24, y - 18, "SERVICO")
-        pdf.drawCentredString(x + width - 188, y - 18, "QTD")
-        pdf.drawRightString(x + width - 92, y - 18, "UNITARIO")
-        pdf.drawRightString(x + width - 24, y - 18, "TOTAL")
-
-    def draw_services_table(page_rows: list[dict], top_y: float, page_number: int, total_pages: int) -> float:
-        x = margin
-        width = content_w
-        body_h = row_total_height(page_rows) if page_rows else 56
-        table_h = table_title_h + table_head_h + body_h + table_bottom_pad
-        y = top_y - table_h
-        draw_panel(x, y, width, table_h, 14)
-
+    def draw_section_label(text: str, x: float, y: float) -> None:
         pdf.setFillColor(accent)
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(x + 18, top_y - 24, "SERVICOS SOLICITADOS")
-        pdf.setFillColor(soft_text)
-        pdf.setFont("Helvetica", 8.5)
-        pdf.drawRightString(x + width - 18, top_y - 24, f"Pagina {page_number} de {total_pages}")
-        draw_table_header(x, top_y - table_title_h, width)
+        pdf.setFont("Helvetica-Bold", 7.8)
+        pdf.drawString(x, y, text)
 
-        cursor_y = top_y - table_title_h - table_head_h
-        if not page_rows:
-            pdf.setFillColor(muted)
-            pdf.setFont("Helvetica", 10)
-            pdf.drawString(x + 24, cursor_y - 34, "Nenhum serviço vinculado a este orçamento.")
-            return y
+    def draw_services_table(page_blocks: list[dict], top_y: float, page_number: int, total_pages: int) -> float:
+        x = body_x
+        width = body_w
+        body_h = max(52, block_total_height(page_blocks))
+        y = top_y - 22 - body_h
 
-        for row in page_rows:
+        draw_section_label("SERVIÇOS", x, top_y)
+        draw_panel(x, y, width, body_h, 14)
+
+        cursor_y = y + body_h
+        for index, block in enumerate(page_blocks):
             row_top = cursor_y
-            row_bottom = cursor_y - row["height"]
-            pdf.setStrokeColor(line)
-            pdf.setLineWidth(0.7)
-            pdf.line(x + 14, row_bottom, x + width - 14, row_bottom)
+            row_bottom = cursor_y - block["height"]
+            if index > 0:
+                pdf.setStrokeColor(line)
+                pdf.setLineWidth(0.7)
+                pdf.line(x, row_top, x + width, row_top)
 
-            text_y = row_top - 18
-            draw_lines(row["name_lines"], x + 24, text_y, "Helvetica-Bold", 10.5, 12, ink)
-            detail_y = text_y - (len(row["name_lines"]) * 12) - 4
-            draw_lines(row["detail_lines"], x + 24, detail_y, "Helvetica", 8.5, 10, muted)
+            if block["kind"] == "service":
+                if index == 0:
+                    pdf.setFillColor(surface)
+                    pdf.rect(x + 1, row_bottom, width - 2, block["height"] - 1, stroke=0, fill=1)
+                draw_lines(block["name_lines"], x + 18, row_top - 20, "Helvetica-Bold", 10.4, 12, ink)
+                detail_y = row_top - 20 - (len(block["name_lines"]) * 12) - 4
+                draw_lines(block["detail_lines"], x + 18, detail_y, "Helvetica", 8.2, 10, muted)
+                draw_right_fitted_text(block["total_value"], x + width - 18, row_top - 23, 98, "Helvetica-Bold", 10.5, accent)
+            elif block["kind"] == "rules":
+                pdf.setFillColor(muted)
+                pdf.setFont("Helvetica-Bold", 7.4)
+                pdf.drawString(x + 18, row_top - 18, block["title"])
+                rule_y = row_top - 36
+                for label, value in block["rows"]:
+                    pdf.setFillColor(accent)
+                    pdf.circle(x + 22, rule_y + 3, 1.6, stroke=0, fill=1)
+                    draw_fitted_text(label, x + 32, rule_y, width - 142, "Helvetica", 8.5, muted, 7)
+                    draw_right_fitted_text(value, x + width - 18, rule_y, 96, "Helvetica", 8.5, accent)
+                    rule_y -= 20
+            else:
+                pdf.setFillColor(muted)
+                pdf.setFont("Helvetica", 9.2)
+                pdf.drawString(x + 18, row_top - 30, block["text"])
 
-            value_y = row_top - 32
-            pdf.setFillColor(ink)
-            pdf.setFont("Helvetica-Bold", 10)
-            pdf.drawCentredString(x + width - 188, value_y, row["quantity"])
-            pdf.setFont("Helvetica", 9.5)
-            pdf.drawRightString(x + width - 92, value_y, row["unit_value"])
-            pdf.setFillColor(accent)
-            pdf.setFont("Helvetica-Bold", 10)
-            pdf.drawRightString(x + width - 24, value_y, row["total_value"])
             cursor_y = row_bottom
 
-        return y
+        return y - 26
 
-    def draw_final_block() -> None:
-        y = 92
-        h = 104
-        note_w = 318
-        total_w = content_w - note_w - 16
-        total_x = margin + note_w + 16
+    def draw_final_block(top_y: float | None = None) -> None:
+        def draw_summary_block(top_y: float) -> float:
+            h = summary_block_h
+            x = body_x
+            y = top_y - h
+            width = body_w
+            draw_panel(x, y, width, h, 14)
 
-        draw_panel(margin, y, note_w, h, 14)
-        if note_text:
-            draw_lines(
-                wrap_pdf_text(note_text, note_w - 36, "Helvetica", 9.2, 4),
-                margin + 18,
-                y + h - 28,
-                "Helvetica",
-                9.2,
-                11,
-                muted,
-            )
-        pdf.setStrokeColor(line)
-        pdf.line(margin + 18, y + 20, margin + note_w - 18, y + 20)
-        pdf.setFillColor(soft_text)
-        pdf.setFont("Helvetica", 7.8)
-        pdf.drawString(margin + 18, y + 8, "Valores sujeitos a confirmação de agenda e avaliação técnica.")
+            total_h = 44
+            row_font_size = 9
+            subtotal_y = y + h - 25
+            divider_y = y + h - 43
+            multiplier_row_bottom = y + total_h
+            multiplier_row_h = divider_y - multiplier_row_bottom
+            multiplier_y = multiplier_row_bottom + ((multiplier_row_h - row_font_size) / 2) + 2
 
-        pdf.setFillColor(accent)
-        pdf.roundRect(total_x, y, total_w, h, 14, stroke=0, fill=1)
-        pdf.setFillColor(colors.white)
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(total_x + 18, y + h - 25, "VALOR TOTAL")
-        draw_fitted_text(money(orcamento.valor), total_x + 18, y + h - 58, total_w - 36, "Helvetica-Bold", 24, colors.white, 12)
-        pdf.setFont("Helvetica", 8.5)
-        pdf.drawString(total_x + 18, y + 20, f"{len(itens)} item(ns) x {orcamento.quantidade}")
+            pdf.setFillColor(muted)
+            pdf.setFont("Helvetica", row_font_size)
+            pdf.drawString(x + 20, subtotal_y, "Subtotal dos serviços")
+            draw_right_fitted_text(money(subtotal_orcamento), x + width - 20, subtotal_y, 150, "Helvetica-Bold", row_font_size, ink)
+
+            pdf.setStrokeColor(line)
+            pdf.line(x, divider_y, x + width, divider_y)
+            pdf.setFillColor(muted)
+            pdf.setFont("Helvetica", row_font_size)
+            pdf.drawString(x + 20, multiplier_y, "Multiplicador aplicado")
+            draw_right_fitted_text(f"x {format_factor(fator_multiplicadores)}", x + width - 20, multiplier_y, 140, "Helvetica-Bold", row_font_size, ink)
+
+            pdf.setFillColor(accent)
+            pdf.roundRect(x, y, width, total_h, 14, stroke=0, fill=1)
+            pdf.rect(x, y + total_h - 14, width, 14, stroke=0, fill=1)
+            pdf.setFillColor(colors.white)
+            pdf.setFont("Helvetica-Bold", 10)
+            pdf.drawString(x + 20, y + 17, "Valor Total")
+            draw_right_fitted_text(money(orcamento.valor), x + width - 20, y + 13, 190, "Helvetica-Bold", 17, colors.white, 11)
+
+            return y - summary_conditions_gap
+
+        def draw_conditions(top_y: float) -> float:
+            wrapped_items = final_condition_items()
+            h = final_conditions_height()
+            x = body_x
+            y = top_y - h
+            draw_panel(x, y, body_w, h, 14, surface, accent_soft)
+
+            draw_section_label("CONDIÇÕES", x + 18, y + h - 24)
+            cursor_y = y + h - 38
+            for lines in wrapped_items:
+                pdf.setFillColor(accent)
+                pdf.circle(x + 20, cursor_y + 3, 1.7, stroke=0, fill=1)
+                draw_lines(lines, x + 32, cursor_y, "Helvetica", 8.2, 10, muted)
+                cursor_y -= max(14, len(lines) * 10 + 4)
+
+            return y - 20
+
+        minimum_top = card_y + footer_h + conditions_footer_gap + final_reserved_height()
+        summary_top = max(top_y or minimum_top, minimum_top)
+        next_y = draw_summary_block(summary_top)
+        draw_conditions(next_y)
 
     def draw_continuation_note() -> None:
+        y = card_y + footer_h + 18
         pdf.setFillColor(surface)
-        pdf.roundRect(margin, 72, content_w, 28, 10, stroke=0, fill=1)
+        pdf.roundRect(body_x, y, body_w, 28, 10, stroke=0, fill=1)
         pdf.setFillColor(muted)
         pdf.setFont("Helvetica", 8.5)
-        pdf.drawString(margin + 14, 82, "Continua na próxima página com mais serviços e o resumo final.")
+        pdf.drawString(body_x + 14, y + 10, "Continua na próxima página com mais serviços e o resumo final.")
 
     def draw_footer(page_number: int, total_pages: int) -> None:
+        pdf.setFillColor(surface)
+        pdf.rect(card_x, card_y, card_w, footer_h, stroke=0, fill=1)
         pdf.setStrokeColor(line)
-        pdf.setLineWidth(0.8)
-        pdf.line(margin, 60, margin + content_w, 60)
-        pdf.setFillColor(soft_text)
-        pdf.setFont("Helvetica", 8)
-        pdf.drawString(margin, 40, f"{pdf_text(pdf_brand)} | Documento gerado em {emission_date}")
-        pdf.drawRightString(margin + content_w, 40, f"Pagina {page_number} de {total_pages}")
+        pdf.line(card_x, card_y + footer_h, card_x + card_w, card_y + footer_h)
+        pdf.setFillColor(colors.HexColor("#EAF1FF"))
+        pdf.setFont("Helvetica-Bold", 12)
+        pdf.drawString(card_x + 32, card_y + 21, "HigiFlow")
+        pdf.setFillColor(muted)
+        pdf.setFont("Helvetica", 7.5)
+        footer_text = "© 2024 HigiFlow. Todos os direitos reservados."
+        if total_pages > 1:
+            footer_text = f"{footer_text} Página {page_number} de {total_pages}."
+        pdf.drawRightString(card_x + card_w - 32, card_y + 22, pdf_text(footer_text))
 
-    rows = build_rows()
-    pages = paginate_rows(rows)
+    blocks = build_blocks()
+    pages = paginate_blocks(blocks)
     total_pages = len(pages)
 
     for index, page in enumerate(pages, start=1):
@@ -1497,12 +1668,12 @@ def gerar_orcamento_pdf(request: HttpRequest, pk: int) -> HttpResponse:
             pdf.showPage()
         draw_page_base()
         header_bottom = draw_header(index, total_pages, page["first"])
-        table_top = first_table_top if page["first"] else next_table_top
-        if page["first"]:
-            table_top = draw_client_summary(header_bottom)
-        draw_services_table(page["rows"], table_top, index, total_pages)
+        table_top = draw_client_summary(header_bottom) if page["first"] else header_bottom
+        final_top = table_top
+        if page["blocks"] or not page["last"]:
+            final_top = draw_services_table(page["blocks"], table_top, index, total_pages) - services_final_gap
         if page["last"]:
-            draw_final_block()
+            draw_final_block(final_top)
         else:
             draw_continuation_note()
         draw_footer(index, total_pages)
