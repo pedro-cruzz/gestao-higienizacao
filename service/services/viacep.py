@@ -8,6 +8,8 @@ from urllib.request import Request, urlopen
 
 from django.conf import settings
 
+from .http import get_ssl_context
+
 logger = logging.getLogger(__name__)
 
 
@@ -106,7 +108,7 @@ class ViaCepService:
         url = f"{self.base_url}{path}"
         try:
             request = Request(url, headers={"Accept": "application/json"})
-            with urlopen(request, timeout=self.timeout) as response:
+            with urlopen(request, timeout=self.timeout, context=get_ssl_context()) as response:
                 data = response.read().decode("utf-8")
             return json.loads(data)
         except HTTPError as exc:

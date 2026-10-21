@@ -138,7 +138,8 @@ if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
-            conn_max_age=600,
+            conn_max_age=0 if DEBUG else 600,
+            conn_health_checks=True,
             ssl_require=not DATABASE_URL.startswith("sqlite"),
         )
     }
